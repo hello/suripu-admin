@@ -10,7 +10,6 @@ import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.NewDynamoDBConfiguration;
-
 import com.hello.suripu.core.db.PillViewsDynamoDB;
 import com.hello.suripu.core.db.SenseEventsDAO;
 import com.yammer.dropwizard.cli.ConfiguredCommand;
