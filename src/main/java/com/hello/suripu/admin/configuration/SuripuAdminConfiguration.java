@@ -1,14 +1,12 @@
 package com.hello.suripu.admin.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hello.suripu.coredw.configuration.GraphiteConfiguration;
+
 import com.hello.suripu.core.configuration.KinesisConfiguration;
 import com.hello.suripu.core.configuration.KinesisLoggerConfiguration;
 import com.hello.suripu.core.configuration.NewDynamoDBConfiguration;
-import com.hello.suripu.coredw.configuration.RedisConfiguration;
-import com.yammer.dropwizard.config.Configuration;
-import com.yammer.dropwizard.db.DatabaseConfiguration;
-
+import io.dropwizard.Configuration;
+import io.dropwizard.db.DataSourceFactory;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
@@ -18,18 +16,18 @@ public class SuripuAdminConfiguration extends Configuration {
     @Valid
     @NotNull
     @JsonProperty("sensors_db")
-    private DatabaseConfiguration sensorsDB = new DatabaseConfiguration();
+    private DataSourceFactory sensorsDB = new DataSourceFactory();
 
-    public DatabaseConfiguration getSensorsDB() {
+    public DataSourceFactory getSensorsDB() {
         return sensorsDB;
     }
 
     @Valid
     @NotNull
     @JsonProperty("common_db")
-    private DatabaseConfiguration commonDB = new DatabaseConfiguration();
+    private DataSourceFactory commonDB = new DataSourceFactory();
 
-    public DatabaseConfiguration getCommonDB() {
+    public DataSourceFactory getCommonDB() {
         return commonDB;
     }
 

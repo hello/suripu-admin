@@ -14,7 +14,7 @@ import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.tracking.Category;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.core.util.JsonError;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;

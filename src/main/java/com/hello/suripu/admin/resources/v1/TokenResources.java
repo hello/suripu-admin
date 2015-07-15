@@ -19,7 +19,7 @@ import com.hello.suripu.core.oauth.TokenExpirationRequest;
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
 import com.hello.suripu.core.oauth.stores.OAuthTokenStore;
 import com.hello.suripu.core.util.HelloHttpHeader;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

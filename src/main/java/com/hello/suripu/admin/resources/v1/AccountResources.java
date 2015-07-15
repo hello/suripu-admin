@@ -24,7 +24,7 @@ import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.util.HelloHttpHeader;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PasswordUtil;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;

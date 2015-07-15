@@ -25,14 +25,20 @@ common_db:
   properties:
     charSet: UTF-8
 
-http:
-  port: 3333
-  adminPort: 3336
+server:
+  applicationConnectors:
+    - type: http
+      port: 3333
+  adminConnectors:
+    - type: http
+      port: 3336
 
 logging:
   level: INFO
   loggers:
     com.hello.suripu: DEBUG
+  appenders:
+      - type: console
 
 kinesis:
   endpoint : https://kinesis.us-east-1.amazonaws.com
