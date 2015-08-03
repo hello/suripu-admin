@@ -12,26 +12,10 @@ notifications:
     rooms:
     - mDwGqxGUPFlLf8CBEWGs9JPzZBmhJiQahoaHmlns@ops
     template:
-    - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
+    - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}'
 jdk:
 - oraclejdk7
 env:
   global:
-  - secure: ZtcabJIbdoPJSX8tHU6Hocj1dknD/UxATnqvvVo3RK9CwWYlzEbO/3AyAqul78ythMOnvouU9dIFoxjxb4lek1nsd3dvSix7zNa4YVDvcj0+uV/IBl12OqTO2RnxlP5MPIeRzkrhs0vg1OfvxquMizBcBdF7MbwmdUtL1g1IA3A=
-  - secure: Ed/gOoioqi7oacM+HpYsBF8nfXE6sd3Y99ZtNKg4mTrNUB9adF9jijv2B669TP+L/QXNoMvZizF7Cq+JFxjgH39pEMuMJfMsci2upxEtymZRbWKv3Kr6wM8AF7Jdyinf71RkIZC3VffKOluQ6vSFx1O51oVuSyrjyGxOYraPKWI=
-
-#before_deploy: "./build.sh"
-#deploy:
-#  provider: s3
-#  access_key_id: AKIAISH6DVH456763TWA
-#  secret_access_key:
-#    secure: e8AaJVEs2Xj31P2jMKXLQhqFFdiqmUhRe10FptP69C6SLhDxIrUiy+ZRtim2x9cQyFGVeOGOjBz/6qARqo2rsArndW2zOUi7q9tYYfm0GK8wG4XccpvDko+8+CaPJn/ZVnVW8tm0Voxn0HUXvyilmrTNKCcHDq/kZZqAhP/5o0o=
-#  bucket: hello-deploy
-#  local-dir: build
-#  on:
-#    repo: hello/suripu
-
-#cache:
-#  bundler : true
-#  directories:
-#  - $HOME/.m2
+  - secure: aw022EUmLWDNPEAQVHpNxMKpbJeaVk1xAbWOWHEAJVTja3W95CHC4TDLfSQZwqQjfoCiqSczU6P/TN9Qeyw54V8djuuOdmvVWShYTzx4alj3PkVD66Qdut7+O1v6T0KjrghO9SahODtdSguhGa3a8Jnq3pmwYT8jPrOFmolB+II4KEj+uEMS+2aMjPwdujzxncqVWpLdRIAVv8kdvUNtyqslkGM6ewJ5MXFaWtLGMbVlRnXfDvHc43f49nZDXSJlkVkrtphp8Opwc2ENIbp4zo0xA45/Mj8Ij2was6iV/4XPhbIDS5R1gHNFSiJ+nUIK44nxrF7fPXg0dRdsp1XUk3P0ocSDrWDX4PngVnQRqEcDgO89/q1WuEITKROOccWvxR+nGYAN+8zIlSHDMBcNgesgWvy1lx4jM+a7TERs0JSg5Dv3g88jkH+HO782fvFSmfT/rLUjeeauXXkV575QgIQoZ6Ir1XyjeBkoZkhiWhJYXjjq6BhONiiTU3IOdE63pZXxfI1L9pZmOedbzF0ZgehejKGnqcRWcw305jGktiqIRQmXu7yBClo/OqGv97C5I2Wk4wXT7aLRiIw/0/Z9L6TYN3gQU2xRLGhm6v5dea47apNJd8WcghA22vqkN9/aiIcIEnbge1qnaXYosyPjtYgEw4tdQis8Jy9+sdTQVio=
+  - secure: XVf5EEVApPHMX6gComQHPpknZOWf8cttrpbKwn9OeRlmAf+QpwlEsV5SXWZnhaDUNyWZyERpW+nGbgqu/Il7Va4YaZ3HTUn1TtDEi89Dzl/l5BRb9lgxs+bbBy5Clf5WCGTeYU5WU2nqfC3P97YVYyt0yqmeyrdUHc9/QE7yxuqh8xLXkywaDaurXE0TXpT7Sf0yY962CgmRNs+If142JFJsYFJMumRDN//MiLmLcuoMs6bHRgmQdyt5GZ45GPxSQD2zeFAXqoKbUVRjn6Zk3ruqTBckM81TRgpHSXQHEj7zQqmCexDq3mriy+PeGMDYn2xJ7g9VAI8ZuutbhTFctCsnl8NROo57onAEip2uBGx2gjA357dY0yrYD90rmeMEKyVb4gMtMW6BcsVKEfInQjrDqU4zCCKZw0b2VHcfTaLyC8w9bQnXDM/ZVBJFQsg9Jlri4yaMGoah5r7I39TJPR0OeDUINWo35B5mr/CWySY6bJB/P8/fvjt4pdBKUtp7KmW/+TDm//lp9lla7m7O6dcStAUwRk66OCCh6DPdM2d1oyP7Zns7MT6LpYAkBV7d8gwvJ5Mq8SooJK1NTIiho+0mYEci0ZfDdynkcY13jbUx4DgwURhPDGGM9hu5FxYz29bmjeBaaoKHo3LCEc66JIpJ4K+KB1Ecc0fnDVjTU4Q=
