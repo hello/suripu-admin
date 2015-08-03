@@ -26,8 +26,8 @@ common_db:
     hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
 
 http:
-  port: 3333
-  adminPort: 3336
+  port: 6666
+  adminPort: 6667
 
 logging:
   level: INFO
