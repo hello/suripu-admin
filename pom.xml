@@ -15,6 +15,13 @@
     <jodatime.version>20150319</jodatime.version>
     </properties>
 
+    <scm>
+        <connection>scm:git:git://github.com/hello/suripu-admin.git</connection>
+        <developerConnection>scm:git:git@github.com:hello/suripu-admin.git</developerConnection>
+        <url>http://github.com/hello/suripu-admin</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <distributionManagement>
         <site>
             <id>s3.site</id>
