@@ -163,7 +163,7 @@
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <mavenExecutorId>forked-path</mavenExecutorId>
-                    <tagNameFormat>suripu-@{project.version}</tagNameFormat>
+                    <tagNameFormat>suripu-admin-@{project.version}</tagNameFormat>
                     <preparationGoals>clean test</preparationGoals>
                 </configuration>
             </plugin>
