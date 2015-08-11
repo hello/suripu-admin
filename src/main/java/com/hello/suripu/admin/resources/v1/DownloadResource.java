@@ -29,7 +29,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
-@Path(("/v1/download"))
+@Path("/v1/download")
 public class DownloadResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadResource.class);
@@ -43,12 +43,7 @@ public class DownloadResource {
     }
 
 
-    private static boolean isValidType(final String type) {
-        return (type.equals("pill") || type.equals("morpheus"));
-    }
-
-    private List<FirmwareUpdate> createFirmwareUpdatesFromListing(final Iterable<S3ObjectSummary> objectSummaries,
-                                                                  final String type) {
+    private List<FirmwareUpdate> createFirmwareUpdatesFromListing(final Iterable<S3ObjectSummary> objectSummaries) {
         final Date expiration = DateTime.now().plusHours(1).toDate();
         return FluentIterable.from(objectSummaries)
                 .filter(new Predicate<S3ObjectSummary>() {
@@ -56,13 +51,6 @@ public class DownloadResource {
                     public boolean apply(final S3ObjectSummary summary) {
                         final String key = summary.getKey();
                         return (key.endsWith(".hex") || key.endsWith(".bin") || key.endsWith(".zip"));
-                    }
-                })
-                .filter(new Predicate<S3ObjectSummary>() {
-                    @Override
-                    public boolean apply(final S3ObjectSummary objectSummary) {
-                        // Key is of form stable/{type}+{type}_{tag}.(hex|bin|zip)
-                        return objectSummary.getKey().contains("/" + type + "+");
                     }
                 })
                 .transform(new Function<S3ObjectSummary, FirmwareUpdate>() {
@@ -84,35 +72,28 @@ public class DownloadResource {
     }
 
 
-    @Path("/{type}/firmware/stable")
+    @Path("/pill/firmware/stable")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareUpdate> getStableFirmware(final @Scope(OAuthScope.FIRMWARE_UPDATE) AccessToken accessToken,
-                                                  final @PathParam("type") String type) {
-        if (!isValidType(type)) {
-            LOGGER.warn("Unrecognized type '{}' given", type);
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-
+    public List<FirmwareUpdate> getStablePillFirmware(final @Scope(OAuthScope.FIRMWARE_UPDATE) AccessToken accessToken) {
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
         listObjectsRequest.withBucketName(bucketName);
-        listObjectsRequest.withPrefix("stable");
+        listObjectsRequest.withPrefix("pill_stable");
 
         final ObjectListing objectListing = amazonS3Client.listObjects(listObjectsRequest);
-        return createFirmwareUpdatesFromListing(objectListing.getObjectSummaries(), type);
+        return createFirmwareUpdatesFromListing(objectListing.getObjectSummaries());
     }
 
 
-    @Path("/{type}/firmware")
+    @Path("/pill/firmware")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareUpdate> getLatestFirmware(final @Scope(OAuthScope.FIRMWARE_UPDATE) AccessToken accessToken,
-                                                  final @PathParam("type") String type) {
+    public List<FirmwareUpdate> getUnstablePillFirmware(final @Scope(OAuthScope.FIRMWARE_UPDATE) AccessToken accessToken) {
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
         listObjectsRequest.withBucketName(bucketName);
-        listObjectsRequest.withPrefix("latest");
+        listObjectsRequest.withPrefix("pill_unstable");
 
         final ObjectListing objectListing = amazonS3Client.listObjects(listObjectsRequest);
-        return createFirmwareUpdatesFromListing(objectListing.getObjectSummaries(), type);
+        return createFirmwareUpdatesFromListing(objectListing.getObjectSummaries());
     }
 }
