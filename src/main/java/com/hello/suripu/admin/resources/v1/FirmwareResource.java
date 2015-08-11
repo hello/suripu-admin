@@ -349,7 +349,7 @@ public class FirmwareResource {
     public List<String> getFWNames(
             @Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
             @PathParam("fw_hash") final String fwHash) {
-        return firmwareVersionMappingDAO.get(fwHash);
+        return firmwareVersionMappingDAO.get(fwHash.toLowerCase());
     }
 
     @POST
