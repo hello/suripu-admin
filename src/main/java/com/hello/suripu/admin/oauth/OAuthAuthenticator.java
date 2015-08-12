@@ -2,11 +2,8 @@ package com.hello.suripu.admin.oauth;
 
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.oauth.stores.PersistentAccessTokenStore;
-import com.hello.suripu.core.oauth.ClientCredentials;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
-import javax.swing.text.html.Option;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,14 +17,13 @@ public class OAuthAuthenticator implements Authenticator<String, AccessToken> {
     }
 
     @Override
-    public Optional<AccessToken> authenticate(String credentials) throws AuthenticationException {
+    public Optional<AccessToken> authenticate(String submittedToken) throws AuthenticationException {
 
-        final Optional<AccessToken> token = tokenStore.getAccessTokenByToken(credentials);
+        final Optional<AccessToken> token = tokenStore.getAccessTokenByToken(submittedToken);
 
         if(!token.isPresent()) {
-            LOGGER.warn("Token {} was not present in OAuthAuthenticator", credentials);
+            LOGGER.warn("Token {} was not present in OAuthAuthenticator", submittedToken);
         }
-        LOGGER.debug("Credentials: {}", credentials);
         return token;
     }
 }
