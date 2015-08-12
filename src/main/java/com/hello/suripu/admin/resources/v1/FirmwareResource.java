@@ -24,6 +24,7 @@ import com.hello.suripu.core.models.Team;
 import com.hello.suripu.core.models.UpgradeNodeRequest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;

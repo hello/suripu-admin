@@ -7,6 +7,8 @@ import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.models.DeviceAdmin;
 import com.hello.suripu.admin.models.DeviceStatusBreakdown;
 import com.hello.suripu.admin.models.InactiveDevicesPaginator;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.configuration.ActiveDevicesTrackerConfiguration;
 import com.hello.suripu.core.configuration.BlackListDevicesConfiguration;
 import com.hello.suripu.core.db.AccountDAO;
@@ -35,11 +37,10 @@ import com.hello.suripu.core.models.ProvisionRequest;
 import com.hello.suripu.core.models.SenseRegistration;
 import com.hello.suripu.core.models.TimeZoneHistory;
 import com.hello.suripu.core.models.UserInfo;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
+
 import com.hello.suripu.core.util.JsonError;
 import com.codahale.metrics.annotation.Timed;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
@@ -123,11 +124,12 @@ public class DeviceResources {
         this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sense")
-    public List<DeviceAdmin> getSensesByEmail(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<DeviceAdmin> getSensesByEmail(@Auth final AccessToken accessToken,
                                               @QueryParam("email") final String email) {
         LOGGER.debug("Querying all senses for email = {}", email);
         final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, email);
@@ -138,11 +140,12 @@ public class DeviceResources {
         return getSensesByAccountId(accountIdOptional.get());
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/pill")
-    public List<DeviceAdmin> getPillsByEmail(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<DeviceAdmin> getPillsByEmail(@Auth final AccessToken accessToken,
                                              @QueryParam("email") final String email) {
         LOGGER.debug("Querying all pills for email = {}", email);
         final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, email);
@@ -153,11 +156,12 @@ public class DeviceResources {
         return getPillsByAccountId(accountIdOptional.get());
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/pill_status")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<DeviceStatus> getPillStatus(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<DeviceStatus> getPillStatus(@Auth final AccessToken accessToken,
                                             @QueryParam("email") final String email,
                                             @QueryParam("pill_id_partial") final String pillIdPartial,
                                             @QueryParam("end_ts") final Long endTs) {
@@ -190,11 +194,12 @@ public class DeviceResources {
         return pillStatuses;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/pill_heartbeat/{pill_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceStatus getPillHeartBeat(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public DeviceStatus getPillHeartBeat(@Auth final AccessToken accessToken,
                                             @PathParam("pill_id") final String pillId) {
 
         final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getInternalPillId(pillId);
@@ -215,11 +220,12 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Path("/{device_id}/accounts")
     @Produces(MediaType.APPLICATION_JSON)
-    public ImmutableList<Account> getAccountsByDeviceIDs(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public ImmutableList<Account> getAccountsByDeviceIDs(@Auth final AccessToken accessToken,
                                                          @QueryParam("max_devices") final Long maxDevices,
                                                          @PathParam("device_id") final String deviceId) {
         final List<Account> accounts = new ArrayList<>();
@@ -231,11 +237,12 @@ public class DeviceResources {
         return ImmutableList.copyOf(accounts);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Path("/status_breakdown")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceStatusBreakdown getDeviceStatusBreakdown(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public DeviceStatusBreakdown getDeviceStatusBreakdown(@Auth final AccessToken accessToken,
                                                           @QueryParam("start_ts") final Long startTs,
                                                           @QueryParam("end_ts") final Long endTs) {
         // TODO: move this out of url handler once we've validated this is what we want
@@ -266,11 +273,12 @@ public class DeviceResources {
         return new DeviceStatusBreakdown(sensesCount, pillsCount);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/inactive/sense")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceInactivePage getInactiveSenses(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public DeviceInactivePage getInactiveSenses(@Auth final AccessToken accessToken,
                                                 @QueryParam("after") final Long afterTimestamp,
                                                 @QueryParam("before") final Long beforeTimestamp,
                                                 @QueryParam("limit") final Integer limit) {
@@ -279,11 +287,12 @@ public class DeviceResources {
                 .generatePage();
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/inactive/pill")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceInactivePage getInactivePills(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public DeviceInactivePage getInactivePills(@Auth final AccessToken accessToken,
                                                @QueryParam("after") final Long afterTimestamp,
                                                @QueryParam("before") final Long beforeTimestamp,
                                                @QueryParam("limit") final Integer limit) {
@@ -299,11 +308,12 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/register/sense")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void registerSense(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void registerSense(@Auth final AccessToken accessToken,
                               @Valid final SenseRegistration senseRegistration) {
 
         final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, senseRegistration.email);
@@ -342,11 +352,12 @@ public class DeviceResources {
         }
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/register/pill")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void registerPill(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void registerPill(@Auth final AccessToken accessToken,
                              @Valid final PillRegistration pillRegistration) {
 
         final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, pillRegistration.email);
@@ -396,11 +407,12 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @DELETE
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sense/{email}/{sense_id}")
-    public void unregisterSenseByUser(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void unregisterSenseByUser(@Auth final AccessToken accessToken,
                                       @PathParam("email") final String email,
                                       @PathParam("sense_id") final String senseId) {
 
@@ -466,11 +478,12 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @DELETE
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/pill/{email}/{pill_id}")
-    public void unregisterPill(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void unregisterPill(@Auth final AccessToken accessToken,
                                @PathParam("email") final String email,
                                @PathParam("pill_id") String externalPillId) {
 
@@ -504,13 +517,13 @@ public class DeviceResources {
                                     externalPillId, senseId, accountId, ex.getMessage()))).build());
         }
     }
-    
-    
+
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/key_store_hints/sense/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceKeyStoreRecord getKeyHintForSense(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public DeviceKeyStoreRecord getKeyHintForSense(@Auth final AccessToken accessToken,
                                                    @PathParam("sense_id") final String senseId) {
         final Optional<DeviceKeyStoreRecord> senseKeyStoreRecord = senseKeyStore.getKeyStoreRecord(senseId);
         if (!senseKeyStoreRecord.isPresent()) {
@@ -520,11 +533,12 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/key_store_hints/pill/{pill_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceKeyStoreRecord getKeyHintForPill(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public DeviceKeyStoreRecord getKeyHintForPill(@Auth final AccessToken accessToken,
                                                   @PathParam("pill_id") final String pillId) {
         final Optional<DeviceKeyStoreRecord> pillKeyStoreRecord = pillKeyStore.getKeyStoreRecord(pillId);
         if (!pillKeyStoreRecord.isPresent()) {
@@ -534,38 +548,42 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/provision/sense")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void senseProvision(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken, @Valid final ProvisionRequest provisionRequest) {
+    public void senseProvision(@Auth final AccessToken accessToken, @Valid final ProvisionRequest provisionRequest) {
         senseKeyStore.put(provisionRequest.deviceId, provisionRequest.publicKey, provisionRequest.metadata);
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/provision/pill")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void pillProvision(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken, @Valid final ProvisionRequest provisionRequest) {
+    public void pillProvision(@Auth final AccessToken accessToken, @Valid final ProvisionRequest provisionRequest) {
         pillKeyStore.put(provisionRequest.deviceId, provisionRequest.publicKey, provisionRequest.metadata);
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/provision/batch_pills")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void batchPillsProvision(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken, @Valid final List<ProvisionRequest> provisionRequests) {
+    public void batchPillsProvision(@Auth final AccessToken accessToken, @Valid final List<ProvisionRequest> provisionRequests) {
         for (final ProvisionRequest provisionRequest : provisionRequests) {
             pillKeyStore.put(provisionRequest.deviceId, provisionRequest.publicKey, provisionRequest.metadata);
         }
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/timezone")
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeZoneHistory getTimezone(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public TimeZoneHistory getTimezone(@Auth final AccessToken accessToken,
                                        @QueryParam("sense_id") final String senseId,
                                        @QueryParam("email") final String email,
                                        @QueryParam("event_ts") final Long eventTs){
@@ -586,21 +604,21 @@ public class DeviceResources {
     }
 
 
-
-
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/color/missing")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<String> missingColors(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken){
+    public List<String> missingColors(@Auth final AccessToken accessToken){
         final List<String> deviceIdsMissingColor = senseColorDAO.missing();
         return deviceIdsMissingColor;
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/color/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Integer updateColorsForMissingSense(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public Integer updateColorsForMissingSense(@Auth final AccessToken accessToken,
                                                     @PathParam("sense_id") final String senseId){
 
         final Optional<DeviceKeyStoreRecord> deviceKeyStoreRecordOptional = senseKeyStore.getKeyStoreRecord(senseId);
@@ -616,9 +634,10 @@ public class DeviceResources {
         return 0;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/color/{sense_id}")
-    public String getColor(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public String getColor(@Auth final AccessToken accessToken,
                            @PathParam("sense_id") final String senseId){
 
         final Optional<Device.Color> colorOptional = senseColorDAO.getColorForSense(senseId);
@@ -630,10 +649,11 @@ public class DeviceResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @PUT
     @Path("/color/{sense_id}/{color}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response setColor(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public Response setColor(@Auth final AccessToken accessToken,
                            @PathParam("sense_id") final String senseId,
                            @PathParam("color") final String color) {
 
@@ -651,10 +671,11 @@ public class DeviceResources {
         return Response.noContent().build();
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @PUT
     @Timed
     @Path("/{device_id}/reset_mcu")
-    public void resetDeviceToFactoryFW(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void resetDeviceToFactoryFW(@Auth final AccessToken accessToken,
                                        @PathParam("device_id") final String deviceId,
                                        @QueryParam("fw_version") final Integer fwVersion) {
         if(deviceId == null) {
@@ -673,12 +694,13 @@ public class DeviceResources {
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @PUT
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sense_black_list")
-    public Response updateSenseBlackList(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public Response updateSenseBlackList(@Auth final AccessToken accessToken,
                                          @Valid final Set<String> updatedSenseBlackList) {
         Jedis jedis = null;
         try {
@@ -717,11 +739,12 @@ public class DeviceResources {
         return Response.noContent().build();
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sense_black_list")
-    public Set<String> addSenseBlackList(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken) {
+    public Set<String> addSenseBlackList(@Auth final AccessToken accessToken) {
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
@@ -752,11 +775,12 @@ public class DeviceResources {
         }
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/invalid/sense")
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<String> getInvalidActiveSenses(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public Set<String> getInvalidActiveSenses(@Auth final AccessToken accessToken,
                                                      @QueryParam("start_ts") final Long startTs,
                                                      @QueryParam("end_ts") final Long endTs) {
 

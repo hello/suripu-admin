@@ -1,12 +1,12 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.collect.ImmutableList;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.SenseEventsDAO;
 import com.hello.suripu.core.metrics.DeviceEvents;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
 import com.codahale.metrics.annotation.Timed;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -29,11 +29,12 @@ public class EventsResources {
         this.senseEventsDAO = senseEventsDAO;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{device_id}")
-    public ImmutableList<DeviceEvents> getDeviceEvents(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public ImmutableList<DeviceEvents> getDeviceEvents(@Auth final AccessToken accessToken,
                                                        @PathParam("device_id") final String deviceId,
                                                        @QueryParam("start_ts") final Long startTs,
                                                        @QueryParam("limit") final Integer limit) {

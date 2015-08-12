@@ -84,7 +84,7 @@ public class AccountResources {
     }
 
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,7 +115,7 @@ public class AccountResources {
         }
     }
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -137,7 +137,7 @@ public class AccountResources {
                 .entity("Missing email/name partials input").build());
     }
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -150,7 +150,7 @@ public class AccountResources {
         return accountDAO.getRecent(Math.min(limit, MAX_RECENT_USERS_LIMIT));
     }
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -164,7 +164,7 @@ public class AccountResources {
         return accountDAOAdmin.getRecentBeforeId(Math.min(limit, MAX_RECENT_USERS_LIMIT), maxId);
     }
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
@@ -195,7 +195,7 @@ public class AccountResources {
     }
 
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -221,7 +221,7 @@ public class AccountResources {
     }
 
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -232,7 +232,7 @@ public class AccountResources {
     }
 
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -247,7 +247,7 @@ public class AccountResources {
         return timeZoneHistoryDAODynamoDB.getAllTimeZones(accountIdOptional.get());
     }
 
-    @PermitAll
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -282,6 +282,7 @@ public class AccountResources {
 
     }
 
+    @RolesAllowed({"ZENDESK_EXTENSION"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)

@@ -2,20 +2,20 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.diagnostic.Count;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.DeviceAccountPair;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.tracking.Category;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.core.util.JsonError;
 import com.codahale.metrics.annotation.Timed;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -47,11 +47,12 @@ public class DiagnosticResources {
         this.trackingDAO = trackingDAO;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Path("/uptime/{email}")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Count> uptime(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<Count> uptime(@Auth final AccessToken accessToken,
                               @PathParam("email") final String email,
                               @DefaultValue("false") @QueryParam("padded") Boolean padded) {
 
@@ -75,13 +76,12 @@ public class DiagnosticResources {
         return diagnosticDAO.uptime(accountIdOptional.get(), deviceAccountPairOptional.get().internalDeviceId);
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @Timed
     @PUT
     @Path("/track/uptime/{email}")
-    public void Track(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
-
+    public void Track(@Auth final AccessToken accessToken,
                       @PathParam("email") final String email) {
-
 
         final Optional<Account> accountOptional = accountDAO.getByEmail(email);
         if(!accountOptional.isPresent()) {
