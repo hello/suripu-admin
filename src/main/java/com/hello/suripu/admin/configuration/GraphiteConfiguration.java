@@ -9,6 +9,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import jersey.repackaged.com.google.common.base.MoreObjects;
 import org.hibernate.validator.constraints.NotEmpty;
 
 public class GraphiteConfiguration extends Configuration {
@@ -48,5 +49,13 @@ public class GraphiteConfiguration extends Configuration {
 
     public List<String> getIncludeMetrics() {
         return ImmutableList.copyOf(includeMetrics);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("host", host)
+                .add("include_metrics", includeMetrics)
+                .toString();
     }
 }

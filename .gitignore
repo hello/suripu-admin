@@ -1,5 +1,5 @@
 **/*.iml
 .idea
 *.releaseBackup
-*.dev.yml
+*.dev*.yml
 target

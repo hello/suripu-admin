@@ -4,14 +4,14 @@
 
     <artifactId>suripu-admin</artifactId>
     <groupId>com.hello.suripu</groupId>
-    <version>0.4.58-SNAPSHOT</version>
+    <version>0.4</version>
 
     <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <dropwizard.version>0.8.2</dropwizard.version>
     <metrics.version>3.1.0</metrics.version>
     <java.version>1.7</java.version>
-    <suripu.version>0.4.62</suripu.version>
+    <suripu.version>0.4.73</suripu.version>
     <jodatime.version>20150319</jodatime.version>
     </properties>
 
@@ -34,6 +34,11 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -96,7 +101,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-client</artifactId>
-            <version>1.4.0</version>
+            <version>1.5.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.codehaus.jackson</groupId>
@@ -117,6 +122,16 @@
             <groupId>com.hello.suripu</groupId>
             <artifactId>suripu-core</artifactId>
             <version>${suripu.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.hello.suripu</groupId>
@@ -127,17 +142,33 @@
                     <groupId>com.yammer.dropwizard</groupId>
                     <artifactId>dropwizard-core</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.hello.dropwizard</groupId>
             <artifactId>dropwizard-mikkusu</artifactId>
             <version>0.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>suripu-jodatime</groupId>
             <artifactId>suripu-jodatime</artifactId>
             <version>${jodatime.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>

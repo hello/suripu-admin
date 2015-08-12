@@ -2,7 +2,6 @@ package com.hello.suripu.admin.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import com.hello.suripu.core.configuration.KinesisConfiguration;
 import com.hello.suripu.core.configuration.KinesisLoggerConfiguration;
 import com.hello.suripu.core.configuration.NewDynamoDBConfiguration;
 import io.dropwizard.Configuration;
@@ -10,6 +9,7 @@ import io.dropwizard.db.DataSourceFactory;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
+import jersey.repackaged.com.google.common.base.MoreObjects;
 
 public class SuripuAdminConfiguration extends Configuration {
 
@@ -105,4 +105,12 @@ public class SuripuAdminConfiguration extends Configuration {
     @JsonProperty("token_expiration")
     private Long tokenExpiration;
     public Long getTokenExpiration() {return this.tokenExpiration;}
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("debug", debug)
+                .add("include_metrics", metricsEnabled)
+                .toString();
+    }
 }

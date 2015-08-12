@@ -7,6 +7,7 @@ import com.hello.suripu.core.oauth.ApplicationRegistration;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
+import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class ApplicationResources {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response register(
             @Valid final ApplicationRegistration applicationRegistration,
-            @Scope({OAuthScope.ADMINISTRATION_WRITE}) final AccessToken token) {
+            @Auth final AccessToken token) {
         final ApplicationRegistration applicationWithDevAccountId = ApplicationRegistration.addDevAccountId(applicationRegistration, token.accountId);
         applicationStore.register(applicationWithDevAccountId);
         return Response.ok().build();
@@ -48,7 +49,7 @@ public class ApplicationResources {
     @Path("/{dev_account_id}")
     @Produces(MediaType.APPLICATION_JSON)
     public List<Application> getApplicationsByDeveloper(
-            @Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken token,
+            @Auth final AccessToken token,
             @PathParam("dev_account_id") final Long devAccountId) {
 
         return applicationStore.getApplicationsByDevId(devAccountId);
@@ -57,7 +58,7 @@ public class ApplicationResources {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Application> getAllApplications(
-            @Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken) {
+            @Auth final AccessToken accessToken) {
         List<Application> applications = applicationStore.getAll();
         LOGGER.debug("Size of applications = {}", applications.size());
         return applications;
@@ -67,7 +68,7 @@ public class ApplicationResources {
     @GET
     @Path("/scopes")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OAuthScope> scopes(@Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken) {
+    public List<OAuthScope> scopes(@Auth AccessToken accessToken) {
         final List<OAuthScope> scopes = new ArrayList<>();
         for(OAuthScope scope : OAuthScope.values()) {
             scopes.add(scope);
@@ -79,7 +80,7 @@ public class ApplicationResources {
     @GET
     @Path("/{id}/scopes")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OAuthScope> scopesForApplication(@Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken, @PathParam("id") Long applicationId) {
+    public List<OAuthScope> scopesForApplication(@Auth AccessToken accessToken, @PathParam("id") Long applicationId) {
         final Optional<Application> applicationOptional = applicationStore.getApplicationById(applicationId);
         if(!applicationOptional.isPresent()) {
 
@@ -98,7 +99,7 @@ public class ApplicationResources {
     @PUT
     @Path("/{id}/scopes")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void updateScopes(@Scope({OAuthScope.ADMINISTRATION_WRITE}) AccessToken accessToken, @Valid List<OAuthScope> scopes, @PathParam("id") Long applicationId) {
+    public void updateScopes(@Auth AccessToken accessToken, @Valid List<OAuthScope> scopes, @PathParam("id") Long applicationId) {
         applicationStore.updateScopes(applicationId, scopes);
     }
 }

@@ -1,47 +1,33 @@
 package com.hello.suripu.admin.oauth;
 
 import com.google.common.base.Optional;
-import com.hello.suripu.core.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.core.oauth.ClientCredentials;
-import com.hello.suripu.core.oauth.ClientDetails;
-import com.hello.suripu.core.oauth.stores.OAuthTokenStore;
-
-
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
+import javax.swing.text.html.Option;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OAuthAuthenticator implements Authenticator<ClientCredentials, AccessToken> {
-    private OAuthTokenStore<AccessToken, ClientDetails, ClientCredentials> tokenStore;
+public class OAuthAuthenticator implements Authenticator<String, AccessToken> {
+
+    private PersistentAccessTokenStore tokenStore;
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthAuthenticator.class);
 
-    public OAuthAuthenticator(OAuthTokenStore<AccessToken, ClientDetails, ClientCredentials> tokenStore) {
-        super();
+    public OAuthAuthenticator(PersistentAccessTokenStore tokenStore) {
         this.tokenStore = tokenStore;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * com.yammer.dropwizard.auth.Authenticator#authenticate(java.lang.Object)
-     */
     @Override
-    public Optional<AccessToken> authenticate(ClientCredentials credentials) throws AuthenticationException {
+    public Optional<AccessToken> authenticate(String credentials) throws AuthenticationException {
 
+        final Optional<AccessToken> token = tokenStore.getAccessTokenByToken(credentials);
 
-//        final String stuff = bearer;
-    /*
-     * Hook for the application to enforce that a REST call can only access the
-     * data for the student that authorized the client application (which we
-     * currently don't do)
-     */
-        final Optional<AccessToken> token = tokenStore.getClientDetailsByToken(credentials, DateTime.now());
         if(!token.isPresent()) {
-            LOGGER.warn("Token {} was not present in OAuthAuthenticator", credentials.tokenOrCode);
+            LOGGER.warn("Token {} was not present in OAuthAuthenticator", credentials);
         }
+        LOGGER.debug("Credentials: {}", credentials);
         return token;
     }
 }
