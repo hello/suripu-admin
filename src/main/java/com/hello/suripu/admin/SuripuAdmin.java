@@ -4,7 +4,6 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.common.base.Joiner;
@@ -79,6 +78,7 @@ import com.hello.suripu.core.metrics.RegexMetricPredicate;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
+import com.hello.suripu.core.util.CustomJSONExceptionMapper;
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
@@ -210,10 +210,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PASSWORD_RESET)
         );
 
-        //TODO: Figure out if de-registering these singletons is necessary
-        //final DropwizardResourceConfig jrConfig = environment.jersey().getResourceConfig();
-       // DropwizardServiceUtil.deregisterDWSingletons(jrConfig);
-        //environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
+        environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
 
         final AccessTokenDAO accessTokenDAO = commonDB.onDemand(AccessTokenDAO.class);
 
