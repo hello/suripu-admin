@@ -28,6 +28,7 @@ public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfigura
 
         createSenseEventsTable(configuration, awsCredentialsProvider);
         createFirmwareVersionsMappingTable(configuration, awsCredentialsProvider);
+        createSenseLastSeen(configuration, awsCredentialsProvider);
         createPillLastSeen(configuration, awsCredentialsProvider);
         createFWUpgradePath(configuration, awsCredentialsProvider);
     }
@@ -65,6 +66,23 @@ public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfigura
     }
 
 
+    private void createSenseLastSeen(final SuripuAdminConfiguration configuration, final AWSCredentialsProvider awsCredentialsProvider) {
+        final NewDynamoDBConfiguration config = configuration.dynamoDBConfiguration();
+        final AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
+
+        client.setEndpoint(config.endpoints().get(DynamoDBTableName.SENSE_LAST_SEEN));
+        final String tableName = config.tables().get(DynamoDBTableName.SENSE_LAST_SEEN);
+        try {
+            client.describeTable(tableName);
+            System.out.println(String.format("%s already exists.", tableName));
+        } catch (AmazonServiceException exception) {
+            final CreateTableResult result = PillViewsDynamoDB.createLastSeenTable(tableName, client);
+            final TableDescription description = result.getTableDescription();
+            System.out.println(tableName + " " + description.getTableStatus());
+        }
+    }
+
+
     private void createPillLastSeen(final SuripuAdminConfiguration configuration, final AWSCredentialsProvider awsCredentialsProvider) {
         final NewDynamoDBConfiguration config = configuration.dynamoDBConfiguration();
         final AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
@@ -96,4 +114,5 @@ public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfigura
             System.out.println(tableName + " " + description.getTableStatus());
         }
     }
+
 }

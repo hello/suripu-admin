@@ -360,7 +360,7 @@ public class FirmwareResource {
     public List<String> getFWNames(
             @Auth final AccessToken accessToken,
             @PathParam("fw_hash") final String fwHash) {
-        return firmwareVersionMappingDAO.get(fwHash);
+        return firmwareVersionMappingDAO.get(fwHash.toLowerCase());
     }
 
     @RolesAllowed({"ADMINISTRATION_READ"})
