@@ -58,10 +58,10 @@ server:
   applicationContextPath: /
   applicationConnectors:
     - type: http
-      port: 3333
+      port: 6666
   adminConnectors:
     - type: http
-      port: 3336
+      port: 6667
 
 logging:
   level: INFO
