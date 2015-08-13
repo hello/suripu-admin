@@ -4,7 +4,7 @@
 
     <artifactId>suripu-admin-solo</artifactId>
     <groupId>com.hello.suripu</groupId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.5.1</version>
 
     <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
