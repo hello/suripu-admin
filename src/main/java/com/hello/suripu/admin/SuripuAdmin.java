@@ -74,7 +74,6 @@ import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
 import com.hello.suripu.core.configuration.QueueName;
-import com.hello.suripu.core.metrics.RegexMetricPredicate;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
@@ -145,7 +144,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
             final String prefix = String.format("%s.%s.%s", apiKey, env, "suripu-admin");
 
             final List<String> metrics = configuration.getGraphite().getIncludeMetrics();
-            final RegexMetricPredicate predicate = new RegexMetricPredicate(metrics);
             final Joiner joiner = Joiner.on(", ");
             LOGGER.info("Logging the following metrics: {}", joiner.join(metrics));
 
