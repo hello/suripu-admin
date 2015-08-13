@@ -4,7 +4,6 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.common.base.Joiner;
@@ -28,6 +27,7 @@ import com.hello.suripu.admin.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
+import com.hello.suripu.admin.resources.v1.CalibrationResources;
 import com.hello.suripu.admin.resources.v1.DataResources;
 import com.hello.suripu.admin.resources.v1.DeviceResources;
 import com.hello.suripu.admin.resources.v1.DiagnosticResources;
@@ -40,13 +40,14 @@ import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
-
 import com.hello.suripu.core.configuration.DynamoDBTableName;
-
+import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.AccountDAOImpl;
 import com.hello.suripu.core.db.ApplicationsDAO;
+import com.hello.suripu.core.db.CalibrationDAO;
+import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDAOAdmin;
 import com.hello.suripu.core.db.DeviceDataDAO;
@@ -74,11 +75,11 @@ import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
-import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.metrics.RegexMetricPredicate;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
+import com.hello.suripu.core.util.CustomJSONExceptionMapper;
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
@@ -213,7 +214,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         //TODO: Figure out if de-registering these singletons is necessary
         //final DropwizardResourceConfig jrConfig = environment.jersey().getResourceConfig();
        // DropwizardServiceUtil.deregisterDWSingletons(jrConfig);
-        //environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
+        environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
 
         final AccessTokenDAO accessTokenDAO = commonDB.onDemand(AccessTokenDAO.class);
 
@@ -304,6 +305,12 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PILL_LAST_SEEN)
         );
 
+        final AmazonDynamoDB calibrationDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.CALIBRATION, CalibrationDynamoDB.class);
+        final CalibrationDAO calibrationDAO = new CalibrationDynamoDB(
+                calibrationDynamoDBClient,
+                tableNames.get(DynamoDBTableName.CALIBRATION)
+        );
+
         environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
@@ -331,5 +338,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
         environment.jersey().register(new TeamsResources(teamStore));
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
+        environment.jersey().register(new CalibrationResources(calibrationDAO));
     }
 }

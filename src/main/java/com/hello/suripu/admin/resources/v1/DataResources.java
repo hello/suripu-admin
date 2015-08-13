@@ -1,5 +1,6 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.models.UserInteraction;
@@ -15,6 +16,7 @@ import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.logging.SenseLogTag;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.AllSensorSampleList;
+import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.models.CurrentRoomState;
 import com.hello.suripu.core.models.DataScience.UserLabel;
 import com.hello.suripu.core.models.Device;
@@ -25,8 +27,6 @@ import com.hello.suripu.core.models.Sensor;
 import com.hello.suripu.core.models.TrackerMotion;
 import com.hello.suripu.core.util.DateTimeUtil;
 import com.hello.suripu.core.util.JsonError;
-import com.codahale.metrics.annotation.Timed;
-import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -34,6 +34,7 @@ import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -192,7 +193,7 @@ public class DataResources {
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
         return deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
-                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color);
+                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, Calibration.createDefault(deviceIdPair.get().externalDeviceId));
     }
 
 
@@ -326,7 +327,8 @@ public class DataResources {
                 deviceAccountPairOptional.get().internalDeviceId,
                 slotDurationInMinutes,
                 missingDataDefaultValue,
-                color
+                color,
+                Calibration.createDefault(deviceAccountPairOptional.get().externalDeviceId)
         );
 
         final List<UserInteraction> userInteractions = new ArrayList<>();
@@ -369,7 +371,7 @@ public class DataResources {
         if(!deviceDataOptional.isPresent()) {
             return CurrentRoomState.empty();
         }
-        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c");
+        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", Calibration.createDefault(pair.externalDeviceId));
     }
 
     @RolesAllowed({"ADMINISTRATION_READ"})
