@@ -1,8 +1,11 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.models.UserInteraction;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
@@ -13,6 +16,7 @@ import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.logging.SenseLogTag;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.AllSensorSampleList;
+import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.models.CurrentRoomState;
 import com.hello.suripu.core.models.DataScience.UserLabel;
 import com.hello.suripu.core.models.Device;
@@ -21,12 +25,8 @@ import com.hello.suripu.core.models.DeviceData;
 import com.hello.suripu.core.models.Sample;
 import com.hello.suripu.core.models.Sensor;
 import com.hello.suripu.core.models.TrackerMotion;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.util.DateTimeUtil;
 import com.hello.suripu.core.util.JsonError;
-import com.yammer.metrics.annotation.Timed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -34,6 +34,7 @@ import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -78,11 +79,12 @@ public class DataResources {
         this.senseColorDAO = senseColorDAO;
     }
 
+    @RolesAllowed({"SENSORS_BASIC", "RESEARCH"})
     @GET
     @Path("/user_interaction")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<UserInteraction> getUserInteractions(@Scope({OAuthScope.SENSORS_BASIC, OAuthScope.RESEARCH}) final AccessToken accessToken,
+    public List<UserInteraction> getUserInteractions(@Auth final AccessToken accessToken,
                                                      @QueryParam("email") String email,
                                                      @QueryParam("account_id") Long accountId,
                                                      @QueryParam("start_ts") Long startTimestamp,
@@ -111,10 +113,11 @@ public class DataResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/pill/{email}/{query_date_local_utc}/")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<TrackerMotion> getMotionAdmin(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<TrackerMotion> getMotionAdmin(@Auth final AccessToken accessToken,
                                               @PathParam("query_date_local_utc") String date,
                                               @PathParam("email") String email) {
         final DateTime targetDate = DateTime.parse(date, DateTimeFormat.forPattern(DateTimeUtil.DYNAMO_DB_DATE_FORMAT))
@@ -135,12 +138,13 @@ public class DataResources {
         return trackerMotions;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Path("/{email}/{sensor}/{resolution}")
     @Produces(MediaType.APPLICATION_JSON)
     public List<Sample> getAdminLastDay(
-            @Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken,
+            @Auth AccessToken accessToken,
             @PathParam("email") final String email,
             @PathParam("sensor") final String sensor,
             @PathParam("resolution") final String resolution,
@@ -189,14 +193,15 @@ public class DataResources {
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
         return deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
-                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color);
+                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, Calibration.createDefault(deviceIdPair.get().externalDeviceId));
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/label")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void label(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void label(@Auth final AccessToken accessToken,
                       @Valid final UserLabel label) {
 
         final Optional<Long> optionalAccountId = Util.getAccountIdByEmail(accountDAO, label.email);
@@ -220,11 +225,12 @@ public class DataResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Path("/batch_label")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public int label(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public int label(@Auth final AccessToken accessToken,
                      @Valid final List<UserLabel> labels) {
 
         final List<Long> accountIds = new ArrayList<>();
@@ -279,11 +285,12 @@ public class DataResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @GET
     @Path("/label/{email}/{night}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<UserLabel> getLabels(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public List<UserLabel> getLabels(@Auth final AccessToken accessToken,
                                      @PathParam("email") String email,
                                      @PathParam("night") String night) {
         final DateTime nightDate = DateTime.parse(night, DateTimeFormat.forPattern(DateTimeUtil.DYNAMO_DB_DATE_FORMAT))
@@ -320,7 +327,8 @@ public class DataResources {
                 deviceAccountPairOptional.get().internalDeviceId,
                 slotDurationInMinutes,
                 missingDataDefaultValue,
-                color
+                color,
+                Calibration.createDefault(deviceAccountPairOptional.get().externalDeviceId)
         );
 
         final List<UserInteraction> userInteractions = new ArrayList<>();
@@ -343,14 +351,13 @@ public class DataResources {
         return userInteractions;
     }
 
-
-
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Path("/current_room_conditions/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
     public CurrentRoomState currentRoomState(
-            @Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken,
+            @Auth AccessToken accessToken,
             @PathParam("sense_id") final String senseId) {
 
         final List<DeviceAccountPair> pairs = deviceDAO.getAccountIdsForDeviceId(senseId);
@@ -364,14 +371,15 @@ public class DataResources {
         if(!deviceDataOptional.isPresent()) {
             return CurrentRoomState.empty();
         }
-        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c");
+        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", Calibration.createDefault(pair.externalDeviceId));
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Path("/log_tags")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<String> getSenseLogsTag (@Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken,
+    public List<String> getSenseLogsTag (@Auth AccessToken accessToken,
                                    @PathParam("sense_id") final String senseId) {
         return SenseLogTag.rawValues();
 

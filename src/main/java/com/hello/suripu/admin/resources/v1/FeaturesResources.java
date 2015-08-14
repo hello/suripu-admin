@@ -1,10 +1,10 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.models.Feature;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
+import javax.annotation.security.RolesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,16 +28,18 @@ public class FeaturesResources {
         this.featureStore = featureStore;
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public void setFeature(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken, @Valid Feature feature) {
+    public void setFeature(@Auth final AccessToken accessToken, @Valid Feature feature) {
         LOGGER.info("Saving feature: {}", feature);
         featureStore.put(feature);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Feature> listFeatures(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken) {
+    public List<Feature> listFeatures(@Auth final AccessToken accessToken) {
         final List<Feature> features = featureStore.getAllFeatures();
         Collections.sort(features);
         return features;

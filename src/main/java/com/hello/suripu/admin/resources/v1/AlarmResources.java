@@ -3,17 +3,18 @@ package com.hello.suripu.admin.resources.v1;
 import com.amazonaws.AmazonServiceException;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
 import com.hello.suripu.core.models.Alarm;
 import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.UserInfo;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
+
 import com.hello.suripu.core.util.JsonError;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -46,11 +47,12 @@ public class AlarmResources {
         this.accountDAO = accountDAO;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @Timed
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{email}")
-    public List<Alarm> getAlarms(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken token,
+    public List<Alarm> getAlarms(@Auth final AccessToken token,
                                  @PathParam("email") final String email ){
 
         final Optional<Long> accountIdOptional =  Util.getAccountIdByEmail(accountDAO, email);

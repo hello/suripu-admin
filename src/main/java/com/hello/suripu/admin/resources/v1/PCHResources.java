@@ -6,11 +6,11 @@ import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.models.Device;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
+import javax.annotation.security.RolesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +45,12 @@ public class PCHResources {
         this.senseColorDAO = senseColorDAO;
     }
 
+    @RolesAllowed({"PCH_READ"})
     @POST
     @Path("/check/sense")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<String> checkIfSerialNumbersExists(@Scope(OAuthScope.PCH_READ) final AccessToken accessToken, @Valid @NotNull Set<String> snToChecks) {
+    public Set<String> checkIfSerialNumbersExists(@Auth final AccessToken accessToken, @Valid @NotNull Set<String> snToChecks) {
 
         LOGGER.warn("Checking {} Sense SNs", snToChecks.size());
 
@@ -89,13 +90,13 @@ public class PCHResources {
         return missingSN;
     }
 
-
-
+    @RolesAllowed({"PCH_READ"})
     @POST
     @Path("/check/pill")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    public String checkIfPillDeviceIdExists(@Scope(OAuthScope.PCH_READ) final AccessToken accessToken, final String body) {
+    public String checkIfPillDeviceIdExists(@Auth final AccessToken accessToken,
+                                            final String body) {
 
         final String[] pillDeviceIds = body.split("\n");
         final Set<String> pills = Sets.newHashSet();
@@ -143,10 +144,10 @@ public class PCHResources {
         return sb.toString();
     }
 
-
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @GET
     @Path("/colors")
-    public String updateSenseColors(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken) {
+    public String updateSenseColors(@Auth final AccessToken accessToken) {
 
         Map<String, AttributeValue> lastKeyEvaluated = null;
         int count = 0;

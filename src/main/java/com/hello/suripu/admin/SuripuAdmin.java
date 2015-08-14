@@ -4,8 +4,8 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.hello.dropwizard.mikkusu.resources.PingResource;
@@ -14,10 +14,20 @@ import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
 import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
+import com.hello.suripu.admin.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
+import com.hello.suripu.admin.db.AccessTokenDAO;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.AuthDynamicFeature;
+import com.hello.suripu.admin.oauth.AuthValueFactoryProvider;
+import com.hello.suripu.admin.oauth.OAuthAuthenticator;
+import com.hello.suripu.admin.oauth.OAuthAuthorizer;
+import com.hello.suripu.admin.oauth.OAuthCredentialAuthFilter;
+import com.hello.suripu.admin.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
+import com.hello.suripu.admin.resources.v1.CalibrationResources;
 import com.hello.suripu.admin.resources.v1.DataResources;
 import com.hello.suripu.admin.resources.v1.DeviceResources;
 import com.hello.suripu.admin.resources.v1.DiagnosticResources;
@@ -30,14 +40,14 @@ import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
-import com.hello.suripu.core.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
-import com.hello.suripu.core.db.AccessTokenDAO;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.AccountDAOImpl;
 import com.hello.suripu.core.db.ApplicationsDAO;
+import com.hello.suripu.core.db.CalibrationDAO;
+import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDAOAdmin;
 import com.hello.suripu.core.db.DeviceDataDAO;
@@ -65,29 +75,21 @@ import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
-import com.hello.suripu.core.logging.DataLogger;
-import com.hello.suripu.core.logging.KinesisLoggerFactory;
 import com.hello.suripu.core.metrics.RegexMetricPredicate;
-import com.hello.suripu.core.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.core.util.CustomJSONExceptionMapper;
-import com.hello.suripu.core.util.DropwizardServiceUtil;
-import com.hello.suripu.coredw.oauth.OAuthAuthenticator;
-import com.hello.suripu.coredw.oauth.OAuthProvider;
-import com.sun.jersey.api.core.ResourceConfig;
-import com.yammer.dropwizard.Service;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
-import com.yammer.dropwizard.jdbi.DBIFactory;
-import com.yammer.dropwizard.jdbi.ImmutableListContainerFactory;
-import com.yammer.dropwizard.jdbi.ImmutableSetContainerFactory;
-import com.yammer.dropwizard.jdbi.OptionalContainerFactory;
-import com.yammer.dropwizard.jdbi.bundles.DBIExceptionsBundle;
-
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.reporting.GraphiteReporter;
+import io.dropwizard.Application;
+import io.dropwizard.jdbi.DBIFactory;
+import io.dropwizard.jdbi.ImmutableListContainerFactory;
+import io.dropwizard.jdbi.ImmutableSetContainerFactory;
+import io.dropwizard.jdbi.OptionalContainerFactory;
+import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
+import io.dropwizard.metrics.graphite.GraphiteReporterFactory;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
@@ -99,7 +101,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 
-public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
+public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SuripuAdmin.class);
 
     public static void main(final String[] args) throws Exception {
@@ -121,8 +123,8 @@ public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
     @Override
     public void run(SuripuAdminConfiguration configuration, Environment environment) throws Exception {
         final DBIFactory factory = new DBIFactory();
-        final DBI commonDB = factory.build(environment, configuration.getCommonDB(), "postgresql");
-        final DBI sensorsDB = factory.build(environment, configuration.getSensorsDB(), "postgresql");
+        final DBI commonDB = factory.build(environment, configuration.getCommonDB(), "postgresql-common");
+        final DBI sensorsDB = factory.build(environment, configuration.getSensorsDB(), "postgresql-sensors");
 
         sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
         sensorsDB.registerContainerFactory(new OptionalContainerFactory());
@@ -148,7 +150,12 @@ public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
             final Joiner joiner = Joiner.on(", ");
             LOGGER.info("Logging the following metrics: {}", joiner.join(metrics));
 
-            GraphiteReporter.enable(Metrics.defaultRegistry(), interval, TimeUnit.SECONDS, graphiteHostName, 2003, prefix, predicate);
+            GraphiteReporterFactory graphiteReporterFactory = new GraphiteReporterFactory();
+            graphiteReporterFactory.setHost(graphiteHostName);
+            graphiteReporterFactory.setPort(2003);
+            graphiteReporterFactory.setPrefix(prefix);
+            GraphiteReporter graphiteReporter = (GraphiteReporter) graphiteReporterFactory.build(environment.metrics());
+            graphiteReporter.start(interval, TimeUnit.SECONDS);
 
             LOGGER.info("Metrics enabled.");
         } else {
@@ -177,11 +184,6 @@ public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
         final DiagnosticDAO diagnosticDAO = sensorsDB.onDemand(DiagnosticDAO.class);
         final TrackerMotionDAO trackerMotionDAO = sensorsDB.onDemand(TrackerMotionDAO.class);
 
-
-
-
-
-
         final ImmutableMap<DynamoDBTableName, String> tableNames = configuration.dynamoDBConfiguration().tables();
         final AmazonDynamoDB mergedUserInfoDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.ALARM_INFO);
         final MergedUserInfoDynamoDB mergedUserInfoDynamoDB = new MergedUserInfoDynamoDB(
@@ -209,25 +211,33 @@ public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PASSWORD_RESET)
         );
 
-        final ResourceConfig jrConfig = environment.getJerseyResourceConfig();
-        DropwizardServiceUtil.deregisterDWSingletons(jrConfig);
-        environment.addProvider(new CustomJSONExceptionMapper(configuration.getDebug()));
+        //TODO: Figure out if de-registering these singletons is necessary
+        //final DropwizardResourceConfig jrConfig = environment.jersey().getResourceConfig();
+       // DropwizardServiceUtil.deregisterDWSingletons(jrConfig);
+        environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
+
         final AccessTokenDAO accessTokenDAO = commonDB.onDemand(AccessTokenDAO.class);
 
         final ApplicationsDAO applicationsDAO = commonDB.onDemand(ApplicationsDAO.class);
         final PersistentApplicationStore applicationStore = new PersistentApplicationStore(applicationsDAO);
 
-        final PersistentAccessTokenStore accessTokenStore = new PersistentAccessTokenStore(accessTokenDAO, applicationStore, configuration.getTokenExpiration());
+        final PersistentAccessTokenStore tokenStore = new PersistentAccessTokenStore(accessTokenDAO, applicationStore);
 
         final ImmutableMap<QueueName, String> streams = ImmutableMap.copyOf(configuration.getKinesisConfiguration().getStreams());
 
         final ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.withConnectionTimeout(200); // in ms
         clientConfiguration.withMaxErrorRetry(1);
-        final AmazonKinesisAsyncClient kinesisClient = new AmazonKinesisAsyncClient(awsCredentialsProvider, clientConfiguration);
-        final KinesisLoggerFactory kinesisLoggerFactory = new KinesisLoggerFactory(kinesisClient, streams);
-        final DataLogger activityLogger = kinesisLoggerFactory.get(QueueName.ACTIVITY_STREAM);
-        environment.addProvider(new OAuthProvider(new OAuthAuthenticator(accessTokenStore), "protected-resources", activityLogger));
+
+        environment.jersey().register(new AuthDynamicFeature(new OAuthCredentialAuthFilter.Builder<AccessToken>()
+                .setAuthenticator(new OAuthAuthenticator(tokenStore))
+                .setAuthorizer(new OAuthAuthorizer())
+                .setRealm("SUPER SECRET STUFF")
+                .setPrefix("Bearer")
+                .buildAuthFilter()));
+        environment.jersey().register(RolesAllowedDynamicFeature.class);
+        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(AccessToken.class));
+
 
         final JedisPool jedisPool = new JedisPool(
                 configuration.getRedisConfiguration().getHost(),
@@ -295,25 +305,30 @@ public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PILL_LAST_SEEN)
         );
 
-        environment.addResource(new PingResource());
-        environment.addResource(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
-                timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
+        final AmazonDynamoDB calibrationDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.CALIBRATION, CalibrationDynamoDB.class);
+        final CalibrationDAO calibrationDAO = new CalibrationDynamoDB(
+                calibrationDynamoDBClient,
+                tableNames.get(DynamoDBTableName.CALIBRATION)
+        );
 
+        environment.jersey().register(PingResource.class);
+        environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
+                timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
+        environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
+        environment.jersey().register(new ApplicationResources(applicationStore));
+        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO));
         final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceDAOAdmin, deviceDataDAO, trackerMotionDAO, accountDAO,
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
-        environment.addResource(deviceResources);
-        environment.addResource(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB,senseColorDAO));
-        environment.addResource(new ApplicationResources(applicationStore));
-        environment.addResource(new FeaturesResources(featureStore));
-        environment.addResource(new TeamsResources(teamStore));
-        environment.addResource(new FirmwareResource(jedisPool, firmwareVersionMappingDAO, otaHistoryDAODynamoDB, respCommandsDAODynamoDB, firmwareUpgradePathDAO, deviceDAO, sensorsViewsDynamoDB, teamStore));
-        environment.addResource(new EventsResources(senseEventsDAO));
-        environment.addResource(new InspectionResources(deviceDAOAdmin));
-        environment.addResource(new OnBoardingLogResource(accountDAO, onBoardingLogDAO));
-        environment.addResource(new DownloadResource(s3Client, "hello-firmware"));
-
-        environment.addResource(
+        environment.jersey().register(deviceResources);
+        environment.jersey().register(new DiagnosticResources(diagnosticDAO, accountDAO, deviceDAO, trackingDAO));
+        environment.jersey().register(new DownloadResource(s3Client, "hello-firmware"));
+        environment.jersey().register(new EventsResources(senseEventsDAO));
+        environment.jersey().register(new FeaturesResources(featureStore));
+        environment.jersey().register(new FirmwareResource(jedisPool, firmwareVersionMappingDAO, otaHistoryDAODynamoDB, respCommandsDAODynamoDB, firmwareUpgradePathDAO, deviceDAO, sensorsViewsDynamoDB, teamStore));
+        environment.jersey().register(new InspectionResources(deviceDAOAdmin));
+        environment.jersey().register(new OnBoardingLogResource(accountDAO, onBoardingLogDAO));
+        environment.jersey().register(
                 new PCHResources(
                         senseKeyStoreDynamoDBClient, // we use the same endpoint for Sense and Pill keystore
                         tableNames.get(DynamoDBTableName.SENSE_KEY_STORE),
@@ -321,9 +336,8 @@ public class SuripuAdmin extends Service<SuripuAdminConfiguration> {
                         senseColorDAO
                 )
         );
-
-        environment.addResource(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
-        environment.addResource(new DiagnosticResources(diagnosticDAO, accountDAO, deviceDAO, trackingDAO));
-        environment.addResource(new TokenResources(accessTokenStore, applicationStore, accessTokenDAO, accountDAO));
+        environment.jersey().register(new TeamsResources(teamStore));
+        environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
+        environment.jersey().register(new CalibrationResources(calibrationDAO));
     }
 }

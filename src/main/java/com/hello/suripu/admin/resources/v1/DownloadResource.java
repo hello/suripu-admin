@@ -10,9 +10,9 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.hello.suripu.admin.models.FirmwareUpdate;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +20,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
@@ -71,11 +68,11 @@ public class DownloadResource {
                 .toSortedList(FirmwareUpdate.createOrdering());
     }
 
-
+    @RolesAllowed({"FIRMWARE_UPDATE"})
     @Path("/pill/firmware/stable")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareUpdate> getStablePillFirmware(final @Scope(OAuthScope.FIRMWARE_UPDATE) AccessToken accessToken) {
+    public List<FirmwareUpdate> getStablePillFirmware(@Auth AccessToken accessToken) {
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
         listObjectsRequest.withBucketName(bucketName);
         listObjectsRequest.withPrefix("pill_stable");
@@ -85,10 +82,11 @@ public class DownloadResource {
     }
 
 
+    @RolesAllowed({"FIRMWARE_UPDATE"})
     @Path("/pill/firmware")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareUpdate> getUnstablePillFirmware(final @Scope(OAuthScope.FIRMWARE_UPDATE) AccessToken accessToken) {
+    public List<FirmwareUpdate> getUnstablePillFirmware(@Auth AccessToken accessToken) {
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
         listObjectsRequest.withBucketName(bucketName);
         listObjectsRequest.withPrefix("pill_unstable");

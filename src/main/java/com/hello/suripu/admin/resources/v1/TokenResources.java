@@ -2,10 +2,11 @@ package com.hello.suripu.admin.resources.v1;
 
 
 import com.google.common.base.Optional;
-import com.hello.suripu.core.db.AccessTokenDAO;
+import com.hello.suripu.admin.db.AccessTokenDAO;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.models.Account;
-import com.hello.suripu.core.oauth.AccessToken;
 import com.hello.suripu.core.oauth.AccessTokenUtils;
 import com.hello.suripu.core.oauth.Application;
 import com.hello.suripu.core.oauth.ApplicationRegistration;
@@ -14,12 +15,15 @@ import com.hello.suripu.core.oauth.ClientCredentials;
 import com.hello.suripu.core.oauth.ClientDetails;
 import com.hello.suripu.core.oauth.ImplicitTokenRequest;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.oauth.TokenExpirationRequest;
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
 import com.hello.suripu.core.oauth.stores.OAuthTokenStore;
 import com.hello.suripu.core.util.HelloHttpHeader;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
+import javax.annotation.security.RolesAllowed;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Days;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,12 +61,14 @@ public class TokenResources {
         this.accessTokenDAO = accessTokenDAO;
         this.accountDAO = accountDAO;
     }
+
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @POST
     @Path("/expiration")
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Integer getExpiration(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public Integer getExpiration(@Auth final AccessToken accessToken,
                                  @Valid @NotNull TokenExpirationRequest tokenExpirationRequest) {
         final String dirtyToken = tokenExpirationRequest.dirtyToken;
         final Optional<UUID> tokenUUIDOptional = AccessTokenUtils.cleanUUID(dirtyToken);
@@ -75,15 +81,16 @@ public class TokenResources {
             LOGGER.warn("Token {} not found", dirtyToken);
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
         }
-        return AccessTokenUtils.expiresInDays(accessTokenOptional.get());
+        return Days.daysBetween(DateTime.now(DateTimeZone.UTC), accessTokenOptional.get().createdAt.plusSeconds((int) accessTokenOptional.get().expiresIn.longValue())).getDays();
     }
 
+    @RolesAllowed({"IMPLICIT_TOKEN"})
     @POST
     @Path("/implicit")
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public AccessToken accessToken(@Scope({OAuthScope.IMPLICIT_TOKEN}) final AccessToken accessToken,
+    public AccessToken accessToken(@Auth final AccessToken accessToken,
                                    @Valid @NotNull final ImplicitTokenRequest implicitTokenRequest) {
         LOGGER.debug("Raw implicit token request {}", implicitTokenRequest);
         String requesterEmail = this.request.getHeader(HelloHttpHeader.ADMIN);

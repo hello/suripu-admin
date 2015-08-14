@@ -4,6 +4,8 @@ import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.models.PasswordResetAdmin;
 import com.hello.suripu.admin.models.TimeHistory;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.DeviceDAO;
@@ -16,7 +18,7 @@ import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.RingTime;
 import com.hello.suripu.core.models.SmartAlarmHistory;
 import com.hello.suripu.core.models.TimeZoneHistory;
-import com.hello.suripu.core.oauth.AccessToken;
+
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.passwordreset.PasswordReset;
@@ -24,7 +26,10 @@ import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.util.HelloHttpHeader;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PasswordUtil;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -79,10 +84,11 @@ public class AccountResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
-    public Account retrieveAccountByEmailOrId(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public Account retrieveAccountByEmailOrId(@Auth final AccessToken accessToken,
                                               @QueryParam("email") final String email,
                                               @QueryParam("id") final Long id) {
 
@@ -109,11 +115,12 @@ public class AccountResources {
         }
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/partial")
-    public List<Account> retrieveAccountsByEmailPartial(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public List<Account> retrieveAccountsByEmailPartial(@Auth final AccessToken accessToken,
                                                         @QueryParam("email") final String emailPartial,
                                                         @QueryParam("name") final String namePartial) {
         if (emailPartial != null) {
@@ -130,11 +137,12 @@ public class AccountResources {
                 .entity("Missing email/name partials input").build());
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/recent")
-    public List<Account> retrieveRecentlyCreatedAccounts(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public List<Account> retrieveRecentlyCreatedAccounts(@Auth final AccessToken accessToken,
                                                          @QueryParam("limit") final Integer limit){
         if (limit == null) {
             return accountDAO.getRecent(DEFAULT_RECENT_USERS_LIMIT);
@@ -142,11 +150,12 @@ public class AccountResources {
         return accountDAO.getRecent(Math.min(limit, MAX_RECENT_USERS_LIMIT));
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/paginate")
-    public List<Account> retrievePaginatedAccounts(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public List<Account> retrievePaginatedAccounts(@Auth final AccessToken accessToken,
                                                          @QueryParam("limit") final Integer limit,
                                                          @QueryParam("max_id") final Integer maxId){
         if (limit == null || maxId == null) {
@@ -155,12 +164,13 @@ public class AccountResources {
         return accountDAOAdmin.getRecentBeforeId(Math.min(limit, MAX_RECENT_USERS_LIMIT), maxId);
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/update_password")
-    public Response passwordUpdate(@Scope({OAuthScope.ADMINISTRATION_WRITE, OAuthScope.PASSWORD_RESET}) final AccessToken accessToken, final PasswordResetAdmin passwordResetAdmin) {
+    public Response passwordUpdate(@Auth final AccessToken accessToken, final PasswordResetAdmin passwordResetAdmin) {
 
         LOGGER.debug("Admin {} attempts to set passsword for email {}", accessToken.accountId, passwordResetAdmin.email);
         final Optional<Account> accountOptional = accountDAO.getByEmail(passwordResetAdmin.email.toLowerCase());
@@ -185,11 +195,12 @@ public class AccountResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{email}/partner")
-    public Account retrievePartnerAccount(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public Account retrievePartnerAccount(@Auth final AccessToken accessToken,
                                           @PathParam("email") final String email){
 
         final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, email);
@@ -210,21 +221,23 @@ public class AccountResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/count_by_created")
-    public List<AccountCount> retrieveCountsByCreated(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken) {
+    public List<AccountCount> retrieveCountsByCreated(@Auth final AccessToken accessToken) {
         return accountDAOAdmin.countByDate();
 
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/timezone_history/{email}")
-    public Map<DateTime, TimeZoneHistory> timeZoneHistoryList(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public Map<DateTime, TimeZoneHistory> timeZoneHistoryList(@Auth final AccessToken accessToken,
                                                               @PathParam("email") final String email) {
         final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, email);
         if (!accountIdOptional.isPresent()) {
@@ -234,11 +247,12 @@ public class AccountResources {
         return timeZoneHistoryDAODynamoDB.getAllTimeZones(accountIdOptional.get());
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/ring_history")
-    public TimeHistory timeDiagnose(@Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken,
+    public TimeHistory timeDiagnose(@Auth final AccessToken accessToken,
                                     @QueryParam("email") final String email,
                                     @QueryParam("start_time_millis") final long startMillis,
                                     @QueryParam("end_time_millis") final long endMillis){
@@ -268,11 +282,12 @@ public class AccountResources {
 
     }
 
+    @RolesAllowed({"ZENDESK_EXTENSION"})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/zendesk/{email}")
-    public Long getAccountIdForZendesk(@Scope({OAuthScope.ZENDESK_EXTENSION}) final AccessToken accessToken,
+    public Long getAccountIdForZendesk(@Auth final AccessToken accessToken,
                                           @PathParam("email") final String email){
 
         LOGGER.debug("Looking account up by email {}", email);

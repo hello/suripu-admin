@@ -1,12 +1,14 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
-import com.hello.suripu.core.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.core.oauth.Application;
 import com.hello.suripu.core.oauth.ApplicationRegistration;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
+
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
+import io.dropwizard.auth.Auth;
+import javax.annotation.security.RolesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,40 +36,41 @@ public class ApplicationResources {
         this.applicationStore = applicationStore;
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response register(
-            @Valid final ApplicationRegistration applicationRegistration,
-            @Scope({OAuthScope.ADMINISTRATION_WRITE}) final AccessToken token) {
+    public Response register(@Auth final AccessToken token,
+                             @Valid final ApplicationRegistration applicationRegistration) {
         final ApplicationRegistration applicationWithDevAccountId = ApplicationRegistration.addDevAccountId(applicationRegistration, token.accountId);
         applicationStore.register(applicationWithDevAccountId);
         return Response.ok().build();
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/{dev_account_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Application> getApplicationsByDeveloper(
-            @Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken token,
-            @PathParam("dev_account_id") final Long devAccountId) {
+    public List<Application> getApplicationsByDeveloper(@Auth final AccessToken token,
+                                                        @PathParam("dev_account_id") final Long devAccountId) {
 
         return applicationStore.getApplicationsByDevId(devAccountId);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Application> getAllApplications(
-            @Scope({OAuthScope.ADMINISTRATION_READ}) final AccessToken accessToken) {
-        List<Application> applications = applicationStore.getAll();
+    public List<Application> getAllApplications(@Auth final AccessToken accessToken) {
+        final List<Application> applications = applicationStore.getAll();
         LOGGER.debug("Size of applications = {}", applications.size());
         return applications;
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/scopes")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OAuthScope> scopes(@Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken) {
+    public List<OAuthScope> scopes(@Auth final AccessToken accessToken) {
         final List<OAuthScope> scopes = new ArrayList<>();
         for(OAuthScope scope : OAuthScope.values()) {
             scopes.add(scope);
@@ -76,10 +79,12 @@ public class ApplicationResources {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/{id}/scopes")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OAuthScope> scopesForApplication(@Scope({OAuthScope.ADMINISTRATION_READ}) AccessToken accessToken, @PathParam("id") Long applicationId) {
+    public List<OAuthScope> scopesForApplication(@Auth final AccessToken accessToken,
+                                                 @PathParam("id") final Long applicationId) {
         final Optional<Application> applicationOptional = applicationStore.getApplicationById(applicationId);
         if(!applicationOptional.isPresent()) {
 
@@ -95,10 +100,13 @@ public class ApplicationResources {
         return scopes;
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @PUT
     @Path("/{id}/scopes")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void updateScopes(@Scope({OAuthScope.ADMINISTRATION_WRITE}) AccessToken accessToken, @Valid List<OAuthScope> scopes, @PathParam("id") Long applicationId) {
+    public void updateScopes(@Auth final AccessToken accessToken,
+                             @Valid List<OAuthScope> scopes,
+                             @PathParam("id") final Long applicationId) {
         applicationStore.updateScopes(applicationId, scopes);
     }
 }
