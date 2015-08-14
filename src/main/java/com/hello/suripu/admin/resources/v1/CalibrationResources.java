@@ -1,7 +1,8 @@
 package com.hello.suripu.admin.resources.v1;
 
-
 import com.google.common.base.Optional;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.util.JsonError;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -29,18 +31,20 @@ import java.util.Set;
 
 @Path("/v1/calibration")
 public class CalibrationResources {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CalibrationResources.class);
 
-    public CalibrationDAO calibrationDAO;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CalibrationResources.class);
+    private final CalibrationDAO calibrationDAO;
 
     public CalibrationResources(final CalibrationDAO calibrationDAO) {
         this.calibrationDAO = calibrationDAO;
     }
 
+
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Calibration getCalibration(@PathParam("sense_id")  @NotNull @Valid final String senseId) {
+    public Calibration getCalibration(@Auth final AccessToken accessToken, @PathParam("sense_id")  @NotNull @Valid final String senseId) {
         final Optional<Calibration> optionalCalibration = calibrationDAO.getStrict(senseId);
         if (!optionalCalibration.isPresent()) {
             throw new WebApplicationException(Response.status(404).entity(new JsonError(404, "Calibration not found")).build());
@@ -48,17 +52,23 @@ public class CalibrationResources {
         return optionalCalibration.get();
     }
 
+
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Calibration> getCalibrationBatch(final Set<String> senseIds,
+    public Map<String, Calibration> getCalibrationBatch(@Auth final AccessToken accessToken,
+                                                        final Set<String> senseIds,
                                                         @QueryParam("strict") @Nullable @DefaultValue("true") final Boolean strict) {
         return strict ? calibrationDAO.getBatchStrict(senseIds) : calibrationDAO.getBatch(senseIds);
     }
 
+
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putCalibration(final Calibration calibration,
+    public Response putCalibration(@Auth final AccessToken accessToken,
+                                   final Calibration calibration,
                                    @QueryParam("force") @Nullable @DefaultValue("false") final Boolean force) {
 
         final Boolean hasSuccessfullyUpdated = force ? calibrationDAO.putForce(calibration) : calibrationDAO.put(calibration);
@@ -70,10 +80,13 @@ public class CalibrationResources {
 
     }
 
+
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @DELETE
     @Path("/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteCalibration(@PathParam("sense_id") @NotNull @Valid final String senseId) {
+    public Response deleteCalibration(@Auth final AccessToken accessToken,
+                                      @PathParam("sense_id") @NotNull @Valid final String senseId) {
         final Boolean hasSuccessfullyDeleted = calibrationDAO.delete(senseId);
         if (!hasSuccessfullyDeleted) {
             throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Cannot delete item, either key was incorrect or unexpected aws error occurred")).build());
