@@ -63,7 +63,7 @@ public class OAuthCredentialAuthFilter<P extends Principal> extends AuthFilter<S
                 }
             } catch (AuthenticationException e) {
                 LOGGER.warn("Error authenticating credentials", e);
-                throw new InternalServerErrorException();
+                throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
         throw new WebApplicationException(Response.Status.UNAUTHORIZED);

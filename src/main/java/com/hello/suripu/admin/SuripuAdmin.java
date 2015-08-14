@@ -40,6 +40,7 @@ import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
 
+import com.hello.suripu.admin.util.CustomJSONExceptionMapper;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 
 import com.hello.suripu.core.db.AccountDAO;
@@ -77,7 +78,6 @@ import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
-import com.hello.suripu.core.util.CustomJSONExceptionMapper;
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
