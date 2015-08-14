@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import io.dropwizard.auth.AuthenticationException;
 
 import io.dropwizard.auth.Authenticator;
+import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +66,7 @@ public class OAuthCredentialAuthFilter<P extends Principal> extends AuthFilter<S
                 throw new InternalServerErrorException();
             }
         }
-
-        throw new WebApplicationException(unauthorizedHandler.buildResponse(prefix, realm));
+        throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
 
     /**
