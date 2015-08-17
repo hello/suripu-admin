@@ -197,6 +197,11 @@
             <artifactId>postgresql</artifactId>
             <version>9.2-1004-jdbc4</version>
         </dependency>
+        <dependency>
+            <groupId>com.dcsquare</groupId>
+            <artifactId>dropwizard-papertrail</artifactId>
+            <version>1.1</version>
+        </dependency>
     </dependencies>
     <build>
         <extensions>

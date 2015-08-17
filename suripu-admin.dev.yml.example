@@ -68,7 +68,7 @@ logging:
   loggers:
     com.hello.suripu: DEBUG
   appenders:
-      - type: console
+    - type: console
 
 kinesis:
   endpoint : https://kinesis.us-east-1.amazonaws.com
