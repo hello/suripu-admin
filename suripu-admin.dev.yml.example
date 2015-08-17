@@ -66,9 +66,16 @@ server:
 logging:
   level: INFO
   loggers:
-    com.hello.suripu: DEBUG
+    com.hello.suripu.admin: DEBUG
   appenders:
     - type: console
+#    - type: papertrail
+#      host: logs2.papertrailapp.com
+#      port: 11366
+#      ident: suripu-admin-solo-
+#      # timezone: UTC
+#      # facility: USER
+#      # sendLocalName: true
 
 kinesis:
   endpoint : https://kinesis.us-east-1.amazonaws.com

@@ -5,8 +5,9 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.hello.dropwizard.mikkusu.resources.PingResource;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
@@ -84,18 +85,16 @@ import io.dropwizard.jdbi.ImmutableListContainerFactory;
 import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
-import io.dropwizard.metrics.graphite.GraphiteReporterFactory;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import java.net.InetSocketAddress;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
-
-import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -141,19 +140,17 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
             final Integer interval = configuration.getGraphite().getReportingIntervalInSeconds();
 
             final String env = (configuration.getDebug()) ? "dev" : "prod";
+            final String prefix = String.format("%s.%s.suripu-admin", apiKey, env);
 
-            final String prefix = String.format("%s.%s.%s", apiKey, env, "suripu-admin");
+            final Graphite graphite = new Graphite(new InetSocketAddress(graphiteHostName, 2003));
 
-            final List<String> metrics = configuration.getGraphite().getIncludeMetrics();
-            final Joiner joiner = Joiner.on(", ");
-            LOGGER.info("Logging the following metrics: {}", joiner.join(metrics));
-
-            GraphiteReporterFactory graphiteReporterFactory = new GraphiteReporterFactory();
-            graphiteReporterFactory.setHost(graphiteHostName);
-            graphiteReporterFactory.setPort(2003);
-            graphiteReporterFactory.setPrefix(prefix);
-            GraphiteReporter graphiteReporter = (GraphiteReporter) graphiteReporterFactory.build(environment.metrics());
-            graphiteReporter.start(interval, TimeUnit.SECONDS);
+            final GraphiteReporter reporter = GraphiteReporter.forRegistry(environment.metrics())
+                    .prefixedWith(prefix)
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .filter(MetricFilter.ALL)
+                    .build(graphite);
+            reporter.start(interval, TimeUnit.SECONDS);
 
             LOGGER.info("Metrics enabled.");
         } else {
