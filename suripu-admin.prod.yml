@@ -62,7 +62,6 @@ server:
   adminConnectors:
     - type: http
       port: 6667
-  registerDefaultExceptionMappers: false
 
 logging:
   level: INFO

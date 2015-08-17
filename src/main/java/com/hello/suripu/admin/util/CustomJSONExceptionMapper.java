@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class CustomJSONExceptionMapper implements ExceptionMapper<Throwable> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(com.hello.suripu.core.util.CustomJSONExceptionMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomJSONExceptionMapper.class);
 
     private final Boolean debug;
 

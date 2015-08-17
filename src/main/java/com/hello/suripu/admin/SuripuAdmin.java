@@ -85,6 +85,7 @@ import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.metrics.graphite.GraphiteReporterFactory;
+import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
@@ -207,6 +208,11 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 passwordResetDynamoDBClient,
                 tableNames.get(DynamoDBTableName.PASSWORD_RESET)
         );
+
+        //Doing this programmatically instead of in config files
+        AbstractServerFactory sf = (AbstractServerFactory) configuration.getServerFactory();
+        // disable all default exception mappers
+        sf.setRegisterDefaultExceptionMappers(false);
 
         environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
 
