@@ -4,11 +4,11 @@
 
     <artifactId>suripu-admin-solo</artifactId>
     <groupId>com.hello.suripu</groupId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.5.1</version>
 
     <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <dropwizard.version>0.6.2</dropwizard.version>
+    <dropwizard.version>0.8.2</dropwizard.version>
     <metrics.version>3.1.0</metrics.version>
     <java.version>1.7</java.version>
     <suripu.version>0.5.3</suripu.version>
@@ -62,14 +62,12 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-all</artifactId>
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
@@ -77,14 +75,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.yammer.dropwizard</groupId>
+            <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
             <exclusions>
-                <exclusion>
-                    <groupId>org.jdbi</groupId>
-                    <artifactId>org.jdbi</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>joda-time</groupId>
                     <artifactId>joda-time</artifactId>
@@ -92,9 +86,49 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-metrics-graphite</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-jdbi</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-db</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-jersey</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-auth</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-client</artifactId>
-            <version>1.4.0</version>
+            <version>1.5.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.codehaus.jackson</groupId>
+                    <artifactId>jackson-core-asl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.codehaus.jackson</groupId>
+                    <artifactId>jackson-mapper-asl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>redis.clients</groupId>
@@ -102,39 +136,56 @@
             <version>2.6.1</version>
         </dependency>
         <dependency>
-            <groupId>com.yammer.metrics</groupId>
-            <artifactId>metrics-graphite</artifactId>
-            <version>2.2.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.hello.suripu</groupId>
             <artifactId>suripu-core</artifactId>
             <version>${suripu.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hello.suripu</groupId>
-            <artifactId>suripu-coredw</artifactId>
-            <version>${suripu.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.hello.suripu</groupId>
             <artifactId>suripu-api</artifactId>
             <version>${suripu.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.hello.dropwizard</groupId>
             <artifactId>dropwizard-mikkusu</artifactId>
             <version>0.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>suripu-jodatime</groupId>
             <artifactId>suripu-jodatime</artifactId>
             <version>${jodatime.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>[14.0.1]</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -145,6 +196,11 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>9.2-1004-jdbc4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dcsquare</groupId>
+            <artifactId>dropwizard-papertrail</artifactId>
+            <version>1.1</version>
         </dependency>
     </dependencies>
     <build>
@@ -216,6 +272,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>

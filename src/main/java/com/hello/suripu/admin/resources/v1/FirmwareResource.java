@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
@@ -20,10 +22,10 @@ import com.hello.suripu.core.models.FirmwareInfo;
 import com.hello.suripu.core.models.OTAHistory;
 import com.hello.suripu.core.models.Team;
 import com.hello.suripu.core.models.UpgradeNodeRequest;
-import com.hello.suripu.core.oauth.AccessToken;
+
+import com.codahale.metrics.annotation.Timed;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
-import com.yammer.metrics.annotation.Timed;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,11 +87,13 @@ public class FirmwareResource {
         this.teamStore = teamStore;
     }
 
+    //TODO: Cleanup the way allowed roles are defined. *use OAuthScopes
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/devices")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareInfo> getFirmwareDeviceList(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<FirmwareInfo> getFirmwareDeviceList(@Auth final AccessToken accessToken,
                                               @QueryParam("firmware_version") final Long firmwareVersion,
                                               @QueryParam("range_start") final Long rangeStart,
                                               @QueryParam("range_end") final Long rangeEnd) {
@@ -125,11 +129,12 @@ public class FirmwareResource {
         return deviceInfo;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/count")
     @Produces(MediaType.APPLICATION_JSON)
-    public Long getFirmwareDeviceCount(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public Long getFirmwareDeviceCount(@Auth final AccessToken accessToken,
                                        @QueryParam("firmware_version") final Long firmwareVersion) {
         if(firmwareVersion == null) {
             LOGGER.error("Missing firmwareVersion parameter");
@@ -152,11 +157,12 @@ public class FirmwareResource {
         return devicesOnFirmware;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/list")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareCountInfo> getAllSeenFirmwares(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken) {
+    public List<FirmwareCountInfo> getAllSeenFirmwares(@Auth final AccessToken accessToken) {
 
         final Jedis jedis = jedisPool.getResource();
         final List<FirmwareCountInfo> firmwareCounts = Lists.newArrayList();
@@ -185,11 +191,12 @@ public class FirmwareResource {
         return firmwareCounts;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/list_by_time")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareCountInfo> getSeenFirmwareByTime(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<FirmwareCountInfo> getSeenFirmwareByTime(@Auth final AccessToken accessToken,
                                                             @QueryParam("range_start") final Long rangeStart,
                                                             @QueryParam("range_end") final Long rangeEnd) {
 
@@ -230,11 +237,12 @@ public class FirmwareResource {
         return firmwareCounts;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/{device_id}/history")
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeMap<Long, String> getFirmwareHistory(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public TreeMap<Long, String> getFirmwareHistory(@Auth final AccessToken accessToken,
                                                  @PathParam("device_id") final String deviceId) {
 
         if(deviceId == null) {
@@ -263,11 +271,12 @@ public class FirmwareResource {
         return fwHistory;
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/{device_id}/latest")
     @Produces(MediaType.APPLICATION_JSON)
-    public FirmwareInfo getLatestFirmwareVersion(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public FirmwareInfo getLatestFirmwareVersion(@Auth final AccessToken accessToken,
                                                 @PathParam("device_id") final String deviceId) {
 
         if(deviceId == null) {
@@ -283,11 +292,12 @@ public class FirmwareResource {
         return latestInfo.get();
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
     @GET
     @Timed
     @Path("/{group_name}/status")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FirmwareInfo> getFirmwareStatusForGroup(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<FirmwareInfo> getFirmwareStatusForGroup(@Auth final AccessToken accessToken,
                                             @PathParam("group_name") final String groupName) {
 
         if(groupName == null) {
@@ -316,10 +326,11 @@ public class FirmwareResource {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @DELETE
     @Timed
     @Path("/history/{fw_version}/")
-    public void clearFWHistory(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void clearFWHistory(@Auth final AccessToken accessToken,
                                       @PathParam("fw_version") final String fwVersion) {
         if(fwVersion == null) {
             LOGGER.error("Missing fw_version parameter");
@@ -341,33 +352,35 @@ public class FirmwareResource {
 
     }
 
-
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/names/{fw_hash}")
     @Produces(MediaType.APPLICATION_JSON)
     public List<String> getFWNames(
-            @Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+            @Auth final AccessToken accessToken,
             @PathParam("fw_hash") final String fwHash) {
         return firmwareVersionMappingDAO.get(fwHash.toLowerCase());
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @POST
     @Timed
     @Path("/names")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, List<String>> getFWNamesBatch(
-            @Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+            @Auth final AccessToken accessToken,
             @Valid @NotNull final ImmutableSet<String> fwHashSet) {
         return firmwareVersionMappingDAO.getBatch(fwHashSet);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/{device_id}/ota_history")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OTAHistory> getOTAHistory(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<OTAHistory> getOTAHistory(@Auth final AccessToken accessToken,
                                            @PathParam("device_id") final String deviceId,
                                            @QueryParam("range_start") final Long rangeStart,
                                            @QueryParam("range_end") final Long rangeEnd) {
@@ -393,10 +406,11 @@ public class FirmwareResource {
         return otaHistoryEntries;
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @PUT
     @Timed
     @Path("/{device_id}/reset_to_factory_fw")
-    public void resetDeviceToFactoryFW(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void resetDeviceToFactoryFW(@Auth final AccessToken accessToken,
                                                     @PathParam("device_id") final String deviceId,
                                                     @QueryParam("fw_version") final Integer fwVersion) {
         if(deviceId == null) {
@@ -415,11 +429,12 @@ public class FirmwareResource {
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Timed
     @Path("/{group_name}/upgrade_nodes")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<UpgradeNodeRequest> getFWUpgradeNode(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken, @PathParam("group_name") final String groupName) {
+    public List<UpgradeNodeRequest> getFWUpgradeNode(@Auth final AccessToken accessToken, @PathParam("group_name") final String groupName) {
 
         if(groupName == null) {
             LOGGER.error("Missing group name parameter");
@@ -430,21 +445,23 @@ public class FirmwareResource {
         return firmwareUpgradePathDAO.getFWUpgradeNodesForGroup(groupName);
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @PUT
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/upgrades/add_node")
-    public void addFWUpgradeNode(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken, @Valid final UpgradeNodeRequest nodeRequest) {
+    public void addFWUpgradeNode(@Auth final AccessToken accessToken, @Valid final UpgradeNodeRequest nodeRequest) {
 
         LOGGER.info("Adding FW upgrade node for group: {} on FW Version: {} to FW Version: {} @ {}% Rollout", nodeRequest.groupName, nodeRequest.fromFWVersion, nodeRequest.toFWVersion, nodeRequest.rolloutPercent);
         firmwareUpgradePathDAO.insertFWUpgradeNode(nodeRequest);
     }
 
+    @RolesAllowed({"ADMINISTRATION_WRITE"})
     @DELETE
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/upgrades/delete_node/{group_name}/{from_fw_version}")
-    public void deleteFWUpgradeNode(@Scope(OAuthScope.ADMINISTRATION_WRITE) final AccessToken accessToken,
+    public void deleteFWUpgradeNode(@Auth final AccessToken accessToken,
                                     @PathParam("group_name") final String groupName,
                                     @PathParam("from_fw_version") final Integer fromFWVersion) {
 

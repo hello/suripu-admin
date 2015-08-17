@@ -1,15 +1,15 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
+import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.Auth;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.OnBoardingLogDAO;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.OnBoardingLog;
-import com.hello.suripu.core.oauth.AccessToken;
-import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PairingResults;
+import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -41,10 +41,11 @@ public class OnBoardingLogResource {
     }
 
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/sense/{sense_id}/{count}")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OnBoardingLog> getLogsBySenseId(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<OnBoardingLog> getLogsBySenseId(@Auth final AccessToken accessToken,
                                                 @PathParam("sense_id") final String senseId,
                                                 @PathParam("count") final int count){
         try{
@@ -56,10 +57,11 @@ public class OnBoardingLogResource {
         }
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/account/{email}/{count}")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OnBoardingLog> getLogsByEmail(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<OnBoardingLog> getLogsByEmail(@Auth final AccessToken accessToken,
                                               @PathParam("email") final String email,
                                               @PathParam("count") final int count){
         final Optional<Account> accountOptional = accountDAO.getByEmail(email);
@@ -77,10 +79,11 @@ public class OnBoardingLogResource {
         }
     }
 
+    @RolesAllowed({"ADMINISTRATION_READ"})
     @GET
     @Path("/result")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<OnBoardingLog> getLogsByResult(@Scope(OAuthScope.ADMINISTRATION_READ) final AccessToken accessToken,
+    public List<OnBoardingLog> getLogsByResult(@Auth final AccessToken accessToken,
                                        @QueryParam("result") final PairingResults results,
                                        @QueryParam("start_millis") final long startMillis,
                                        @QueryParam("end_millis") final long endMillis){
