@@ -28,6 +28,7 @@ import com.hello.suripu.admin.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
+import com.hello.suripu.admin.resources.v1.CalibrationResources;
 import com.hello.suripu.admin.resources.v1.DataResources;
 import com.hello.suripu.admin.resources.v1.DeviceResources;
 import com.hello.suripu.admin.resources.v1.DiagnosticResources;
@@ -40,14 +41,15 @@ import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
-
 import com.hello.suripu.admin.util.CustomJSONExceptionMapper;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
-
+import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.AccountDAOImpl;
 import com.hello.suripu.core.db.ApplicationsDAO;
+import com.hello.suripu.core.db.CalibrationDAO;
+import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDAOAdmin;
 import com.hello.suripu.core.db.DeviceDataDAO;
@@ -75,7 +77,6 @@ import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
-import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
@@ -88,13 +89,15 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import java.net.InetSocketAddress;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
+
+
+import java.net.InetSocketAddress;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -302,6 +305,12 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PILL_LAST_SEEN)
         );
 
+        final AmazonDynamoDB calibrationDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.CALIBRATION, CalibrationDynamoDB.class);
+        final CalibrationDAO calibrationDAO = new CalibrationDynamoDB(
+                calibrationDynamoDBClient,
+                tableNames.get(DynamoDBTableName.CALIBRATION)
+        );
+
         environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
@@ -329,5 +338,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
         environment.jersey().register(new TeamsResources(teamStore));
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
+        environment.jersey().register(new CalibrationResources(calibrationDAO));
     }
 }
