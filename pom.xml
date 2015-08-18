@@ -4,7 +4,7 @@
 
     <artifactId>suripu-admin-solo</artifactId>
     <groupId>com.hello.suripu</groupId>
-    <version>0.5.3</version>
+    <version>0.5.4-SNAPSHOT</version>
 
     <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,7 +19,7 @@
         <connection>scm:git:git://github.com/hello/suripu-admin.git</connection>
         <developerConnection>scm:git:git@github.com:hello/suripu-admin.git</developerConnection>
         <url>http://github.com/hello/suripu-admin</url>
-        <tag>suripu-admin-0.5.3</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
