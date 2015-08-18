@@ -121,6 +121,7 @@ dynamodb:
     timezone_history : prod_timezone_history
     ring_time_history: prod_ring_history_by_account
     smart_alarm_log: prod_smart_alarm_log
+    calibration: prod_calibration
 
   endpoints:
       alarm_info : http://dynamodb.us-east-1.amazonaws.com
@@ -140,6 +141,7 @@ dynamodb:
       timezone_history : http://dynamodb.us-east-1.amazonaws.com
       smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
       ring_time_history: http://dynamodb.us-east-1.amazonaws.com
+      calibration: http://dynamodb.us-east-1.amazonaws.com
 
 token_expiration: 300
 
