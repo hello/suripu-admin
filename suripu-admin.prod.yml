@@ -68,6 +68,11 @@ logging:
   loggers:
     com.hello.suripu: DEBUG
   appenders:
+    - type: file
+      threshold: INFO
+      currentLogFilename: /var/log/suripu-admin/suripu-admin.log
+      archivedLogFilenamePattern: /var/log/suripu-admin/suripu-admin-%d{yyyy-MM-dd}.log.gz
+      archivedFileCount: 5
     - type: papertrail
       host: logs2.papertrailapp.com
       port: 11366

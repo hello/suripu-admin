@@ -67,12 +67,16 @@ logging:
   level: INFO
   loggers:
     com.hello.suripu.admin: DEBUG
-  appenders:
-    - type: console
+#  appenders:
+#    - type: file
+#      threshold: INFO
+#      currentLogFilename: /var/log/suripu-admin/suripu-admin.log
+#      archivedLogFilenamePattern: /var/log/suripu-admin/suripu-admin-%d{yyyy-MM-dd}.log.gz
+#      archivedFileCount: 5
 #    - type: papertrail
 #      host: logs2.papertrailapp.com
 #      port: 11366
-#      ident: suripu-admin-solo-
+#      ident: suripu-admin-solo
 #      # timezone: UTC
 #      # facility: USER
 #      # sendLocalName: true
