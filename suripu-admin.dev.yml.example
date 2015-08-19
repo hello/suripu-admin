@@ -62,12 +62,23 @@ server:
   adminConnectors:
     - type: http
       port: 6667
+  requestLog:
+    timeZone: UTC
+    appenders:
+      - type: console
+#      - type: file
+#        currentLogFilename: ./log/suripu-admin/suripu-admin-access.log
+#        threshold: ALL
+#        archive: true
+#        archivedLogFilenamePattern: ./log/suripu-admin/suripu-admin-access-%d{yyyy-MM-dd}.log.gz
+#        archivedFileCount: 7
 
 logging:
   level: INFO
   loggers:
     com.hello.suripu.admin: DEBUG
-#  appenders:
+  appenders:
+     - type: console
 #    - type: file
 #      threshold: INFO
 #      currentLogFilename: /var/log/suripu-admin/suripu-admin.log
