@@ -62,6 +62,19 @@ server:
   adminConnectors:
     - type: http
       port: 6667
+  requestLog:
+    timeZone: UTC
+    appenders:
+      - type: file
+        currentLogFilename: /var/log/suripu-admin/suripu-admin-access.log
+        threshold: ALL
+        archive: true
+        archivedLogFilenamePattern: /var/log/suripu-admin/suripu-admin-access-%d{yyyy-MM-dd}.log.gz
+        archivedFileCount: 7
+      - type: papertrail
+        host: logs2.papertrailapp.com
+        port: 11366
+        ident: suripu-admin-solo-prod
 
 logging:
   level: INFO
@@ -69,14 +82,14 @@ logging:
     com.hello.suripu: DEBUG
   appenders:
     - type: file
-      threshold: INFO
+      threshold: DEBUG
       currentLogFilename: /var/log/suripu-admin/suripu-admin.log
       archivedLogFilenamePattern: /var/log/suripu-admin/suripu-admin-%d{yyyy-MM-dd}.log.gz
-      archivedFileCount: 5
+      archivedFileCount: 7
     - type: papertrail
       host: logs2.papertrailapp.com
       port: 11366
-      ident: suripu-admin-solo
+      ident: suripu-admin-solo-prod
       # timezone: UTC
       # facility: USER
       # sendLocalName: true
