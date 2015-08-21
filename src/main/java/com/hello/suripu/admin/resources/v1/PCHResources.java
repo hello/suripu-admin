@@ -8,9 +8,10 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.models.Device;
-import javax.annotation.security.RolesAllowed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class PCHResources {
         this.senseColorDAO = senseColorDAO;
     }
 
-    @RolesAllowed({"PCH_READ"})
+    @ScopesAllowed({OAuthScope.PCH_READ})
     @POST
     @Path("/check/sense")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -90,7 +91,7 @@ public class PCHResources {
         return missingSN;
     }
 
-    @RolesAllowed({"PCH_READ"})
+    @ScopesAllowed({OAuthScope.PCH_READ})
     @POST
     @Path("/check/pill")
     @Consumes(MediaType.TEXT_PLAIN)
@@ -144,7 +145,7 @@ public class PCHResources {
         return sb.toString();
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Path("/colors")
     public String updateSenseColors(@Auth final AccessToken accessToken) {

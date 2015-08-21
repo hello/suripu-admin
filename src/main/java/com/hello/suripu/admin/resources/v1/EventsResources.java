@@ -3,10 +3,11 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.SenseEventsDAO;
 import com.hello.suripu.core.metrics.DeviceEvents;
 import com.codahale.metrics.annotation.Timed;
-import javax.annotation.security.RolesAllowed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ public class EventsResources {
         this.senseEventsDAO = senseEventsDAO;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)

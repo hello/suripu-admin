@@ -6,6 +6,7 @@ import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.models.UserInteraction;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
@@ -24,6 +25,7 @@ import com.hello.suripu.core.models.DeviceData;
 import com.hello.suripu.core.models.Sample;
 import com.hello.suripu.core.models.Sensor;
 import com.hello.suripu.core.models.TrackerMotion;
+import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.DateTimeUtil;
 import com.hello.suripu.core.util.JsonError;
 import org.joda.time.DateTime;
@@ -32,8 +34,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -78,7 +78,7 @@ public class DataResources {
         this.senseColorDAO = senseColorDAO;
     }
 
-    @RolesAllowed({"SENSORS_BASIC", "RESEARCH"})
+    @ScopesAllowed({OAuthScope.SENSORS_BASIC, OAuthScope.RESEARCH})
     @GET
     @Path("/user_interaction")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -112,7 +112,7 @@ public class DataResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/pill/{email}/{query_date_local_utc}/")
     @Produces(MediaType.APPLICATION_JSON)
@@ -137,7 +137,7 @@ public class DataResources {
         return trackerMotions;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
     @GET
     @Path("/{email}/{sensor}/{resolution}")
@@ -196,7 +196,7 @@ public class DataResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/label")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -224,7 +224,7 @@ public class DataResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/batch_label")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -284,7 +284,7 @@ public class DataResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Path("/label/{email}/{night}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -349,7 +349,7 @@ public class DataResources {
         return userInteractions;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
     @GET
     @Path("/current_room_conditions/{sense_id}")
@@ -372,7 +372,7 @@ public class DataResources {
         return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c");
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
     @GET
     @Path("/log_tags")

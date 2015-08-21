@@ -6,6 +6,7 @@ import com.hello.suripu.admin.models.PasswordResetAdmin;
 import com.hello.suripu.admin.models.TimeHistory;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.DeviceDAO;
@@ -20,16 +21,12 @@ import com.hello.suripu.core.models.SmartAlarmHistory;
 import com.hello.suripu.core.models.TimeZoneHistory;
 
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.core.oauth.Scope;
 import com.hello.suripu.core.passwordreset.PasswordReset;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.util.HelloHttpHeader;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PasswordUtil;
 import com.codahale.metrics.annotation.Timed;
-
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -84,7 +81,7 @@ public class AccountResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,7 +112,7 @@ public class AccountResources {
         }
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -137,7 +134,7 @@ public class AccountResources {
                 .entity("Missing email/name partials input").build());
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -150,7 +147,7 @@ public class AccountResources {
         return accountDAO.getRecent(Math.min(limit, MAX_RECENT_USERS_LIMIT));
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -164,7 +161,7 @@ public class AccountResources {
         return accountDAOAdmin.getRecentBeforeId(Math.min(limit, MAX_RECENT_USERS_LIMIT), maxId);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
@@ -195,7 +192,7 @@ public class AccountResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -221,7 +218,7 @@ public class AccountResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -232,7 +229,7 @@ public class AccountResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -247,7 +244,7 @@ public class AccountResources {
         return timeZoneHistoryDAODynamoDB.getAllTimeZones(accountIdOptional.get());
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -282,7 +279,7 @@ public class AccountResources {
 
     }
 
-    @RolesAllowed({"ZENDESK_EXTENSION"})
+    @ScopesAllowed({OAuthScope.ZENDESK_EXTENSION})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)

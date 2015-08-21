@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
@@ -25,7 +26,6 @@ import com.hello.suripu.core.models.UpgradeNodeRequest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hello.suripu.core.oauth.OAuthScope;
-import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,8 +87,7 @@ public class FirmwareResource {
         this.teamStore = teamStore;
     }
 
-    //TODO: Cleanup the way allowed roles are defined. *use OAuthScopes
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/devices")
@@ -129,7 +128,7 @@ public class FirmwareResource {
         return deviceInfo;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/count")
@@ -157,7 +156,7 @@ public class FirmwareResource {
         return devicesOnFirmware;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/list")
@@ -191,7 +190,7 @@ public class FirmwareResource {
         return firmwareCounts;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/list_by_time")
@@ -237,7 +236,7 @@ public class FirmwareResource {
         return firmwareCounts;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/{device_id}/history")
@@ -271,7 +270,7 @@ public class FirmwareResource {
         return fwHistory;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/{device_id}/latest")
@@ -292,7 +291,7 @@ public class FirmwareResource {
         return latestInfo.get();
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ", "ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
     @GET
     @Timed
     @Path("/{group_name}/status")
@@ -326,7 +325,7 @@ public class FirmwareResource {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Timed
     @Path("/history/{fw_version}/")
@@ -352,7 +351,7 @@ public class FirmwareResource {
 
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/names/{fw_hash}")
@@ -363,7 +362,7 @@ public class FirmwareResource {
         return firmwareVersionMappingDAO.get(fwHash.toLowerCase());
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @POST
     @Timed
     @Path("/names")
@@ -375,7 +374,7 @@ public class FirmwareResource {
         return firmwareVersionMappingDAO.getBatch(fwHashSet);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/{device_id}/ota_history")
@@ -406,7 +405,7 @@ public class FirmwareResource {
         return otaHistoryEntries;
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Timed
     @Path("/{device_id}/reset_to_factory_fw")
@@ -429,7 +428,7 @@ public class FirmwareResource {
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/{group_name}/upgrade_nodes")
@@ -445,7 +444,7 @@ public class FirmwareResource {
         return firmwareUpgradePathDAO.getFWUpgradeNodesForGroup(groupName);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
@@ -456,7 +455,7 @@ public class FirmwareResource {
         firmwareUpgradePathDAO.insertFWUpgradeNode(nodeRequest);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)

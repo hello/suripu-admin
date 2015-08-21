@@ -4,18 +4,18 @@ import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.diagnostic.Count;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.DeviceAccountPair;
+import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.tracking.Category;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.core.util.JsonError;
 import com.codahale.metrics.annotation.Timed;
-
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -47,7 +47,7 @@ public class DiagnosticResources {
         this.trackingDAO = trackingDAO;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
     @GET
     @Path("/uptime/{email}")
@@ -76,7 +76,7 @@ public class DiagnosticResources {
         return diagnosticDAO.uptime(accountIdOptional.get(), deviceAccountPairOptional.get().internalDeviceId);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @Timed
     @PUT
     @Path("/track/uptime/{email}")

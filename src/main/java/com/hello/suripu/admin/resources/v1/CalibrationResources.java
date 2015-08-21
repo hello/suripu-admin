@@ -3,14 +3,15 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.models.Calibration;
+import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -40,7 +41,7 @@ public class CalibrationResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -53,7 +54,7 @@ public class CalibrationResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -64,7 +65,7 @@ public class CalibrationResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     public Response putCalibration(@Auth final AccessToken accessToken,
@@ -81,7 +82,7 @@ public class CalibrationResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Path("/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)

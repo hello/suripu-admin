@@ -12,7 +12,8 @@ import com.google.common.collect.FluentIterable;
 import com.hello.suripu.admin.models.FirmwareUpdate;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
-import javax.annotation.security.RolesAllowed;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ public class DownloadResource {
                 .toSortedList(FirmwareUpdate.createOrdering());
     }
 
-    @RolesAllowed({"FIRMWARE_UPDATE"})
+    @ScopesAllowed({OAuthScope.FIRMWARE_UPDATE})
     @Path("/pill/firmware/stable")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -82,7 +83,7 @@ public class DownloadResource {
     }
 
 
-    @RolesAllowed({"FIRMWARE_UPDATE"})
+    @ScopesAllowed({OAuthScope.FIRMWARE_UPDATE})
     @Path("/pill/firmware")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
