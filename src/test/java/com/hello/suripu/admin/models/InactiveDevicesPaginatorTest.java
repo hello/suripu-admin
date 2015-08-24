@@ -1,6 +1,7 @@
 package com.hello.suripu.admin.models;
 import com.hello.suripu.core.models.DeviceInactive;
 import com.hello.suripu.core.models.DeviceInactivePage;
+import com.hello.suripu.coredw8.models.InactiveDevicesPaginator;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -152,6 +152,13 @@
         </dependency>
         <dependency>
             <groupId>com.hello.suripu</groupId>
+            <artifactId>suripu-core-dw8</artifactId>
+            <scope>system</scope>
+            <version>0.5.14-SNAPSHOT</version>
+            <systemPath>${project.basedir}/suripu-coredw8-0.5.14-SNAPSHOT.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.hello.suripu</groupId>
             <artifactId>suripu-api</artifactId>
             <version>${suripu.version}</version>
             <exclusions>
