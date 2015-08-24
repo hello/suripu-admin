@@ -1,5 +1,6 @@
 package com.hello.suripu.admin.oauth;
 
+import com.hello.suripu.core.oauth.OAuthScope;
 import java.security.Principal;
 
 /**
@@ -16,5 +17,5 @@ public interface Authorizer<P extends Principal> {
      * @param role a user role
      * @return {@code true}, if the access is granted, {@code false otherwise}
      */
-    boolean authorize(P principal, String role);
+    boolean authorize(P principal, OAuthScope role);
 }

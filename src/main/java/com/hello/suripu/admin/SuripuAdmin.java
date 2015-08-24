@@ -24,6 +24,7 @@ import com.hello.suripu.admin.oauth.AuthValueFactoryProvider;
 import com.hello.suripu.admin.oauth.OAuthAuthenticator;
 import com.hello.suripu.admin.oauth.OAuthAuthorizer;
 import com.hello.suripu.admin.oauth.OAuthCredentialAuthFilter;
+import com.hello.suripu.admin.oauth.ScopesAllowedDynamicFeature;
 import com.hello.suripu.admin.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
@@ -235,7 +236,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .setRealm("SUPER SECRET STUFF")
                 .setPrefix("Bearer")
                 .buildAuthFilter()));
-        environment.jersey().register(RolesAllowedDynamicFeature.class);
+        environment.jersey().register(ScopesAllowedDynamicFeature.class);
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(AccessToken.class));
 
 

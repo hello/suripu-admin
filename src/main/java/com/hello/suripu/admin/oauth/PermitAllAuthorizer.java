@@ -1,5 +1,6 @@
 package com.hello.suripu.admin.oauth;
 
+import com.hello.suripu.core.oauth.OAuthScope;
 import java.security.Principal;
 
 /**
@@ -10,7 +11,7 @@ import java.security.Principal;
 public class PermitAllAuthorizer<P extends Principal> implements Authorizer<P> {
 
     @Override
-    public boolean authorize(P principal, String role) {
+    public boolean authorize(P principal, OAuthScope role) {
         return true;
     }
 }

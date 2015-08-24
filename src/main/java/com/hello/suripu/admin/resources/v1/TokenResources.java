@@ -5,6 +5,7 @@ import com.google.common.base.Optional;
 import com.hello.suripu.admin.db.AccessTokenDAO;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.oauth.AccessTokenUtils;
@@ -20,7 +21,6 @@ import com.hello.suripu.core.oauth.stores.ApplicationStore;
 import com.hello.suripu.core.oauth.stores.OAuthTokenStore;
 import com.hello.suripu.core.util.HelloHttpHeader;
 import com.codahale.metrics.annotation.Timed;
-import javax.annotation.security.RolesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
@@ -62,7 +62,7 @@ public class TokenResources {
         this.accountDAO = accountDAO;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @POST
     @Path("/expiration")
     @Timed
@@ -84,7 +84,7 @@ public class TokenResources {
         return Days.daysBetween(DateTime.now(DateTimeZone.UTC), accessTokenOptional.get().createdAt.plusSeconds((int) accessTokenOptional.get().expiresIn.longValue())).getDays();
     }
 
-    @RolesAllowed({"IMPLICIT_TOKEN"})
+    @ScopesAllowed({OAuthScope.IMPLICIT_TOKEN})
     @POST
     @Path("/implicit")
     @Timed

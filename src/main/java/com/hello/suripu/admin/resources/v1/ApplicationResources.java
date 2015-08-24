@@ -2,13 +2,13 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.oauth.AccessToken;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.oauth.Application;
 import com.hello.suripu.core.oauth.ApplicationRegistration;
 import com.hello.suripu.core.oauth.OAuthScope;
 
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
 import io.dropwizard.auth.Auth;
-import javax.annotation.security.RolesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ public class ApplicationResources {
         this.applicationStore = applicationStore;
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response register(@Auth final AccessToken token,
@@ -46,7 +46,7 @@ public class ApplicationResources {
         return Response.ok().build();
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/{dev_account_id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -56,7 +56,7 @@ public class ApplicationResources {
         return applicationStore.getApplicationsByDevId(devAccountId);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Application> getAllApplications(@Auth final AccessToken accessToken) {
@@ -66,7 +66,7 @@ public class ApplicationResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/scopes")
     @Produces(MediaType.APPLICATION_JSON)
@@ -79,7 +79,7 @@ public class ApplicationResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/{id}/scopes")
     @Produces(MediaType.APPLICATION_JSON)
@@ -100,7 +100,7 @@ public class ApplicationResources {
         return scopes;
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Path("/{id}/scopes")
     @Consumes(MediaType.APPLICATION_JSON)

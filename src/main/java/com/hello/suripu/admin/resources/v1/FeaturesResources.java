@@ -2,9 +2,10 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.models.Feature;
-import javax.annotation.security.RolesAllowed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ public class FeaturesResources {
         this.featureStore = featureStore;
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     public void setFeature(@Auth final AccessToken accessToken, @Valid Feature feature) {
@@ -36,7 +37,7 @@ public class FeaturesResources {
         featureStore.put(feature);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Feature> listFeatures(@Auth final AccessToken accessToken) {

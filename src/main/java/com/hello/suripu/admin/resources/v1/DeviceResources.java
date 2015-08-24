@@ -9,6 +9,7 @@ import com.hello.suripu.admin.models.DeviceStatusBreakdown;
 import com.hello.suripu.admin.models.InactiveDevicesPaginator;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.configuration.ActiveDevicesTrackerConfiguration;
 import com.hello.suripu.core.configuration.BlackListDevicesConfiguration;
 import com.hello.suripu.core.db.AccountDAO;
@@ -41,8 +42,6 @@ import com.hello.suripu.core.models.UserInfo;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
 import com.codahale.metrics.annotation.Timed;
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.HEAD;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
@@ -128,7 +127,7 @@ public class DeviceResources {
         this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -144,7 +143,7 @@ public class DeviceResources {
         return getSensesByAccountId(accountIdOptional.get());
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -160,7 +159,7 @@ public class DeviceResources {
         return getPillsByAccountId(accountIdOptional.get());
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/pill_status")
@@ -198,7 +197,7 @@ public class DeviceResources {
         return pillStatuses;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/pill_heartbeat/{pill_id}")
@@ -224,7 +223,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
     @GET
     @Path("/{device_id}/accounts")
@@ -241,7 +240,7 @@ public class DeviceResources {
         return ImmutableList.copyOf(accounts);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
     @GET
     @Path("/status_breakdown")
@@ -277,7 +276,7 @@ public class DeviceResources {
         return new DeviceStatusBreakdown(sensesCount, pillsCount);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/inactive/sense")
@@ -291,7 +290,7 @@ public class DeviceResources {
                 .generatePage();
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/inactive/pill")
@@ -312,7 +311,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/register/sense")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -356,7 +355,7 @@ public class DeviceResources {
         }
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/register/pill")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -411,7 +410,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -492,7 +491,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -532,7 +531,7 @@ public class DeviceResources {
         }
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/key_store_hints/sense/{sense_id}")
@@ -547,7 +546,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/key_store_hints/pill/{pill_id}")
@@ -562,7 +561,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/provision/sense")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -572,7 +571,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/provision/pill")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -582,7 +581,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/provision/batch_pills")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -593,7 +592,7 @@ public class DeviceResources {
         }
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/timezone")
     @Produces(MediaType.APPLICATION_JSON)
@@ -618,7 +617,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/color/missing")
     @Produces(MediaType.APPLICATION_JSON)
@@ -628,7 +627,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/color/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -648,7 +647,7 @@ public class DeviceResources {
         return 0;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/color/{sense_id}")
     public String getColor(@Auth final AccessToken accessToken,
@@ -663,7 +662,7 @@ public class DeviceResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @PUT
     @Path("/color/{sense_id}/{color}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -685,7 +684,7 @@ public class DeviceResources {
         return Response.noContent().build();
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Timed
     @Path("/{device_id}/reset_mcu")
@@ -708,7 +707,7 @@ public class DeviceResources {
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @PUT
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
@@ -753,7 +752,7 @@ public class DeviceResources {
         return Response.noContent().build();
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
@@ -789,7 +788,7 @@ public class DeviceResources {
         }
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/invalid/sense")
@@ -915,7 +914,7 @@ public class DeviceResources {
         return Optional.absent();
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/update_timezone_by_partner/{account_id}")

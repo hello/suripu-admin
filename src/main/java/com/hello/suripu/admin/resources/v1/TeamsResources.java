@@ -4,9 +4,10 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.TeamStore;
 import com.hello.suripu.core.models.Team;
-import javax.annotation.security.RolesAllowed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -32,7 +33,7 @@ public class TeamsResources {
         this.teamStore = teamStore;
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/devices")
     @Produces(MediaType.APPLICATION_JSON)
@@ -40,7 +41,7 @@ public class TeamsResources {
         return teamStore.getTeams(TeamStore.Type.DEVICES);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
@@ -48,7 +49,7 @@ public class TeamsResources {
         return teamStore.getTeams(TeamStore.Type.USERS);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/devices/{team_name}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -62,7 +63,7 @@ public class TeamsResources {
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/users/{team_name}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,7 +75,7 @@ public class TeamsResources {
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @PUT
     @Path("/devices")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -82,7 +83,7 @@ public class TeamsResources {
         teamStore.createTeam(team, TeamStore.Type.DEVICES);
     }
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @PUT
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -90,7 +91,7 @@ public class TeamsResources {
         teamStore.createTeam(team, TeamStore.Type.USERS);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/devices")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -100,7 +101,7 @@ public class TeamsResources {
         teamStore.add(team.name, TeamStore.Type.DEVICES, Lists.newArrayList(team.ids));
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
     @Path("/users")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -109,7 +110,7 @@ public class TeamsResources {
         teamStore.add(team.name, TeamStore.Type.USERS, Lists.newArrayList(team.ids));
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Path("/devices/{team_name}")
     public void deleteDevicesTeam(
@@ -119,7 +120,7 @@ public class TeamsResources {
         teamStore.delete(team, TeamStore.Type.DEVICES);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Path("/users/{team_name}")
     public void deleteUsersTeam(
@@ -129,7 +130,7 @@ public class TeamsResources {
         teamStore.delete(team, TeamStore.Type.USERS);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Path("/devices/{team_name}/{device_id}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -142,7 +143,7 @@ public class TeamsResources {
         teamStore.remove(teamName, TeamStore.Type.DEVICES, ids);
     }
 
-    @RolesAllowed({"ADMINISTRATION_WRITE"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @DELETE
     @Path("/users/{team_name}/{user_id}")
     public void removeFromUsersTeam(

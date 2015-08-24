@@ -11,10 +11,9 @@ public class OAuthAuthorizer implements Authorizer<AccessToken> {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthAuthorizer.class);
 
     @Override
-    public boolean authorize(AccessToken accessToken, String role) {
+    public boolean authorize(AccessToken accessToken, OAuthScope role) {
         try {
-            final OAuthScope roleScope = OAuthScope.valueOf(role);
-            if(accessToken.hasScope(roleScope)) {
+            if(accessToken.hasScope(role)) {
                 return true;
             }
         } catch (Exception ex) {

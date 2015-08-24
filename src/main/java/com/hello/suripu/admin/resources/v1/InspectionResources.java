@@ -3,11 +3,11 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.oauth.AccessToken;
 import com.hello.suripu.admin.oauth.Auth;
+import com.hello.suripu.admin.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.DeviceDAOAdmin;
 import com.hello.suripu.core.models.Account;
 import com.codahale.metrics.annotation.Timed;
-
-import javax.annotation.security.RolesAllowed;
+import com.hello.suripu.core.oauth.OAuthScope;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -28,7 +28,7 @@ public class InspectionResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/sense_without_pill")
@@ -42,7 +42,7 @@ public class InspectionResources {
     }
 
 
-    @RolesAllowed({"ADMINISTRATION_READ"})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
     @Path("/low_battery_pill")

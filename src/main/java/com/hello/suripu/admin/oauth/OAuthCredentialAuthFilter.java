@@ -1,15 +1,14 @@
 package com.hello.suripu.admin.oauth;
 
 import com.google.common.base.Optional;
+import com.hello.suripu.core.oauth.OAuthScope;
 import io.dropwizard.auth.AuthenticationException;
-
 import io.dropwizard.auth.Authenticator;
 import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
-import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -44,7 +43,8 @@ public class OAuthCredentialAuthFilter<P extends Principal> extends AuthFilter<S
 
                                 @Override
                                 public boolean isUserInRole(String role) {
-                                    return authorizer.authorize(principal.get(), role);
+                                    final OAuthScope roleScope = OAuthScope.valueOf(role);
+                                    return authorizer.authorize(principal.get(), roleScope);
                                 }
 
                                 @Override
