@@ -74,7 +74,7 @@ server:
       - type: papertrail
         host: logs2.papertrailapp.com
         port: 11366
-        ident: suripu-admin-solo-dev
+        ident: suripu-admin-dev
 
 logging:
   level: INFO
@@ -89,7 +89,7 @@ logging:
     - type: papertrail
       host: logs2.papertrailapp.com
       port: 11366
-      ident: suripu-admin-solo-dev
+      ident: suripu-admin-dev
       # timezone: UTC
       # facility: USER
       # sendLocalName: true

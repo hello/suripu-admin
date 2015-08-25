@@ -9,7 +9,7 @@ fi
 VERSION=$1
 
 # prod
-s3cmd put suripu-admin.prod.yml s3://hello-deploy/configs/com/hello/suripu/suripu-admin-solo/$VERSION/suripu-admin.prod.yml
+s3cmd put suripu-admin.prod.yml s3://hello-deploy/configs/com/hello/suripu/suripu-admin/$VERSION/suripu-admin.prod.yml
 
 # staging
-s3cmd put suripu-admin.staging.yml s3://hello-deploy/configs/com/hello/suripu/suripu-admin-solo/$VERSION/suripu-admin.staging.yml
+s3cmd put suripu-admin.staging.yml s3://hello-deploy/configs/com/hello/suripu/suripu-admin/$VERSION/suripu-admin.staging.yml
