@@ -6,11 +6,11 @@ script:
 - mvn versions:commit
 - mvn --settings settings.xml clean -DskipITs deploy -q
 after_success:
- - if [ "$TRAVIS_BRANCH" == "PRODUCTION" ];then echo "Tagging Production Deployment" \
+  - if [ "$TRAVIS_BRANCH" == "PRODUCTION" ];then echo "Tagging Production Deployment" \
     && git config --global user.email "builds@travis-ci.com" \
     && git config --global user.name "Travis CI" \
-    && export GIT_TAG=suripu-admin-$TRAVIS_BRANCH-$BUILD_NUMBER \
-    && git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER" \
+    && export GIT_TAG=suripu-admin-$TRAVIS_BRANCH-$BUILD_NUMBER; fi
+  - if [ "$TRAVIS_BRANCH" == "PRODUCTION" ];then git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER" \
     && git push --quiet git@github.com:hello/suripu-admin.git --tags; fi
 deploy:
   provider: s3
@@ -31,7 +31,7 @@ branches:
   - PRODUCTION
 notifications:
   email:
-  - tim+travis-suripu@sayhello.com
+  - josef+travis-suripu@sayhello.com
 jdk:
 - oraclejdk7
 env:
