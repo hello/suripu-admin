@@ -286,13 +286,13 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.TIMEZONE_HISTORY)
         );
 
-        final AmazonDynamoDB smartAlarmHistoryDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.TIMEZONE_HISTORY, SmartAlarmLoggerDynamoDB.class);
+        final AmazonDynamoDB smartAlarmHistoryDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.SMART_ALARM_LOG, SmartAlarmLoggerDynamoDB.class);
         final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB = new SmartAlarmLoggerDynamoDB(
                 smartAlarmHistoryDynamoDBClient,
                 tableNames.get(DynamoDBTableName.SMART_ALARM_LOG)
         );
 
-        final AmazonDynamoDB ringTimeHistoryDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.TIMEZONE_HISTORY, RingTimeHistoryDAODynamoDB.class);
+        final AmazonDynamoDB ringTimeHistoryDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.RING_TIME_HISTORY, RingTimeHistoryDAODynamoDB.class);
         final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB = new RingTimeHistoryDAODynamoDB(
                 ringTimeHistoryDynamoDBClient,
                 tableNames.get(DynamoDBTableName.RING_TIME_HISTORY)

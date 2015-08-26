@@ -2,13 +2,14 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.oauth.Application;
 import com.hello.suripu.core.oauth.ApplicationRegistration;
 import com.hello.suripu.core.oauth.OAuthScope;
 
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
-import io.dropwizard.auth.Auth;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
