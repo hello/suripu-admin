@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.hello.suripu.core.configuration.KinesisLoggerConfiguration;
 import com.hello.suripu.core.configuration.NewDynamoDBConfiguration;
+import com.hello.suripu.coredw8.configuration.GraphiteConfiguration;
+import com.hello.suripu.coredw8.configuration.KinesisConfiguration;
+import com.hello.suripu.coredw8.configuration.RedisConfiguration;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import javax.validation.Valid;

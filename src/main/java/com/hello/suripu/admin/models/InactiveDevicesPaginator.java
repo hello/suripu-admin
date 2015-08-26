@@ -3,16 +3,15 @@ package com.hello.suripu.admin.models;
 import com.google.common.base.Optional;
 import com.hello.suripu.core.models.DeviceInactive;
 import com.hello.suripu.core.models.DeviceInactivePage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Tuple;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class InactiveDevicesPaginator {
     private static final Logger LOGGER = LoggerFactory.getLogger(InactiveDevicesPaginator.class);

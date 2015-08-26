@@ -3,7 +3,6 @@ package com.hello.suripu.admin.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
-
 import javax.annotation.Nullable;
 
 public class FirmwareUpdate {

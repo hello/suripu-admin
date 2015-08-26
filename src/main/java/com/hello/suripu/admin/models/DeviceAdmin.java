@@ -3,7 +3,7 @@ package com.hello.suripu.admin.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.DeviceStatus;
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;

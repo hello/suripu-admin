@@ -1,9 +1,9 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
-import com.hello.suripu.admin.oauth.AccessToken;
-import com.hello.suripu.admin.oauth.Auth;
-import com.hello.suripu.admin.oauth.ScopesAllowed;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.oauth.OAuthScope;
