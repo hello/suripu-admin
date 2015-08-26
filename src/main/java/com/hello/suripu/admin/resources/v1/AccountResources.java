@@ -2,8 +2,8 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
-import com.hello.suripu.coredw8.models.PasswordResetAdmin;
-import com.hello.suripu.coredw8.models.TimeHistory;
+import com.hello.suripu.admin.models.PasswordResetAdmin;
+import com.hello.suripu.core.models.TimeHistory;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
