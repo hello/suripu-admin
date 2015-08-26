@@ -5,13 +5,12 @@ script:
 - mvn versions:set -DnewVersion=$BUILD_NUMBER
 - mvn versions:commit
 - mvn --settings settings.xml clean -DskipITs deploy -q
-after_success:
-  - if [ "$TRAVIS_BRANCH" == "PRODUCTION" ];then echo "Tagging Production Deployment" \
-    && git config --global user.email "builds@travis-ci.com" \
-    && git config --global user.name "Travis CI" \
-    && export GIT_TAG=suripu-admin-$TRAVIS_BRANCH-$BUILD_NUMBER; fi
-  - if [ "$TRAVIS_BRANCH" == "PRODUCTION" ];then git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER" \
-    && git push --quiet git@github.com:hello/suripu-admin.git --tags; fi
+after_deploy:
+  - git config --global user.email "builds@travis-ci.com"
+  - git config --global user.name "Travis CI"
+  - export GIT_TAG=suripu-admin-$TRAVIS_BRANCH-$BUILD_NUMBER
+  - git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
+  - git push --quiet git@github.com:hello/suripu-admin.git --tags
 deploy:
   provider: s3
   access_key_id: $CI_DEPLOY_USERNAME
