@@ -1,16 +1,21 @@
 language: java
-sudo: false
 install: mvn --version
+sudo: false
 script:
+- echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=512m'" > ~/.mavenrc
+- mkdir src/main/resources
+- cp configs/suripu-admin.prod.yml src/main/resources/boxfuse.yml
 - mvn versions:set -DnewVersion=$BUILD_NUMBER
 - mvn versions:commit
-- mvn --settings settings.xml clean -DskipITs deploy -q
+- mvn --settings settings.xml clean package
+before_deploy:
+- mvn --settings settings.xml -DskipITs deploy
 after_deploy:
-  - git config --global user.email "builds@travis-ci.com"
-  - git config --global user.name "Travis CI"
-  - export GIT_TAG=suripu-admin-$TRAVIS_BRANCH-$BUILD_NUMBER
-  - git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
-  - git push --quiet git@github.com:hello/suripu-admin.git --tags
+- git config --global user.email "builds@travis-ci.com"
+- git config --global user.name "Travis CI"
+- export GIT_TAG=suripu-admin-$TRAVIS_BRANCH-$BUILD_NUMBER
+- git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
+- git push --quiet git@github.com:hello/suripu-admin.git --tags
 deploy:
   provider: s3
   access_key_id: $CI_DEPLOY_USERNAME
@@ -23,7 +28,7 @@ deploy:
   on:
     tags: false
     branch:
-      - PRODUCTION
+    - PRODUCTION
 branches:
   only:
   - master
@@ -38,3 +43,5 @@ env:
   - BUILD_NUMBER=0.5.$TRAVIS_BUILD_NUMBER
   - secure: tGp8R/Qh2uw1hS2cPlP75Z3EK0m+RfEp0/BitI7wQ95hHd4mSSzVN/KBEgdte/j0MT3/R0qTqYFaTTl98yA41lVptFMjE2c3V1LECyE3bmN7+QiMY9svy0gEN9A46F6azNyAp4l1EpQ4wCPCA6pO0PXZImht4+DELr24koz3BPrHmOe2vbTvVXFuhcs6mYyWz6q9s6xiFIq89NaUdo/+X/+RFR7g9xk/TJwh8wAN+GeaeeELcdXtGOn+q8V0IwXghHv1Ec3QrfnYFQ367VlDu0CFRYvDh/y6L2qI3vNxuMep5cfiJ2rU89MCPTCMDfacsIA/wxYRJMAOYP1Uwnk7woj6rGFbsJKRoHtpD6dt9/NpBy5L3/euxYh42xWqAPFhODdGE4YUZ7/DCVZCpVvblkFV4cUh8BuUITZecAteO5omVYGrpbztEXvSyvcvKeUFwewebLwP2gqPJgwMM7CxdRFwziJPT5hR1kNTkT87F0tOUmTLGPQ6Wanh146t9jSZXapivq5o9zvHKe3M4FOIc3HzX+MsyfsDxpQBYXHFKTCntB4nTltsp5jwdPmblJBjcA45xbcix2dBFYu5JAexlCdmy1LaHLWpjMKoL05Glfxfpuc42Wefq7MbTkF/txdK+HuhfKCCIzbAM5+uiC5khSOTz7TBL/Pzsc9XbyoZHnw=
   - secure: CK+so7qTlQHH9+ovYD0hqc7jbbDG1Mp1gvjaVZ9aOIIxeTG0pp14MeeqPCX0wrLVFqDZpxA0fmqmejvJOw2WK6Cxi2okp5/q2Cti2zx8T8cY/pGY9151/1KNha9mI4ZmYEDrgKFP7qYMWwRWvjr50L+EHIjJ2u5WTKDEC1VpNTpn/z5V80I+G/mU+4j7LVzRaAITn6E6w2Bj914GHfAdb2yjX+5dED7grb0+ne/KkPIMrAObCicP5PSndc/6iHmVTaaRWAGVBoLhktxuz5l0u7NqqF0bfY5ViwLq3FrvWbGZ8ePTKywCFqE4umBhcVplM7bfdbv6/Nm2l/6CjVppu14aM8cQ8M+DDWN2fMduJXtuJpTU9o3HRosvvnsOP4GIGPxXdon4trg1l7Rw76pOjKFq4rpLNlASBvAxFXVtgzEXb5zbB42gxhCkytA8F/IcsuBjy/6Ml/KmHQl1x/pUoPQ0/bD5wnlOBKAu+8kNz5lYqWiifWYP3eP+8HqEDtKKIHuZxaiirhDXROL9bzd/v3GRN7YD4q7HVWVMNmfsNA6bcmkLpBaBkpj6lKQvLHuzWS6f5ZRR8gnmPzFis9OfmM5F61ciywKX9L2SurvCaIay0Gv3QDyLtEO8knGNYTj4XfdMRM6xda1OGLG29imiBQLhXI2pPOsFLoLVqT/SOiw=
+  - secure: qh5Cq5fRy/K1L6snCT1i2B0fLq6oA18agm1Pqn/1BPQwwbfroC1mVC/5Gv5mlTVIGRoNeJsJZvkYlPE62Pkt+yY5az7juVW8bKTBVRuAuYny1A8hsOm9gfz9vbCZ0s63lB7bW4KmzfW6rlANpBE0KwloxUUiDMsl068Sn1+UoBLPtcSqQ8t78OutS1NaJHcxp7AJRBOuxoHJ4aTcJNkfqtYqmg+dLiO0Ayq7+5qnZw22ywRqmmgKoy+TWeSBtnrrAmPHE1Cm6tZl+GQQOtdZJ/iibXvwQ0Goe03xzoHg5vwG9DinCKAajxvUqOPaBLUmkqnNKzsGca6vARr1Dfa2XQUJglxJzvMJXczV4ddOI07uZZMwtwpIx2bKhnICAhAkNStuOmP02uVGxt99NKbDQbF08HpMf2mIl2EQS0oAMo7NqglJz4xfvpQAaYgpypHuu74w/mOGxP8OU7Sqz2rhK2XqUJLdC4co7XC6RfDhO4y9LclMv/AWLrV42dbYGnCDNnHYk1vIhrRhfi1axtD+OHFk1X+zvgkTV4Naqfl3Qph4GVdyqaI8YeA0LpoIdx1Ye3b0n7loaQD5oZNHfPi7l4kZHh7fznih6NR9lSkXLUYwJkmHtS1XcP1uDajVDGGEKWMJ5PB9vMNSwZUP58KE6dv6n2mm915y10IGvWFgC4k=
+  - secure: YnVDMmQgMrxvOxV3RJHj4z0Sf/J6fjKvstg9WNOgSiyvxwMSN07j56uj2HHpKgE1pP4r/hERKLgeM+ZKSXVeQ/sXCcXLp0T8Uk2JbiUVchifW17zN4yOFcdMnEKmcFQueTzwWkA2fdkJR57PK4sOLTDysxcCSCW87SSV4YrmFnNFtnUS0PzHx9nEnAq6tDKMrx1iLpuA78LDjQx4VELQlA29a8aD/gc4vwaW0YEclfmCx8MN09uvXJgyAcfEc2rtW12AvhjxqMGtMzv4wxsyYf5misiIAWesfNCyGVOqlxsxAndIZiJZXyiNu4SLBLdyTsk+MVa1m9DAsLOvOydvV6EAfLGmuiczYiO1+0MyPDlWSCJdVYjZS/NFQ99RgtaYDhnp1tzZY9xSB68PVLiKZgfIjDDVwjPnyPRojOuzRby8CURw/8NQNIZhQkVXSR0Wi/2QnofJpnvTPGXYT2VVxqgYFXpBTEpcFF0oSLgy3xY5gBh+djbLDnbP5FQqKzVNvQwRBgAuzrzDhxi3JJ9profl7uf6Ecgq3Q8XR5tNgOhDq++AWveTe4H14CUgFaOOYCa1yfwFphhFUX3hXmjOxw7VbxktbTq7GbU6Ce8IIZy3r1qt6ilipuKyfduAjYs0cERZCadYFO5Rv8f9cvSOFrN+4a2gfXsPLDCEfGN67nk=
