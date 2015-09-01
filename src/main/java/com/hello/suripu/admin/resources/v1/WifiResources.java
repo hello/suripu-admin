@@ -2,6 +2,7 @@ package com.hello.suripu.admin.resources.v1;
 
 
 import com.codahale.metrics.annotation.Timed;
+import com.hello.suripu.admin.models.WifiInfo;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.coredw8.oauth.AccessToken;
@@ -38,12 +39,14 @@ public class WifiResources {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{sense_id}")
-    public String getAlarms(@Auth final AccessToken token,
-                                 @PathParam("sense_id") final String senseId ){
+    public WifiInfo getAlarms(@Auth final AccessToken token,
+                              @PathParam("sense_id") final String senseId ){
+
+
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
-            return jedis.hget(WIFI_INFO_HASH_KEY, senseId);
+            return WifiInfo.createWithRedisResult(jedis.hget(WIFI_INFO_HASH_KEY, senseId));
         }
         catch (JedisDataException e) {
             LOGGER.error("Redis data exception {}", e.getMessage());
