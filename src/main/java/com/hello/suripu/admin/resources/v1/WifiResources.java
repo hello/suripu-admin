@@ -39,8 +39,8 @@ public class WifiResources {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{sense_id}")
-    public WifiInfo getAlarms(@Auth final AccessToken token,
-                              @PathParam("sense_id") final String senseId ){
+    public WifiInfo retrieveWifiInfo(@Auth final AccessToken token,
+                                     @PathParam("sense_id") final String senseId ){
 
 
         Jedis jedis = null;
