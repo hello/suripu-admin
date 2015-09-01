@@ -56,7 +56,7 @@ public class WifiResources {
             }
         }
         catch (Exception e) {
-            LOGGER.error("Redis unknown exception", e.getMessage());
+            LOGGER.error("Redis unknown exception {}", e.getMessage());
             if (jedis != null) {
                 jedisPool.returnBrokenResource(jedis);
                 jedis = null;
