@@ -7,6 +7,8 @@ import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisDataException;
@@ -22,7 +24,9 @@ import javax.ws.rs.core.Response;
 @Path("/v1/wifi")
 public class WifiResources {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WifiResources.class);
     public static final String WIFI_INFO_HASH_KEY = "wifi_info";
+
     private final JedisPool jedisPool;
 
     public WifiResources(final JedisPool jedisPool) {
@@ -42,27 +46,26 @@ public class WifiResources {
             return jedis.hget(WIFI_INFO_HASH_KEY, senseId);
         }
         catch (JedisDataException e) {
+            LOGGER.error("Redis data exception {}", e.getMessage());
             if (jedis != null) {
                 jedisPool.returnBrokenResource(jedis);
                 jedis = null;
             }
-            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
-                            String.format("Failed to get data from redis - %s", e.getMessage()))).build());
         }
         catch (Exception e) {
+            LOGGER.error("Redis unknown exception", e.getMessage());
             if (jedis != null) {
                 jedisPool.returnBrokenResource(jedis);
                 jedis = null;
             }
-            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
-                            String.format("Failed to retrieve wifi info for %s because %s", senseId, e.getMessage()))).build());
         }
         finally {
             if (jedis != null) {
                 jedisPool.returnResource(jedis);
             }
         }
+        throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                        String.format("Failed to retrieve wifi info for %s", senseId))).build());
     }
 }
