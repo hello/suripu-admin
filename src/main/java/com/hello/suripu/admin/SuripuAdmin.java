@@ -316,7 +316,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
         environment.jersey().register(new ApplicationResources(applicationStore));
-        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO));
+        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO));
         final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceDAOAdmin, deviceDataDAO, trackerMotionDAO, accountDAO,
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
