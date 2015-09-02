@@ -3,11 +3,8 @@ package com.hello.suripu.admin.resources.v1;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
-import com.hello.suripu.core.models.UserInteraction;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
+import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
@@ -17,6 +14,7 @@ import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.logging.SenseLogTag;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.AllSensorSampleList;
+import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.models.CurrentRoomState;
 import com.hello.suripu.core.models.DataScience.UserLabel;
 import com.hello.suripu.core.models.Device;
@@ -25,17 +23,23 @@ import com.hello.suripu.core.models.DeviceData;
 import com.hello.suripu.core.models.Sample;
 import com.hello.suripu.core.models.Sensor;
 import com.hello.suripu.core.models.TrackerMotion;
+import com.hello.suripu.core.models.UserInteraction;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.DateTimeUtil;
 import com.hello.suripu.core.util.JsonError;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -60,6 +64,7 @@ public class DataResources {
     private final TrackerMotionDAO trackerMotionDAO;
     private final SensorsViewsDynamoDB sensorsViewsDynamoDB;
     private final SenseColorDAO senseColorDAO;
+    private final CalibrationDAO calibrationDAO;
 
     public DataResources(final DeviceDataDAO deviceDataDAO,
                          final DeviceDAO deviceDAO,
@@ -67,7 +72,8 @@ public class DataResources {
                          final UserLabelDAO userLabelDAO,
                          final TrackerMotionDAO trackerMotionDAO,
                          final SensorsViewsDynamoDB sensorsViewsDynamoDB,
-                         final SenseColorDAO senseColorDAO) {
+                         final SenseColorDAO senseColorDAO,
+                         final CalibrationDAO calibrationDAO) {
 
         this.deviceDataDAO = deviceDataDAO;
         this.deviceDAO = deviceDAO;
@@ -76,6 +82,7 @@ public class DataResources {
         this.trackerMotionDAO = trackerMotionDAO;
         this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
         this.senseColorDAO = senseColorDAO;
+        this.calibrationDAO = calibrationDAO;
     }
 
     @ScopesAllowed({OAuthScope.SENSORS_BASIC, OAuthScope.RESEARCH})
@@ -87,7 +94,8 @@ public class DataResources {
                                                      @QueryParam("email") String email,
                                                      @QueryParam("account_id") Long accountId,
                                                      @QueryParam("start_ts") Long startTimestamp,
-                                                     @QueryParam("end_ts") Long endTimestamp) {
+                                                     @QueryParam("end_ts") Long endTimestamp,
+                                                     @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust) {
 
         if ( (email == null && accountId == null) || (startTimestamp == null || endTimestamp == null) ) {
             throw new WebApplicationException(Response.status(400).entity(new JsonError(400,
@@ -108,7 +116,7 @@ public class DataResources {
         final Account account = optionalAccount.get();
         LOGGER.debug("Getting user interactions for account {} between {} and {}", account.id.get(), startTimestamp, endTimestamp);
 
-        return getUserInteractionsData(account.id.get(), startTimestamp, endTimestamp);
+        return getUserInteractionsData(account.id.get(), startTimestamp, endTimestamp, withCalibratedDust);
     }
 
 
@@ -147,7 +155,8 @@ public class DataResources {
             @PathParam("email") final String email,
             @PathParam("sensor") final String sensor,
             @PathParam("resolution") final String resolution,
-            @QueryParam("from") Long queryEndTimestampInUTC) {
+            @QueryParam("from") Long queryEndTimestampInUTC,
+            @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust) {
 
         final Optional<Long> optionalAccountId = Util.getAccountIdByEmail(accountDAO, email);
         if (!optionalAccountId.isPresent()) {
@@ -192,7 +201,7 @@ public class DataResources {
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
         return deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
-                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color);
+                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId, withCalibratedDust));
     }
 
 
@@ -300,7 +309,7 @@ public class DataResources {
 
 
     //Helpers
-    private List<UserInteraction> getUserInteractionsData(final Long accountId, final Long startTimestamp, final Long endTimestamp) {
+    private List<UserInteraction> getUserInteractionsData(final Long accountId, final Long startTimestamp, final Long endTimestamp, final Boolean withCalibratedDust) {
 
         final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(accountId);
         if (!deviceAccountPairOptional.isPresent()) {
@@ -326,7 +335,8 @@ public class DataResources {
                 deviceAccountPairOptional.get().internalDeviceId,
                 slotDurationInMinutes,
                 missingDataDefaultValue,
-                color
+                color,
+                getCalibration(deviceAccountPairOptional.get().externalDeviceId, withCalibratedDust)
         );
 
         final List<UserInteraction> userInteractions = new ArrayList<>();
@@ -354,9 +364,9 @@ public class DataResources {
     @GET
     @Path("/current_room_conditions/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public CurrentRoomState currentRoomState(
-            @Auth AccessToken accessToken,
-            @PathParam("sense_id") final String senseId) {
+    public CurrentRoomState currentRoomState(@Auth AccessToken accessToken,
+                                             @PathParam("sense_id") final String senseId,
+                                             @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust) {
 
         final List<DeviceAccountPair> pairs = deviceDAO.getAccountIdsForDeviceId(senseId);
         if(pairs.isEmpty()) {
@@ -367,9 +377,9 @@ public class DataResources {
 
         final Optional<DeviceData> deviceDataOptional = sensorsViewsDynamoDB.lastSeen(senseId, pair.accountId, pair.internalDeviceId);
         if(!deviceDataOptional.isPresent()) {
-            return CurrentRoomState.empty();
+            return CurrentRoomState.empty(withCalibratedDust);
         }
-        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c");
+        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", getCalibration(senseId, withCalibratedDust)).withDust(withCalibratedDust);
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
@@ -381,5 +391,10 @@ public class DataResources {
                                    @PathParam("sense_id") final String senseId) {
         return SenseLogTag.rawValues();
 
+    }
+
+    private Calibration getCalibration(final String senseId, final Boolean withCalibratedDust) {
+        final Optional<Calibration> optionalCalibration = withCalibratedDust ? calibrationDAO.getStrict(senseId) : Optional.<Calibration>absent();
+        return optionalCalibration.isPresent() ? optionalCalibration.get() : Calibration.createDefault(senseId);
     }
 }

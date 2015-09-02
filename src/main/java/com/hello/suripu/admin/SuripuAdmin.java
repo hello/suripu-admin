@@ -15,6 +15,7 @@ import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
 import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
+import com.hello.suripu.admin.resources.v1.WifiResources;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.coredw8.db.AccessTokenDAO;
@@ -316,7 +317,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
         environment.jersey().register(new ApplicationResources(applicationStore));
-        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO));
+        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO));
         final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceDAOAdmin, deviceDataDAO, trackerMotionDAO, accountDAO,
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
@@ -339,5 +340,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new TeamsResources(teamStore));
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
         environment.jersey().register(new CalibrationResources(calibrationDAO));
+        environment.jersey().register(new WifiResources(jedisPool));
     }
 }
