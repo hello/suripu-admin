@@ -546,6 +546,7 @@ public class DeviceResources {
     }
 
 
+
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
@@ -558,6 +559,21 @@ public class DeviceResources {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("This pill has not been properly provisioned!").build());
         }
         return pillKeyStoreRecord.get();
+    }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @POST
+    @Timed
+    @Path("/key_store/{device_type}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Optional<byte[]>> getKeyStoreByBatch(@Auth final AccessToken accessToken,
+                                                   @PathParam("device_type") final String deviceType,
+                                                   final Set<String> senseIds) {
+        if (deviceType.equals(Device.Type.PILL.toString().toLowerCase())) {
+            return pillKeyStore.getBatch(senseIds);
+        }
+        return senseKeyStore.getBatch(senseIds);
     }
 
 
