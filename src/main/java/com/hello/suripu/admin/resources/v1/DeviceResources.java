@@ -566,6 +566,7 @@ public class DeviceResources {
     @POST
     @Timed
     @Path("/key_store/{device_type}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, Optional<byte[]>> getKeyStoreByBatch(@Auth final AccessToken accessToken,
                                                    @PathParam("device_type") final String deviceType,
