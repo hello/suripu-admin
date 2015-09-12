@@ -4,6 +4,7 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
@@ -15,7 +16,19 @@ import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
 import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
+import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.WifiResources;
+import com.hello.suripu.core.db.AggregateSleepScoreDAODynamoDB;
+import com.hello.suripu.core.db.InsightsDAODynamoDB;
+import com.hello.suripu.core.db.QuestionResponseDAO;
+import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
+import com.hello.suripu.core.db.TrendsInsightsDAO;
+import com.hello.suripu.core.preferences.AccountPreferencesDAO;
+import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
+import com.hello.suripu.core.processors.AccountInfoProcessor;
+import com.hello.suripu.core.processors.InsightProcessor;
+import com.hello.suripu.core.processors.insights.LightData;
+import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.coredw8.db.AccessTokenDAO;
@@ -83,10 +96,12 @@ import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import io.dropwizard.Application;
+import io.dropwizard.db.ManagedDataSource;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
 import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
+import io.dropwizard.jdbi.args.OptionalArgumentFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
@@ -210,6 +225,50 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PASSWORD_RESET)
         );
 
+        //Insights postgres
+        final DBI insightsDBI = factory.build(environment, configuration.getInsightsDB(), "insights");
+
+        insightsDBI.registerArgumentFactory(new OptionalArgumentFactory(configuration.getInsightsDB().getDriverClass()));
+        insightsDBI.registerContainerFactory(new ImmutableListContainerFactory());
+        insightsDBI.registerContainerFactory(new ImmutableSetContainerFactory());
+        insightsDBI.registerContainerFactory(new OptionalContainerFactory());
+        insightsDBI.registerArgumentFactory(new JodaArgumentFactory());
+
+
+        //Insights DynamoDB
+
+        final com.hello.suripu.core.clients.AmazonDynamoDBClientFactory amazonDynamoDBClientFactory = com.hello.suripu.core.clients.AmazonDynamoDBClientFactory.create(awsCredentialsProvider);
+
+
+        final TrendsInsightsDAO trendsInsightsDAO = insightsDBI.onDemand(TrendsInsightsDAO.class);
+
+        final AmazonDynamoDB dynamoDBStatsClient = amazonDynamoDBClientFactory.getForEndpoint(configuration.getSleepStatsDynamoConfiguration().endpoints().get(DynamoDBTableName.SLEEP_STATS));
+        final SleepStatsDAODynamoDB sleepStatsDAODynamoDB = new SleepStatsDAODynamoDB(dynamoDBStatsClient,
+                configuration.getSleepStatsDynamoConfiguration().tables().get(DynamoDBTableName.SLEEP_STATS),
+                configuration.getSleepStatsVersion());
+
+
+        final AmazonDynamoDBClient dynamoDBScoreClient = new AmazonDynamoDBClient(awsCredentialsProvider);
+        dynamoDBScoreClient.setEndpoint(configuration.getSleepScoreDynamoDB().endpoints().get(DynamoDBTableName.SLEEP_SCORE));
+        final AggregateSleepScoreDAODynamoDB aggregateSleepScoreDAODynamoDB = new AggregateSleepScoreDAODynamoDB(
+                dynamoDBScoreClient,
+                configuration.getSleepScoreDynamoDB().tables().get(DynamoDBTableName.SLEEP_SCORE),
+                configuration.getSleepScoreVersion()
+        );
+
+        final AmazonDynamoDB insightsDynamoDB = amazonDynamoDBClientFactory.getForEndpoint(configuration.getInsightsDynamoDB().endpoints().get(DynamoDBTableName.INSIGHTS));
+        final InsightsDAODynamoDB insightsDAODynamoDB = new InsightsDAODynamoDB(insightsDynamoDB, configuration.getInsightsDynamoDB().tables().get(DynamoDBTableName.INSIGHTS));
+        
+        final AmazonDynamoDB accountPreferencesDynamoDBClient = amazonDynamoDBClientFactory.getForEndpoint(configuration.getPreferencesDynamoDB().endpoints().get(DynamoDBTableName.PREFERENCES));
+        final AccountPreferencesDAO accountPreferencesDynamoDB = AccountPreferencesDynamoDB.create(accountPreferencesDynamoDBClient, configuration.getPreferencesDynamoDB().tables().get(DynamoDBTableName.PREFERENCES));
+
+        //InsightsData
+        final LightData lightData = new LightData(); // lights global distribution
+        final WakeStdDevData wakeStdDevData = new WakeStdDevData();
+
+        final QuestionResponseDAO questionResponseDAO = insightsDBI.onDemand(QuestionResponseDAO.class);
+
+
         //Doing this programmatically instead of in config files
         AbstractServerFactory sf = (AbstractServerFactory) configuration.getServerFactory();
         // disable all default exception mappers
@@ -312,6 +371,24 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.CALIBRATION)
         );
 
+        final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
+                .withQuestionResponseDAO(questionResponseDAO)
+                .withMapping(questionResponseDAO);
+        final AccountInfoProcessor accountInfoProcessor = builder.build();
+
+        final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
+                .withSenseDAOs(deviceDataDAO, deviceDAO)
+                .withTrackerMotionDAO(trackerMotionDAO)
+                .withInsightsDAO(trendsInsightsDAO)
+                .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB) //consistent with proposed changes to core
+                .withAccountInfoProcessor(accountInfoProcessor)
+                .withLightData(lightData)
+                .withWakeStdDevData(wakeStdDevData)
+                .withPreferencesDAO(accountPreferencesDynamoDB);
+
+        final InsightProcessor insightProcessor = insightBuilder.build();
+
+
         environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
@@ -341,5 +418,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
         environment.jersey().register(new CalibrationResources(calibrationDAO));
         environment.jersey().register(new WifiResources(jedisPool));
+        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO));
     }
 }
