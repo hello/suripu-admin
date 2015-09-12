@@ -12,6 +12,8 @@ import io.dropwizard.db.DataSourceFactory;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
+
+import io.dropwizard.db.DatabaseConfiguration;
 import jersey.repackaged.com.google.common.base.MoreObjects;
 
 public class SuripuAdminConfiguration extends Configuration {
@@ -34,6 +36,30 @@ public class SuripuAdminConfiguration extends Configuration {
         return commonDB;
     }
 
+    @Valid
+    @NotNull
+    @JsonProperty("insights_db")
+    private DataSourceFactory insightsDB = new DataSourceFactory();
+    public DataSourceFactory getInsightsDB() {
+        return insightsDB;
+    }
+
+    @Valid
+    @NotNull
+    @JsonProperty("insights_dynamo_db")
+    private NewDynamoDBConfiguration insightsDynamoDB;
+    public NewDynamoDBConfiguration getInsightsDynamoDB() {
+        return insightsDynamoDB;
+    }
+
+    @Valid
+    @NotNull
+    @JsonProperty("preferences_db")
+    private NewDynamoDBConfiguration preferencesDynamoDB;
+
+    public NewDynamoDBConfiguration getPreferencesDynamoDB() {
+        return preferencesDynamoDB;
+    }
 
     @Valid
     @JsonProperty("debug")
@@ -101,6 +127,34 @@ public class SuripuAdminConfiguration extends Configuration {
         return dynamoDBConfiguration;
     }
 
+
+    @Valid
+    @NotNull
+    @JsonProperty("sleep_score_db")
+    private NewDynamoDBConfiguration sleepScoreDynamoDB;
+    public NewDynamoDBConfiguration getSleepScoreDynamoDB() { return sleepScoreDynamoDB; }
+
+    @Valid
+    @NotNull
+    @JsonProperty("sleep_score_version")
+    private String sleepScoreVersion;
+    public String getSleepScoreVersion() { return sleepScoreVersion; }
+    
+    @Valid
+    @NotNull
+    @JsonProperty("sleep_stats_db")
+    private NewDynamoDBConfiguration sleepStatsDynamoDBConfiguration;
+    public NewDynamoDBConfiguration getSleepStatsDynamoConfiguration(){
+        return this.sleepStatsDynamoDBConfiguration;
+    }
+
+    @Valid
+    @NotNull
+    @JsonProperty("sleep_stats_version")
+    private String sleepStatsVersion;
+    public String getSleepStatsVersion() {
+        return this.sleepStatsVersion;
+    }
 
     @Valid
     @NotNull
