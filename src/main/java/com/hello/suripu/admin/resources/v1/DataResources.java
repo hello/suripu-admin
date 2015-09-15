@@ -393,8 +393,7 @@ public class DataResources {
 
     }
 
-    private Calibration getCalibration(final String senseId, final Boolean withCalibratedDust) {
-        final Optional<Calibration> optionalCalibration = withCalibratedDust ? calibrationDAO.getStrict(senseId) : Optional.<Calibration>absent();
-        return optionalCalibration.isPresent() ? optionalCalibration.get() : Calibration.createDefault(senseId);
+    private Optional<Calibration> getCalibration(final String senseId, final Boolean withCalibratedDust) {
+        return withCalibratedDust ? calibrationDAO.getStrict(senseId) : Optional.<Calibration>absent();
     }
 }
