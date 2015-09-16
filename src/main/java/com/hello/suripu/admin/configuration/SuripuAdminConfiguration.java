@@ -101,6 +101,28 @@ public class SuripuAdminConfiguration extends Configuration {
         return dynamoDBConfiguration;
     }
 
+    @Valid
+    @NotNull
+    @JsonProperty("insights_db")
+    private DataSourceFactory insightsDB = new DataSourceFactory();
+    public DataSourceFactory getInsightsDB() {
+        return insightsDB;
+    }
+
+    @Valid
+    @NotNull
+    @JsonProperty("sleep_score_version")
+    private String sleepScoreVersion;
+    public String getSleepScoreVersion() { return sleepScoreVersion; }
+
+    @Valid
+    @NotNull
+    @JsonProperty("sleep_stats_version")
+    private String sleepStatsVersion;
+    public String getSleepStatsVersion() {
+        return this.sleepStatsVersion;
+    }
+
 
     @Valid
     @NotNull
