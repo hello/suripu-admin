@@ -53,9 +53,9 @@ common_db:
 
 insights_db:
   driverClass: org.postgresql.Driver
-  user: insights
-  password: hello-insights
-  url: jdbc:postgresql://common.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/insights
+  user: common
+  password: hello-common
+  url: jdbc:postgresql://common.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/common
   properties:
     hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
 
