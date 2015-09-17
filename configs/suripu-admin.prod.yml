@@ -51,6 +51,15 @@ common_db:
   properties:
     hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
 
+insights_db:
+  driverClass: org.postgresql.Driver
+  user: insights
+  password: hello-insights
+  url: jdbc:postgresql://common.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/insights
+  properties:
+    hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
+
+
 server:
   adminMinThreads: 1
   adminMaxThreads: 64
@@ -135,6 +144,10 @@ dynamodb:
     ring_time_history: prod_ring_history_by_account
     smart_alarm_log: prod_smart_alarm_log
     calibration: prod_calibration
+    insights : prod_insights
+    sleep_stats : prod_sleep_stats
+    preferences : prod_preferences
+    sleep_score : prod_sleep_score
 
   endpoints:
       alarm_info : http://dynamodb.us-east-1.amazonaws.com
@@ -155,6 +168,12 @@ dynamodb:
       smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
       ring_time_history: http://dynamodb.us-east-1.amazonaws.com
       calibration: http://dynamodb.us-east-1.amazonaws.com
+      sleep_stats : http://dynamodb.us-east-1.amazonaws.com
+      preferences : http://dynamodb.us-east-1.amazonaws.com
+      sleep_score : http://dynamodb.us-east-1.amazonaws.com
+
+  sleep_score_version: v_0_1
+  sleep_stats_version: v_0_2
 
 token_expiration: 300
 
