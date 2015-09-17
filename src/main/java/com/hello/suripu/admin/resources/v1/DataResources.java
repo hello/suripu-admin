@@ -27,6 +27,7 @@ import com.hello.suripu.core.models.UserInteraction;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.DateTimeUtil;
 import com.hello.suripu.core.util.JsonError;
+import com.hello.suripu.core.util.SmoothSample;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
@@ -156,7 +157,8 @@ public class DataResources {
             @PathParam("sensor") final String sensor,
             @PathParam("resolution") final String resolution,
             @QueryParam("from") Long queryEndTimestampInUTC,
-            @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust) {
+            @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust,
+            @QueryParam("smooth") @DefaultValue("true") final Boolean smooth) {
 
         final Optional<Long> optionalAccountId = Util.getAccountIdByEmail(accountDAO, email);
         if (!optionalAccountId.isPresent()) {
@@ -200,8 +202,15 @@ public class DataResources {
          */
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
-        return deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
+        final List<Sample> timeSeries = deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
                 accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId, withCalibratedDust));
+
+        if (Sensor.PARTICULATES.name().equalsIgnoreCase(sensor)) {
+            if (smooth) {
+                return SmoothSample.convert(timeSeries);
+            }
+        }
+        return timeSeries;
     }
 
 
