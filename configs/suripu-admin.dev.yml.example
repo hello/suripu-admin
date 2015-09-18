@@ -170,7 +170,7 @@ dynamodb:
       preferences : http://localhost:7777
       sleep_score : http://localhost:7777
 
-  sleep_score_version: v_0_1
-  sleep_stats_version: v_0_2
+sleep_score_version: v_0_1
+sleep_stats_version: v_0_2
 
 token_expiration: 300

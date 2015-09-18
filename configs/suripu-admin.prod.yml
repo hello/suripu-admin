@@ -172,8 +172,8 @@ dynamodb:
       preferences : http://dynamodb.us-east-1.amazonaws.com
       sleep_score : http://dynamodb.us-east-1.amazonaws.com
 
-  sleep_score_version: v_0_1
-  sleep_stats_version: v_0_2
+sleep_score_version: v_0_1
+sleep_stats_version: v_0_2
 
 token_expiration: 300
 
