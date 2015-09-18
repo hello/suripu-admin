@@ -51,6 +51,14 @@ common_db:
   properties:
     hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
 
+insights_db:
+  driverClass: org.postgresql.Driver
+  user: ingress_user
+  password: hello ingress user
+  url: jdbc:postgresql://chanku-test.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/chanku
+  properties:
+    hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
+
 server:
   adminMinThreads: 1
   adminMaxThreads: 64
@@ -135,6 +143,10 @@ dynamodb:
     ring_time_history: ring_history_by_account
     smart_alarm_log: smart_alarm_log
     calibration: calibration
+    insights : insights
+    sleep_stats : sleep_stats
+    preferences : preferences
+    sleep_score : sleep_score
 
 
   endpoints:
@@ -156,5 +168,11 @@ dynamodb:
     smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
     ring_time_history: http://dynamodb.us-east-1.amazonaws.com
     calibration: http://dynamodb.us-east-1.amazonaws.com
+    sleep_stats : http://dynamodb.us-east-1.amazonaws.com
+    preferences : http://dynamodb.us-east-1.amazonaws.com
+    sleep_score : http://dynamodb.us-east-1.amazonaws.com
+
+sleep_score_version: v_0_1
+sleep_stats_version: v_0_2
 
 token_expiration: 300

@@ -51,6 +51,14 @@ common_db:
   properties:
     charSet: UTF-8
 
+insights_db:
+  driverClass: org.postgresql.Driver
+  user: [your local psql username]
+  password:
+  url: jdbc:postgresql://localhost:5432/[your local psql db name]
+  properties:
+    charSet: UTF-8
+
 server:
   adminMinThreads: 1
   adminMaxThreads: 64
@@ -133,6 +141,10 @@ dynamodb:
       ring_time_history: ring_history_by_account
       smart_alarm_log: smart_alarm_log
       calibration: calibration
+      insights : insights
+      sleep_stats : sleep_stats
+      preferences : preferences
+      sleep_score : sleep_score
 
   
   endpoints:
@@ -153,6 +165,12 @@ dynamodb:
       timezone_history: http://localhost:7777
       smart_alarm_log: http://localhost:7777
       ring_time_history: http://localhost:7777
-      calibration: http://localhost:7777
+      calibration: http://localhost:777
+      sleep_stats : http://localhost:7777
+      preferences : http://localhost:7777
+      sleep_score : http://localhost:7777
+
+sleep_score_version: v_0_1
+sleep_stats_version: v_0_2
 
 token_expiration: 300
