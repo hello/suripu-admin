@@ -168,6 +168,7 @@ dynamodb:
       smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
       ring_time_history: http://dynamodb.us-east-1.amazonaws.com
       calibration: http://dynamodb.us-east-1.amazonaws.com
+      insights : http://dynamodb.us-east-1.amazonaws.com
       sleep_stats : http://dynamodb.us-east-1.amazonaws.com
       preferences : http://dynamodb.us-east-1.amazonaws.com
       sleep_score : http://dynamodb.us-east-1.amazonaws.com
