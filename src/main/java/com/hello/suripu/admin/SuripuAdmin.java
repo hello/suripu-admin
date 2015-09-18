@@ -228,12 +228,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final QuestionResponseDAO questionResponseDAO = insightsDBI.onDemand(QuestionResponseDAO.class);
 
-        insightsDBI.registerArgumentFactory(new OptionalArgumentFactory(configuration.getInsightsDB().getDriverClass()));
-        insightsDBI.registerContainerFactory(new ImmutableListContainerFactory());
-        insightsDBI.registerContainerFactory(new ImmutableSetContainerFactory());
-        insightsDBI.registerContainerFactory(new OptionalContainerFactory());
-        insightsDBI.registerArgumentFactory(new JodaArgumentFactory());
-
         //Insights dynamodb
 
         final TrendsInsightsDAO trendsInsightsDAO = insightsDBI.onDemand(TrendsInsightsDAO.class);
