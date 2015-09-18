@@ -16,7 +16,6 @@ public class InsightsGenerationRequest {
     @JsonProperty("category_string")
     public final String categoryString;
 
-    @JsonProperty("insight_category")
     public final InsightCard.Category insightCategory;
 
     @JsonCreator
