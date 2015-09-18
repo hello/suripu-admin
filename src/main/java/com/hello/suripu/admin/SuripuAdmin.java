@@ -15,7 +15,19 @@ import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
 import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
+import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.WifiResources;
+import com.hello.suripu.core.db.AggregateSleepScoreDAODynamoDB;
+import com.hello.suripu.core.db.InsightsDAODynamoDB;
+import com.hello.suripu.core.db.QuestionResponseDAO;
+import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
+import com.hello.suripu.core.db.TrendsInsightsDAO;
+import com.hello.suripu.core.preferences.AccountPreferencesDAO;
+import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
+import com.hello.suripu.core.processors.AccountInfoProcessor;
+import com.hello.suripu.core.processors.InsightProcessor;
+import com.hello.suripu.core.processors.insights.LightData;
+import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.coredw8.db.AccessTokenDAO;
@@ -87,6 +99,7 @@ import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
 import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
+import io.dropwizard.jdbi.args.OptionalArgumentFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
@@ -210,6 +223,40 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PASSWORD_RESET)
         );
 
+        //Insights postgres
+        final DBI insightsDBI = factory.build(environment, configuration.getInsightsDB(), "insights");
+
+        final QuestionResponseDAO questionResponseDAO = insightsDBI.onDemand(QuestionResponseDAO.class);
+
+        //Insights dynamodb
+
+        final TrendsInsightsDAO trendsInsightsDAO = insightsDBI.onDemand(TrendsInsightsDAO.class);
+
+        final AmazonDynamoDB dynamoDBStatsClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.SLEEP_STATS);
+        final SleepStatsDAODynamoDB sleepStatsDAODynamoDB = new SleepStatsDAODynamoDB(dynamoDBStatsClient,
+                tableNames.get(DynamoDBTableName.SLEEP_STATS),
+                configuration.getSleepStatsVersion());
+
+        final AmazonDynamoDB dynamoDBScoreClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.SLEEP_SCORE);
+        final AggregateSleepScoreDAODynamoDB aggregateSleepScoreDAODynamoDB = new AggregateSleepScoreDAODynamoDB(
+                dynamoDBScoreClient,
+                tableNames.get(DynamoDBTableName.SLEEP_SCORE),
+                configuration.getSleepScoreVersion()
+        );
+
+        final AmazonDynamoDB insightsDynamoDB = dynamoDBClientFactory.getForTable(DynamoDBTableName.INSIGHTS);
+        final InsightsDAODynamoDB insightsDAODynamoDB = new InsightsDAODynamoDB(insightsDynamoDB,
+                tableNames.get(DynamoDBTableName.INSIGHTS));
+
+        final AmazonDynamoDB accountPreferencesDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.PREFERENCES);
+        final AccountPreferencesDAO accountPreferencesDynamoDB = AccountPreferencesDynamoDB.create(accountPreferencesDynamoDBClient,
+                tableNames.get(DynamoDBTableName.PREFERENCES));
+
+        //InsightsData
+        final LightData lightData = new LightData(); // lights global distribution
+        final WakeStdDevData wakeStdDevData = new WakeStdDevData();
+
+
         //Doing this programmatically instead of in config files
         AbstractServerFactory sf = (AbstractServerFactory) configuration.getServerFactory();
         // disable all default exception mappers
@@ -311,6 +358,26 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 calibrationDynamoDBClient,
                 tableNames.get(DynamoDBTableName.CALIBRATION)
         );
+
+        final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
+                .withQuestionResponseDAO(questionResponseDAO)
+                .withMapping(questionResponseDAO);
+        final AccountInfoProcessor accountInfoProcessor = builder.build();
+
+        final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
+                .withSenseDAOs(deviceDataDAO, deviceDAO)
+                .withTrackerMotionDAO(trackerMotionDAO)
+                .withInsightsDAO(trendsInsightsDAO)
+                .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
+                .withAccountInfoProcessor(accountInfoProcessor)
+                .withLightData(lightData)
+                .withWakeStdDevData(wakeStdDevData)
+                .withPreferencesDAO(accountPreferencesDynamoDB);
+
+        final InsightProcessor insightProcessor = insightBuilder.build();
+
+        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO));
+
 
         environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
