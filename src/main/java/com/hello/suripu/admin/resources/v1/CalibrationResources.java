@@ -72,11 +72,16 @@ public class CalibrationResources {
                                    final Calibration calibration,
                                    @QueryParam("force") @Nullable @DefaultValue("false") final Boolean force) {
 
-        final Boolean hasSuccessfullyUpdated = force ? calibrationDAO.putForce(calibration) : calibrationDAO.put(calibration);
-
-        if (!hasSuccessfullyUpdated){
-            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Cannot update item, either update condition failed or unexpected aws error occurred")).build());
+        if(force) {
+            calibrationDAO.putForce(calibration);
+        } else {
+            calibrationDAO.put(calibration);
         }
+
+        // TODO: fix me
+//        if (hasSuccessfullyUpdated){
+//            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Cannot update item, either update condition failed or unexpected aws error occurred")).build());
+//        }
         return Response.noContent().build();
 
     }
