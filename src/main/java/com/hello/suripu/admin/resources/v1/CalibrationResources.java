@@ -80,8 +80,7 @@ public class CalibrationResources {
             if (!hasPutForceSuccessfully){
                 throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Failed to put force")).build());
             }
-        }
-        else {
+        } else {
             final Optional<Boolean> hasPutSuccessfully = calibrationDAO.put(calibration);
             if (!hasPutSuccessfully.isPresent()) {
                 throw new WebApplicationException(Response.status(400).entity(new JsonError(400, "Failed to put as condition was not satisfied")).build());
@@ -114,10 +113,9 @@ public class CalibrationResources {
             for (final Map.Entry<String, Boolean> item :  putBatchResponse.entrySet()) {
                 putBatchResults.put(item.getKey(), item.getValue().toString());
             }
-        }
-        else {
-            if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_FORCE_SIZE){
-                throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size shhould be less than %s", CalibrationDynamoDB.MAX_PUT_FORCE_SIZE))).build());
+        } else {
+            if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_SIZE){
+                throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size shhould be less than %s", CalibrationDynamoDB.MAX_PUT_SIZE))).build());
             }
             final Map<String, Optional<Boolean>> putBatchResponse = calibrationDAO.putBatch(calibrations);
 
@@ -130,6 +128,7 @@ public class CalibrationResources {
                 }
             }
         }
+
         return putBatchResults;
     }
 
