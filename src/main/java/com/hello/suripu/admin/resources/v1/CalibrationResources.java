@@ -1,13 +1,15 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.admin.models.UpdateCalibrationResponse;
 import com.hello.suripu.core.db.CalibrationDAO;
+import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -72,18 +75,63 @@ public class CalibrationResources {
                                    final Calibration calibration,
                                    @QueryParam("force") @Nullable @DefaultValue("false") final Boolean force) {
 
-        if(force) {
-            calibrationDAO.putForce(calibration);
-        } else {
-            calibrationDAO.put(calibration);
+        final Optional<Boolean> hasPutSuccessfully = calibrationDAO.put(calibration);
+        if (!hasPutSuccessfully.isPresent()) {
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, "Failed to put as condition was not satisfied")).build());
+        }
+        if (!hasPutSuccessfully.get()) {
+            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Failed to put")).build());
         }
 
-        // TODO: fix me
-//        if (hasSuccessfullyUpdated){
-//            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Cannot update item, either update condition failed or unexpected aws error occurred")).build());
-//        }
         return Response.noContent().build();
+    }
 
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @PUT
+    @Path("/force")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response putCalibration(@Auth final AccessToken accessToken,
+                                   final Calibration calibration) {
+
+        final Boolean hasPutForceSuccessfully = calibrationDAO.putForce(calibration);
+        if (!hasPutForceSuccessfully) {
+            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Failed to put force")).build());
+        }
+
+        return Response.noContent().build();
+    }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @PUT
+    @Path("/batch")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public UpdateCalibrationResponse putBatchCalibration(@Auth final AccessToken accessToken,
+                                                         final List<Calibration> calibrations) {
+
+        if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_SIZE){
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size shhould be less than %s", CalibrationDynamoDB.MAX_PUT_SIZE))).build());
+        }
+        final Map<String, Optional<Boolean>> putBatchResponse = calibrationDAO.putBatch(calibrations);
+        return UpdateCalibrationResponse.createFromPutBatchResponse(putBatchResponse);
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @PUT
+    @Path("/batch/force")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public UpdateCalibrationResponse putBatchForceCalibration(@Auth final AccessToken accessToken,
+                                                              final List<Calibration> calibrations) {
+
+        if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_FORCE_SIZE){
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size shhould be less than %s", CalibrationDynamoDB.MAX_PUT_FORCE_SIZE))).build());
+        }
+
+        final Map<String, Boolean> putBatchForceResponse = calibrationDAO.putBatchForce(calibrations);
+        return UpdateCalibrationResponse.createFromPutBatchForceResponse(putBatchForceResponse);
     }
 
 
