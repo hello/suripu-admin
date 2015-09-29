@@ -10,41 +10,30 @@ import java.util.Set;
 public class UpdateCalibrationResponse {
 
     @JsonProperty("success")
-    private Set<String> success;
+    public Set<String> success = new HashSet<String>();
 
     @JsonProperty("failed_condition")
-    private Set<String> failedCondition;
+    public Set<String> failedCondition = new HashSet<String>();
 
     @JsonProperty("unprocessed")
-    private Set<String> unprocessed;
+    public Set<String> unprocessed = new HashSet<String>();
 
-    public UpdateCalibrationResponse(final Set<String> success, final Set<String> failedCondition, final Set<String> unprocessed) {
-        this.success = success;
-        this.failedCondition = failedCondition;
-        this.unprocessed = unprocessed;
-    }
-
-    private UpdateCalibrationResponse addSuccessItem(final String successItem) {
+    private void addSuccessItem(final String successItem) {
         this.success.add(successItem);
-        return this;
     }
 
-    private UpdateCalibrationResponse addFailedConditionItem(final String failedConditionItem) {
+    private void addFailedConditionItem(final String failedConditionItem) {
         this.failedCondition.add(failedConditionItem);
-        return this;
     }
 
-    private UpdateCalibrationResponse addUnprocessedItem(final String unprocessedItem) {
+    private void addUnprocessedItem(final String unprocessedItem) {
         this.unprocessed.add(unprocessedItem);
-        return this;
     }
 
-    private static UpdateCalibrationResponse createEmpty() {
-        return new UpdateCalibrationResponse(new HashSet<String>(), new HashSet<String>(), new HashSet<String>());
-    }
+
     public static UpdateCalibrationResponse createFromPutBatchForceResponse(final Map<String, Boolean> putBatchForceResponse) {
-        final UpdateCalibrationResponse updateCalibrationResponse = UpdateCalibrationResponse.createEmpty();
 
+        final UpdateCalibrationResponse updateCalibrationResponse = new UpdateCalibrationResponse();
         for (final Map.Entry<String, Boolean> item :  putBatchForceResponse.entrySet()) {
             if (item.getValue()) {
                 updateCalibrationResponse.addSuccessItem(item.getKey());
@@ -57,8 +46,8 @@ public class UpdateCalibrationResponse {
     }
 
     public static UpdateCalibrationResponse createFromPutBatchResponse(final Map<String, Optional<Boolean>> putBatchResponse) {
-        final UpdateCalibrationResponse updateCalibrationResponse = UpdateCalibrationResponse.createEmpty();
 
+        final UpdateCalibrationResponse updateCalibrationResponse = new UpdateCalibrationResponse();
         for (final Map.Entry<String, Optional<Boolean>> item :  putBatchResponse.entrySet()) {
             if (!item.getValue().isPresent()) {
                 updateCalibrationResponse.addFailedConditionItem(item.getKey());

@@ -112,7 +112,7 @@ public class CalibrationResources {
                                                          final List<Calibration> calibrations) {
 
         if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_SIZE){
-            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size shhould be less than %s", CalibrationDynamoDB.MAX_PUT_SIZE))).build());
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", CalibrationDynamoDB.MAX_PUT_SIZE))).build());
         }
         final Map<String, Optional<Boolean>> putBatchResponse = calibrationDAO.putBatch(calibrations);
         return UpdateCalibrationResponse.createFromPutBatchResponse(putBatchResponse);
@@ -127,7 +127,7 @@ public class CalibrationResources {
                                                               final List<Calibration> calibrations) {
 
         if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_FORCE_SIZE){
-            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size shhould be less than %s", CalibrationDynamoDB.MAX_PUT_FORCE_SIZE))).build());
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", CalibrationDynamoDB.MAX_PUT_FORCE_SIZE))).build());
         }
 
         final Map<String, Boolean> putBatchForceResponse = calibrationDAO.putBatchForce(calibrations);
