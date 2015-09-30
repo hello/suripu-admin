@@ -153,8 +153,8 @@ public class CalibrationResources {
     }
 
 
-    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
-    @PUT
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
     @Path("/compute")
     @Produces(MediaType.APPLICATION_JSON)
     public ImmutableMap<String, Integer> computeCalibration(@Auth final AccessToken accessToken,
