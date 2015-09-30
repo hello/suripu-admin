@@ -406,7 +406,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
         environment.jersey().register(new TeamsResources(teamStore));
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
-        environment.jersey().register(new CalibrationResources(calibrationDAO));
+        environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
         environment.jersey().register(new WifiResources(jedisPool));
     }
 }
