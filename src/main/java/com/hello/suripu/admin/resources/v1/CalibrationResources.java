@@ -1,9 +1,11 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.models.UpdateCalibrationResponse;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.CalibrationDynamoDB;
+import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
@@ -38,9 +40,11 @@ public class CalibrationResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CalibrationResources.class);
     private final CalibrationDAO calibrationDAO;
+    private final DeviceDataDAO deviceDataDAO;
 
-    public CalibrationResources(final CalibrationDAO calibrationDAO) {
+    public CalibrationResources(final CalibrationDAO calibrationDAO, final DeviceDataDAO deviceDataDAO) {
         this.calibrationDAO = calibrationDAO;
+        this.deviceDataDAO = deviceDataDAO;
     }
 
 
@@ -146,5 +150,18 @@ public class CalibrationResources {
             throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Cannot delete item, either key was incorrect or unexpected aws error occurred")).build());
         }
         return Response.noContent().build();
+    }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @PUT
+    @Path("/compute")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ImmutableMap<String, Integer> computeCalibration(@Auth final AccessToken accessToken,
+                                       @QueryParam("account_id") @NotNull @Valid final Long accountId,
+                                       @QueryParam("sense_internal_id") @NotNull @Valid final Long senseInternalId) {
+
+        final Integer avgDustLast10days = deviceDataDAO.getAverageDustForLast10Days(accountId, senseInternalId);
+        return ImmutableMap.of("compute", avgDustLast10days);
     }
 }
