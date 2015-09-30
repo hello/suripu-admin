@@ -155,7 +155,7 @@ public class CalibrationResources {
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
-    @Path("/{average_dust}")
+    @Path("/average_dust")
     @Produces(MediaType.APPLICATION_JSON)
     public ImmutableMap<String, Integer> computeCalibration(@Auth final AccessToken accessToken,
                                        @QueryParam("account_id") @NotNull @Valid final Long accountId,
