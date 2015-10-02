@@ -52,7 +52,7 @@ public class CalibrationResources {
     @GET
     @Path("/{sense_id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Calibration getCalibration(@Auth final AccessToken accessToken, @PathParam("sense_id")  @NotNull @Valid final String senseId) {
+    public Calibration getCalibration(@Auth final AccessToken accessToken, @PathParam("sense_id") @NotNull @Valid final String senseId) {
         final Optional<Calibration> optionalCalibration = calibrationDAO.getStrict(senseId);
         if (!optionalCalibration.isPresent()) {
             throw new WebApplicationException(Response.status(404).entity(new JsonError(404, "Calibration not found")).build());
@@ -81,10 +81,11 @@ public class CalibrationResources {
 
         final Optional<Boolean> hasPutSuccessfully = calibrationDAO.put(calibration);
         if (!hasPutSuccessfully.isPresent()) {
-            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, "Failed to put as condition was not satisfied")).build());
+            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Failed to put")).build());
+
         }
         if (!hasPutSuccessfully.get()) {
-            throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Failed to put")).build());
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, "Condition was not satisfied")).build());
         }
 
         return Response.noContent().build();
@@ -98,8 +99,8 @@ public class CalibrationResources {
     public Response putCalibration(@Auth final AccessToken accessToken,
                                    final Calibration calibration) {
 
-        final Boolean hasPutForceSuccessfully = calibrationDAO.putForce(calibration);
-        if (!hasPutForceSuccessfully) {
+        final Optional<Boolean> hasPutForceOptional = calibrationDAO.putForce(calibration);
+        if (!hasPutForceOptional.isPresent()) {
             throw new WebApplicationException(Response.status(500).entity(new JsonError(500, "Failed to put force")).build());
         }
 
@@ -134,7 +135,7 @@ public class CalibrationResources {
             throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", CalibrationDynamoDB.MAX_PUT_FORCE_SIZE))).build());
         }
 
-        final Map<String, Boolean> putBatchForceResponse = calibrationDAO.putBatchForce(calibrations);
+        final Map<String, Optional<Boolean>> putBatchForceResponse = calibrationDAO.putBatchForce(calibrations);
         return UpdateCalibrationResponse.createFromPutBatchForceResponse(putBatchForceResponse);
     }
 
