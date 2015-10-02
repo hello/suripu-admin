@@ -31,15 +31,15 @@ public class UpdateCalibrationResponse {
     }
 
 
-    public static UpdateCalibrationResponse createFromPutBatchForceResponse(final Map<String, Boolean> putBatchForceResponse) {
+    public static UpdateCalibrationResponse createFromPutBatchForceResponse(final Map<String, Optional<Boolean>> putBatchForceResponse) {
 
         final UpdateCalibrationResponse updateCalibrationResponse = new UpdateCalibrationResponse();
-        for (final Map.Entry<String, Boolean> item :  putBatchForceResponse.entrySet()) {
-            if (item.getValue()) {
-                updateCalibrationResponse.addSuccessItem(item.getKey());
+        for (final Map.Entry<String, Optional<Boolean>> item :  putBatchForceResponse.entrySet()) {
+            if (!item.getValue().isPresent()) {
+                updateCalibrationResponse.addUnprocessedItem(item.getKey());
             }
             else {
-                updateCalibrationResponse.addUnprocessedItem(item.getKey());
+                updateCalibrationResponse.addSuccessItem(item.getKey());
             }
         }
         return updateCalibrationResponse;
@@ -50,13 +50,13 @@ public class UpdateCalibrationResponse {
         final UpdateCalibrationResponse updateCalibrationResponse = new UpdateCalibrationResponse();
         for (final Map.Entry<String, Optional<Boolean>> item :  putBatchResponse.entrySet()) {
             if (!item.getValue().isPresent()) {
-                updateCalibrationResponse.addFailedConditionItem(item.getKey());
+                updateCalibrationResponse.addUnprocessedItem(item.getKey());
             }
             else if (item.getValue().get()) {
                 updateCalibrationResponse.addSuccessItem(item.getKey());
             }
             else {
-                updateCalibrationResponse.addUnprocessedItem(item.getKey());
+                updateCalibrationResponse.addFailedConditionItem(item.getKey());
             }
         }
         return updateCalibrationResponse;
