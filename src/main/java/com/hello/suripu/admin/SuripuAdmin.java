@@ -8,6 +8,8 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hello.dropwizard.mikkusu.resources.PingResource;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
@@ -22,10 +24,13 @@ import com.hello.suripu.core.db.InsightsDAODynamoDB;
 import com.hello.suripu.core.db.QuestionResponseDAO;
 import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
 import com.hello.suripu.core.db.TrendsInsightsDAO;
+import com.hello.suripu.core.models.DeviceData;
+import com.hello.suripu.core.models.Insights.InsightCard;
 import com.hello.suripu.core.preferences.AccountPreferencesDAO;
 import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
 import com.hello.suripu.core.processors.AccountInfoProcessor;
 import com.hello.suripu.core.processors.InsightProcessor;
+import com.hello.suripu.core.processors.insights.Humidity;
 import com.hello.suripu.core.processors.insights.LightData;
 import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
@@ -104,14 +109,17 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
+import com.google.common.base.Optional;
 
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -151,7 +159,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         commonDB.registerContainerFactory(new ImmutableListContainerFactory());
         commonDB.registerContainerFactory(new ImmutableSetContainerFactory());
 
-        if(configuration.getMetricsEnabled()) {
+        if (configuration.getMetricsEnabled()) {
             final String graphiteHostName = configuration.getGraphite().getHost();
             final String apiKey = configuration.getGraphite().getApiKey();
             final Integer interval = configuration.getGraphite().getReportingIntervalInSeconds();
@@ -174,7 +182,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
             LOGGER.warn("Metrics not enabled.");
         }
 
-        final AWSCredentialsProvider awsCredentialsProvider= new DefaultAWSCredentialsProviderChain();
+        final AWSCredentialsProvider awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         final AmazonDynamoDBClientFactory dynamoDBClientFactory = AmazonDynamoDBClientFactory.create(awsCredentialsProvider, configuration.dynamoDBConfiguration());
 
         final AmazonS3Client s3Client = new AmazonS3Client(awsCredentialsProvider);
@@ -376,6 +384,44 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final InsightProcessor insightProcessor = insightBuilder.build();
 
+        final Long accountId = 1L;
+
+        final Long deviceId = 65L;
+
+        final DateTime startTime = DateTime.parse("2015-03-15");
+        final DateTime endTime = DateTime.parse("2015-03-16");
+        final DateTime startUTC = DateTime.parse("2015-03-15");
+        final DateTime endUTC = DateTime.parse("2015-03-16");
+        final Integer startHour = 22;
+        final Integer endHour = 23;
+
+        final ImmutableList<DeviceData> test1 = deviceDataDAO.getLightByBetweenHourDateByTS(accountId, deviceId, 0, startTime, endTime, startUTC, endUTC, startHour, endHour);
+//        System.out.print(test1);
+        final ImmutableList<DeviceData> test2 = deviceDataDAO.getBetweenHourDateByTSSameDay(accountId, deviceId, startTime, endTime, startHour, endHour);
+//        System.out.print(test2);
+        final ImmutableList<DeviceData> test3 = deviceDataDAO.getBetweenHourDateByTS(accountId, deviceId, startTime, endTime, startHour, endHour);
+        System.out.print(test3);
+
+
+        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceId, InsightCard.Category.BED_LIGHT_DURATION);
+
+        if (!generatedInsight.isPresent()) {
+            LOGGER.debug("Could not generate {} insight for accountId {} ", InsightCard.Category.BED_LIGHT_DURATION, accountId);
+        }
+
+        final Optional<InsightCard.Category> generatedInsight2 = insightProcessor.generateInsightsByCategory(accountId, deviceId, InsightCard.Category.HUMIDITY);
+
+        if (!generatedInsight2.isPresent()) {
+            LOGGER.debug("Could not generate {} insight for accountId {} ", InsightCard.Category.HUMIDITY, accountId);
+        }
+
+        final Optional<InsightCard.Category> generatedInsight3 = insightProcessor.generateInsightsByCategory(accountId, deviceId, InsightCard.Category.BED_LIGHT_INTENSITY_RATIO);
+
+        if (!generatedInsight3.isPresent()) {
+            LOGGER.debug("Could not generate {} insight for accountId {} ", InsightCard.Category.BED_LIGHT_INTENSITY_RATIO, accountId);
+        }
+
+
         environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO));
 
 
@@ -386,7 +432,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new ApplicationResources(applicationStore));
         environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO));
         final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceDAOAdmin, deviceDataDAO, trackerMotionDAO, accountDAO,
-                mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
+                mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB, pillViewsDynamoDB, sensorsViewsDynamoDB);
 
         environment.jersey().register(deviceResources);
         environment.jersey().register(new DiagnosticResources(diagnosticDAO, accountDAO, deviceDAO, trackingDAO));

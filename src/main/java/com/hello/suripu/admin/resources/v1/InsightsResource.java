@@ -3,7 +3,6 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.models.Insight;
 import com.hello.suripu.core.models.Insights.InsightCard;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.processors.InsightProcessor;

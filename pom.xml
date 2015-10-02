@@ -142,7 +142,9 @@
         <dependency>
             <groupId>com.hello.suripu</groupId>
             <artifactId>suripu-core</artifactId>
-            <version>${suripu.version}</version>
+            <version>0.5.42</version>
+            <scope>system</scope>
+            <systemPath>/Users/jyfan/Documents/gitHub/jars/suripu-core-0.5.42-SNAPSHOT.jar</systemPath>
             <exclusions>
                 <exclusion>
                     <groupId>com.yammer.dropwizard</groupId>
