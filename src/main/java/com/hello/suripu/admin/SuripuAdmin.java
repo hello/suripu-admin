@@ -361,7 +361,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final AmazonDynamoDB wifiInfoDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.WIFI_INFO, WifiInfoDynamoDB.class);
         final WifiInfoDAO wifiInfoDAO = new WifiInfoDynamoDB(
-                calibrationDynamoDBClient,
+                wifiInfoDynamoDBClient,
                 tableNames.get(DynamoDBTableName.WIFI_INFO)
         );
 
