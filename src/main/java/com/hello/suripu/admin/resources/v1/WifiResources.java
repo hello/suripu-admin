@@ -88,7 +88,7 @@ public class WifiResources {
         if (wifiInfoList.size() > WifiInfoDynamoDB.MAXIMUM_BATCH_WRITE_SIZE) {
             throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
                     .entity(new JsonError(Response.Status.BAD_REQUEST.getStatusCode(),
-                            String.format("Max batch size allow is %s", WifiInfoDynamoDB.MAXIMUM_BATCH_WRITE_SIZE))).build());
+                            String.format("Max batch size allowed is %s", WifiInfoDynamoDB.MAXIMUM_BATCH_WRITE_SIZE))).build());
         }
 
         final Boolean hasPut = wifiInfoDAO.putBatch(wifiInfoList);
