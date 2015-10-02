@@ -147,6 +147,7 @@ dynamodb:
     sleep_stats : sleep_stats
     preferences : preferences
     sleep_score : sleep_score
+    wifi_info : wifi_info
 
 
   endpoints:
@@ -172,6 +173,7 @@ dynamodb:
     sleep_stats : http://dynamodb.us-east-1.amazonaws.com
     preferences : http://dynamodb.us-east-1.amazonaws.com
     sleep_score : http://dynamodb.us-east-1.amazonaws.com
+    wifi_info : http://dynamodb.us-east-1.amazonaws.com
 
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
