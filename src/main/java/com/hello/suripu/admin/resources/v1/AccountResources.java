@@ -1,12 +1,12 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.Util;
+import com.hello.suripu.admin.db.DeviceAdminDAO;
+import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.models.PasswordResetAdmin;
-import com.hello.suripu.core.models.TimeHistory;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.DeviceDAO;
@@ -18,15 +18,17 @@ import com.hello.suripu.core.models.AccountCount;
 import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.RingTime;
 import com.hello.suripu.core.models.SmartAlarmHistory;
+import com.hello.suripu.core.models.TimeHistory;
 import com.hello.suripu.core.models.TimeZoneHistory;
-
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.passwordreset.PasswordReset;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.util.HelloHttpHeader;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PasswordUtil;
-import com.codahale.metrics.annotation.Timed;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -61,6 +63,7 @@ public class AccountResources {
     private final TimeZoneHistoryDAODynamoDB timeZoneHistoryDAODynamoDB;
     private final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB;
     private final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB;
+    private final DeviceAdminDAO deviceAdminDAO;
 
     @Context
     HttpServletRequest request;
@@ -70,7 +73,8 @@ public class AccountResources {
                             final AccountDAOAdmin accountDAOAdmin,
                             final TimeZoneHistoryDAODynamoDB timeZoneHistoryDAODynamoDB,
                             final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB,
-                            final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB) {
+                            final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB,
+                            final DeviceAdminDAO deviceAdminDAO) {
         this.accountDAO = accountDAO;
         this.passwordResetDB = passwordResetDB;
         this.deviceDAO = deviceDAO;
@@ -78,6 +82,7 @@ public class AccountResources {
         this.timeZoneHistoryDAODynamoDB = timeZoneHistoryDAODynamoDB;
         this.smartAlarmLoggerDynamoDB = smartAlarmLoggerDynamoDB;
         this.ringTimeHistoryDAODynamoDB = ringTimeHistoryDAODynamoDB;
+        this.deviceAdminDAO = deviceAdminDAO;
     }
 
 
@@ -299,5 +304,21 @@ public class AccountResources {
         }
         return accountByEmailOptional.get().id.get();
 
+    }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/recent_pairs")
+    public ImmutableList<DeviceAccountPair> getMostRecentPairsQualifiedForDustCalibration(@Auth final AccessToken accessToken,
+                                                                                          @QueryParam("limit") final Integer limitRaw,
+                                                                                          @QueryParam("max_id") final Integer maxIdRaw,
+                                                                                          @QueryParam("min_up_days") final Integer minUpDaysRaw){
+        final Integer limit = limitRaw == null ? DeviceAdminDAOImpl.DEFAULT_ACCOUNT_DEVICE_MAP_LIMIT
+                : Math.min(limitRaw, DeviceAdminDAOImpl.MAX_ACCOUNT_DEVICE_MAP_LIMIT);
+        final Integer maxId = maxIdRaw == null ? Integer.MAX_VALUE : maxIdRaw;
+        final Integer minUpDays = minUpDaysRaw == null ? DeviceAdminDAOImpl.DEFAULT_ACCOUNT_DEVICE_MAP_MIN_UP_DAYS : minUpDaysRaw;
+        return deviceAdminDAO.getMostRecentPairsQualifiedForDustCalibration(limit, maxId, minUpDays);
     }
 }

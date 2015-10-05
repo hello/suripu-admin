@@ -1,20 +1,18 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.amazonaws.AmazonServiceException;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.Util;
+import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.models.DeviceAdmin;
 import com.hello.suripu.admin.models.DeviceStatusBreakdown;
 import com.hello.suripu.admin.models.InactiveDevicesPaginator;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.configuration.ActiveDevicesTrackerConfiguration;
 import com.hello.suripu.core.configuration.BlackListDevicesConfiguration;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.db.DeviceDAOAdmin;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.KeyStore;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
@@ -38,10 +36,11 @@ import com.hello.suripu.core.models.ProvisionRequest;
 import com.hello.suripu.core.models.SenseRegistration;
 import com.hello.suripu.core.models.TimeZoneHistory;
 import com.hello.suripu.core.models.UserInfo;
-
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
-import com.codahale.metrics.annotation.Timed;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
@@ -81,7 +80,7 @@ public class DeviceResources {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceResources.class);
 
     private final DeviceDAO deviceDAO;
-    private final DeviceDAOAdmin deviceDAOAdmin;
+    private final DeviceAdminDAO deviceAdminDAO;
     private final DeviceDataDAO deviceDataDAO;
     private final TrackerMotionDAO trackerMotionDAO;
     private final AccountDAO accountDAO;
@@ -97,7 +96,7 @@ public class DeviceResources {
 
 
     public DeviceResources(final DeviceDAO deviceDAO,
-                           final DeviceDAOAdmin deviceDAOAdmin,
+                           final DeviceAdminDAO deviceAdminDAO,
                            final DeviceDataDAO deviceDataDAO,
                            final TrackerMotionDAO trackerMotionDAO,
                            final AccountDAO accountDAO,
@@ -112,7 +111,7 @@ public class DeviceResources {
                            final SensorsViewsDynamoDB sensorsViewsDynamoDB) {
 
         this.deviceDAO = deviceDAO;
-        this.deviceDAOAdmin = deviceDAOAdmin;
+        this.deviceAdminDAO = deviceAdminDAO;
         this.accountDAO = accountDAO;
         this.mergedUserInfoDynamoDB = mergedUserInfoDynamoDB;
         this.senseKeyStore = senseKeyStore;
@@ -186,12 +185,12 @@ public class DeviceResources {
 
         else {
             LOGGER.debug("Querying all pills whose IDs contain = {}", pillIdPartial);
-            pills.addAll(deviceDAOAdmin.getPillsByPillIdHint(pillIdPartial));
+            pills.addAll(deviceAdminDAO.getPillsByPillIdHint(pillIdPartial));
         }
 
         final List<DeviceStatus> pillStatuses = new ArrayList<>();
         for (final DeviceAccountPair pill : pills) {
-            pillStatuses.addAll(deviceDAOAdmin.pillStatusBeforeTs(pill.internalDeviceId, new DateTime(endTs, DateTimeZone.UTC)));
+            pillStatuses.addAll(deviceAdminDAO.pillStatusBeforeTs(pill.internalDeviceId, new DateTime(endTs, DateTimeZone.UTC)));
         }
 
         return pillStatuses;
@@ -233,9 +232,9 @@ public class DeviceResources {
                                                          @PathParam("device_id") final String deviceId) {
         final List<Account> accounts = new ArrayList<>();
         LOGGER.debug("Searching accounts who have used device {}", deviceId);
-        accounts.addAll(deviceDAOAdmin.getAccountsBySenseId(deviceId, maxDevices));
+        accounts.addAll(deviceAdminDAO.getAccountsBySenseId(deviceId, maxDevices));
         if (accounts.isEmpty()) {
-            accounts.addAll(deviceDAOAdmin.getAccountsByPillId(deviceId, maxDevices));
+            accounts.addAll(deviceAdminDAO.getAccountsByPillId(deviceId, maxDevices));
         }
         return ImmutableList.copyOf(accounts);
     }
@@ -977,5 +976,4 @@ public class DeviceResources {
 
         return Response.noContent().build();
     }
-
 }
