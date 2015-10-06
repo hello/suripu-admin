@@ -15,30 +15,9 @@ import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
 import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
-import com.hello.suripu.admin.resources.v1.InsightsResource;
-import com.hello.suripu.admin.resources.v1.WifiResources;
-import com.hello.suripu.core.db.AggregateSleepScoreDAODynamoDB;
-import com.hello.suripu.core.db.InsightsDAODynamoDB;
-import com.hello.suripu.core.db.QuestionResponseDAO;
-import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
-import com.hello.suripu.core.db.TrendsInsightsDAO;
-import com.hello.suripu.core.preferences.AccountPreferencesDAO;
-import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
-import com.hello.suripu.core.processors.AccountInfoProcessor;
-import com.hello.suripu.core.processors.InsightProcessor;
-import com.hello.suripu.core.processors.insights.LightData;
-import com.hello.suripu.core.processors.insights.WakeStdDevData;
-import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
-import com.hello.suripu.coredw8.db.AccessTokenDAO;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.AuthDynamicFeature;
-import com.hello.suripu.coredw8.oauth.AuthValueFactoryProvider;
-import com.hello.suripu.coredw8.oauth.OAuthAuthenticator;
-import com.hello.suripu.coredw8.oauth.OAuthAuthorizer;
-import com.hello.suripu.coredw8.oauth.OAuthCredentialAuthFilter;
-import com.hello.suripu.coredw8.oauth.ScopesAllowedDynamicFeature;
-import com.hello.suripu.coredw8.oauth.stores.PersistentAccessTokenStore;
+import com.hello.suripu.admin.db.DeviceAdminDAO;
+import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
@@ -50,26 +29,28 @@ import com.hello.suripu.admin.resources.v1.DownloadResource;
 import com.hello.suripu.admin.resources.v1.EventsResources;
 import com.hello.suripu.admin.resources.v1.FeaturesResources;
 import com.hello.suripu.admin.resources.v1.FirmwareResource;
+import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.InspectionResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
-import com.hello.suripu.coredw8.util.CustomJSONExceptionMapper;
+import com.hello.suripu.admin.resources.v1.WifiResources;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.AccountDAOImpl;
+import com.hello.suripu.core.db.AggregateSleepScoreDAODynamoDB;
 import com.hello.suripu.core.db.ApplicationsDAO;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.db.DeviceDAOAdmin;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
+import com.hello.suripu.core.db.InsightsDAODynamoDB;
 import com.hello.suripu.core.db.KeyStore;
 import com.hello.suripu.core.db.KeyStoreDynamoDB;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
@@ -77,15 +58,20 @@ import com.hello.suripu.core.db.OTAHistoryDAODynamoDB;
 import com.hello.suripu.core.db.OnBoardingLogDAO;
 import com.hello.suripu.core.db.PillHeartBeatDAO;
 import com.hello.suripu.core.db.PillViewsDynamoDB;
+import com.hello.suripu.core.db.QuestionResponseDAO;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB;
 import com.hello.suripu.core.db.RingTimeHistoryDAODynamoDB;
 import com.hello.suripu.core.db.SenseEventsDAO;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
+import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
 import com.hello.suripu.core.db.SmartAlarmLoggerDynamoDB;
 import com.hello.suripu.core.db.TeamStore;
 import com.hello.suripu.core.db.TimeZoneHistoryDAODynamoDB;
 import com.hello.suripu.core.db.TrackerMotionDAO;
+import com.hello.suripu.core.db.TrendsInsightsDAO;
 import com.hello.suripu.core.db.UserLabelDAO;
+import com.hello.suripu.core.db.WifiInfoDAO;
+import com.hello.suripu.core.db.WifiInfoDynamoDB;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
@@ -93,13 +79,29 @@ import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
+import com.hello.suripu.core.preferences.AccountPreferencesDAO;
+import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
+import com.hello.suripu.core.processors.AccountInfoProcessor;
+import com.hello.suripu.core.processors.InsightProcessor;
+import com.hello.suripu.core.processors.insights.LightData;
+import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.core.tracking.TrackingDAO;
+import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
+import com.hello.suripu.coredw8.db.AccessTokenDAO;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.AuthDynamicFeature;
+import com.hello.suripu.coredw8.oauth.AuthValueFactoryProvider;
+import com.hello.suripu.coredw8.oauth.OAuthAuthenticator;
+import com.hello.suripu.coredw8.oauth.OAuthAuthorizer;
+import com.hello.suripu.coredw8.oauth.OAuthCredentialAuthFilter;
+import com.hello.suripu.coredw8.oauth.ScopesAllowedDynamicFeature;
+import com.hello.suripu.coredw8.oauth.stores.PersistentAccessTokenStore;
+import com.hello.suripu.coredw8.util.CustomJSONExceptionMapper;
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
 import io.dropwizard.jdbi.ImmutableSetContainerFactory;
 import io.dropwizard.jdbi.OptionalContainerFactory;
-import io.dropwizard.jdbi.args.OptionalArgumentFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
@@ -109,7 +111,6 @@ import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
-
 
 import java.net.InetSocketAddress;
 import java.util.TimeZone;
@@ -184,7 +185,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AccountDAO accountDAO = commonDB.onDemand(AccountDAOImpl.class);
         final AccountDAOAdmin accountDAOAdmin = commonDB.onDemand(AccountDAOAdmin.class);
         final DeviceDAO deviceDAO = commonDB.onDemand(DeviceDAO.class);
-        final DeviceDAOAdmin deviceDAOAdmin = commonDB.onDemand(DeviceDAOAdmin.class);
+        final DeviceAdminDAO deviceAdminDAO = commonDB.onDemand(DeviceAdminDAOImpl.class);
         final OnBoardingLogDAO onBoardingLogDAO = commonDB.onDemand(OnBoardingLogDAO.class);
         final PillHeartBeatDAO pillHeartBeatDAO = commonDB.onDemand(PillHeartBeatDAO.class);
         final SenseColorDAO senseColorDAO = commonDB.onDemand(SenseColorDAOSQLImpl.class);
@@ -359,6 +360,12 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.CALIBRATION)
         );
 
+        final AmazonDynamoDB wifiInfoDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.WIFI_INFO, WifiInfoDynamoDB.class);
+        final WifiInfoDAO wifiInfoDAO = new WifiInfoDynamoDB(
+                wifiInfoDynamoDBClient,
+                tableNames.get(DynamoDBTableName.WIFI_INFO)
+        );
+
         final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
                 .withQuestionResponseDAO(questionResponseDAO)
                 .withMapping(questionResponseDAO);
@@ -381,11 +388,11 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
-                timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB));
+                timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO));
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
         environment.jersey().register(new ApplicationResources(applicationStore));
         environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO));
-        final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceDAOAdmin, deviceDataDAO, trackerMotionDAO, accountDAO,
+        final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceAdminDAO, deviceDataDAO, trackerMotionDAO, accountDAO,
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
         environment.jersey().register(deviceResources);
@@ -394,7 +401,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new EventsResources(senseEventsDAO));
         environment.jersey().register(new FeaturesResources(featureStore));
         environment.jersey().register(new FirmwareResource(jedisPool, firmwareVersionMappingDAO, otaHistoryDAODynamoDB, respCommandsDAODynamoDB, firmwareUpgradePathDAO, deviceDAO, sensorsViewsDynamoDB, teamStore));
-        environment.jersey().register(new InspectionResources(deviceDAOAdmin));
+        environment.jersey().register(new InspectionResources(deviceAdminDAO));
         environment.jersey().register(new OnBoardingLogResource(accountDAO, onBoardingLogDAO));
         environment.jersey().register(
                 new PCHResources(
@@ -406,7 +413,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
         environment.jersey().register(new TeamsResources(teamStore));
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
-        environment.jersey().register(new CalibrationResources(calibrationDAO));
-        environment.jersey().register(new WifiResources(jedisPool));
+        environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
+        environment.jersey().register(new WifiResources(wifiInfoDAO));
     }
 }
