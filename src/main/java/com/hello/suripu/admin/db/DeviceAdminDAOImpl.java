@@ -18,11 +18,16 @@ public abstract class DeviceAdminDAOImpl implements DeviceAdminDAO {
     public static Integer DEFAULT_ACCOUNT_DEVICE_MAP_LIMIT = 100;
     public static Integer MAX_ACCOUNT_DEVICE_MAP_LIMIT = 200;
     public static Integer DEFAULT_ACCOUNT_DEVICE_MAP_MIN_UP_DAYS = 5;
+    public static Integer DEFAULT_PILL_STATUS_LIMIT = 168;
 
     @RegisterMapper(DeviceStatusMapper.class)
     @SingleValueResult(DeviceStatus.class)
-    @SqlQuery("SELECT id, pill_id, fw_version as firmware_version, battery_level, last_updated as last_seen, uptime FROM pill_status WHERE pill_id = :pill_id AND last_updated <= :end_ts ORDER BY id DESC LIMIT 168;")
-    public abstract ImmutableList<DeviceStatus> pillStatusBeforeTs(@Bind("pill_id") final Long pillId, @Bind("end_ts") final DateTime endTs);
+    @SqlQuery("SELECT id, pill_id, fw_version as firmware_version, battery_level, last_updated as last_seen, uptime FROM pill_status WHERE pill_id = :pill_id AND last_updated <= :end_ts ORDER BY id DESC LIMIT :limit;")
+    public abstract ImmutableList<DeviceStatus> pillStatusBeforeTs(
+            @Bind("pill_id") final Long pillId,
+            @Bind("end_ts") final DateTime endTs,
+            @Bind("limit") final Integer limit
+    );
 
     @RegisterMapper(AccountMapper.class)
     @SingleValueResult(Account.class)
@@ -70,10 +75,18 @@ public abstract class DeviceAdminDAOImpl implements DeviceAdminDAO {
 
     @RegisterMapper(DeviceAccountPairMapper.class)
     @SingleValueResult(DeviceAccountPair.class)
-    @SqlQuery("SELECT * FROM account_device_map WHERE id <= :max_id AND last_updated < now() - :min_up_days * interval '1 days' ORDER BY id DESC LIMIT :limit;")
+    @SqlQuery("SELECT * FROM account_device_map WHERE id <= :max_id AND last_updated < now() - interval '1 days' * :min_up_days ORDER BY id DESC LIMIT :limit;")
     public abstract ImmutableList<DeviceAccountPair> getMostRecentPairsQualifiedForDustCalibration(
             @Bind("limit") final Integer limit,
             @Bind("max_id") final Integer maxId,
             @Bind("min_up_days") final Integer minUpDays
+    );
+
+    @RegisterMapper(DeviceAccountPairMapper.class)
+    @SingleValueResult(DeviceAccountPair.class)
+    @SqlQuery("SELECT * FROM account_device_map WHERE id <= :max_id AND last_updated < now() ORDER BY id DESC LIMIT :limit;")
+    public abstract ImmutableList<DeviceAccountPair> getMostRecentPairs(
+            @Bind("limit") final Integer limit,
+            @Bind("max_id") final Integer maxId
     );
 }

@@ -8,7 +8,7 @@ import com.hello.suripu.core.models.DeviceStatus;
 import org.joda.time.DateTime;
 
 public interface DeviceAdminDAO {
-    ImmutableList<DeviceStatus> pillStatusBeforeTs(final Long pillId, final DateTime endTs);
+    ImmutableList<DeviceStatus> pillStatusBeforeTs(final Long pillId, final DateTime endTs, final Integer limit);
     ImmutableList<Account> getAccountsBySenseId(final String deviceId, final Long maxDevices);
     ImmutableList<Account> getAccountsByPillId(final String deviceId, final Long maxDevices);
     ImmutableList<DeviceAccountPair> getPillsByPillIdHint(final String pillId);

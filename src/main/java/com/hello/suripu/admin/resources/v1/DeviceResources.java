@@ -6,6 +6,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
+import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.models.DeviceAdmin;
 import com.hello.suripu.admin.models.DeviceStatusBreakdown;
 import com.hello.suripu.admin.models.InactiveDevicesPaginator;
@@ -166,7 +167,8 @@ public class DeviceResources {
     public List<DeviceStatus> getPillStatus(@Auth final AccessToken accessToken,
                                             @QueryParam("email") final String email,
                                             @QueryParam("pill_id_partial") final String pillIdPartial,
-                                            @QueryParam("end_ts") final Long endTs) {
+                                            @QueryParam("end_ts") final Long endTs,
+                                            @QueryParam("limit") final Integer limitRaw) {
 
         final List<DeviceAccountPair> pills = new ArrayList<>();
         if (email == null && pillIdPartial == null){
@@ -188,9 +190,10 @@ public class DeviceResources {
             pills.addAll(deviceAdminDAO.getPillsByPillIdHint(pillIdPartial));
         }
 
+        final Integer limit = limitRaw == null ? DeviceAdminDAOImpl.DEFAULT_PILL_STATUS_LIMIT : limitRaw;
         final List<DeviceStatus> pillStatuses = new ArrayList<>();
         for (final DeviceAccountPair pill : pills) {
-            pillStatuses.addAll(deviceAdminDAO.pillStatusBeforeTs(pill.internalDeviceId, new DateTime(endTs, DateTimeZone.UTC)));
+            pillStatuses.addAll(deviceAdminDAO.pillStatusBeforeTs(pill.internalDeviceId, new DateTime(endTs, DateTimeZone.UTC), limit));
         }
 
         return pillStatuses;
