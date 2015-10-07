@@ -27,7 +27,7 @@ public class TimelineResources {
         this.timelineAnalyticsDAO = timelineAnalyticsDAO;
     }
 
-    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Path("/summary/{date}")
     @Produces(MediaType.APPLICATION_JSON)
