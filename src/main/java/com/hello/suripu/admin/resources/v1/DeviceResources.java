@@ -39,6 +39,7 @@ import com.hello.suripu.core.models.TimeZoneHistory;
 import com.hello.suripu.core.models.UserInfo;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
+import com.hello.suripu.core.util.PillColorUtil;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
@@ -702,6 +703,31 @@ public class DeviceResources {
         }
         return Response.noContent().build();
     }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Path("/pill_color/{sense_id}/{account_id}")
+    public String getColor(@Auth final AccessToken accessToken,
+                           @NotNull @PathParam("sense_id") final String senseId,
+                           @NotNull @PathParam("account_id") final Long accountId) {
+
+        final Optional<UserInfo> userInfoOptional = mergedUserInfoDynamoDB.getInfo(senseId, accountId);
+        final String defaultColorName = Device.Color.valueOf("BLUE").name();
+
+        if(!userInfoOptional.isPresent()) {
+            return defaultColorName;
+        }
+
+        final UserInfo userInfo = userInfoOptional.get();
+
+        if(userInfo.pillColor.isPresent()) {
+            final Device.Color pillColor = PillColorUtil.displayDeviceColor(userInfo.pillColor.get().getPillColor());
+            return pillColor.name();
+        }
+
+        return defaultColorName;
+    }
+
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
