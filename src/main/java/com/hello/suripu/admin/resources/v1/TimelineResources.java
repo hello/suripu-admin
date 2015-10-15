@@ -13,6 +13,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
@@ -34,6 +35,18 @@ public class TimelineResources {
     public List<GroupedTimelineLogSummary> getTimelineSummariesForNight(@Auth final AccessToken accessToken,
                                     @PathParam("date") final String dateOfNight) {
         List<GroupedTimelineLogSummary> summaries = timelineAnalyticsDAO.getGroupedSummary(dateOfNight);
+        return summaries;
+    }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Path("/summary_batch")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<GroupedTimelineLogSummary> getTimelineLogSummaryHistopry(@Auth final AccessToken accessToken,
+                                                                         @QueryParam("start_date") final String startDate,
+                                                                         @QueryParam("end_date") final String endDate) {
+        List<GroupedTimelineLogSummary> summaries = timelineAnalyticsDAO.getGroupedSummariesForDateRange(startDate, endDate);
         return summaries;
     }
 }
