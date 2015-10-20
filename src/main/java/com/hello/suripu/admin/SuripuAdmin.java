@@ -33,6 +33,7 @@ import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.InspectionResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
+import com.hello.suripu.admin.resources.v1.PillResource;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
@@ -81,6 +82,7 @@ import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
+import com.hello.suripu.core.pill.heartbeat.PillHeartBeatDAODynamoDB;
 import com.hello.suripu.core.preferences.AccountPreferencesDAO;
 import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
 import com.hello.suripu.core.processors.AccountInfoProcessor;
@@ -369,6 +371,12 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.WIFI_INFO)
         );
 
+        final AmazonDynamoDB pillHeartBeatDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.PILL_HEARTBEAT, PillHeartBeatDAODynamoDB.class);
+        final PillHeartBeatDAODynamoDB pillHeartBeatDAODynamoDB = PillHeartBeatDAODynamoDB.create(
+                pillHeartBeatDynamoDBClient,
+                tableNames.get(DynamoDBTableName.PILL_HEARTBEAT)
+        );
+
         final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
                 .withQuestionResponseDAO(questionResponseDAO)
                 .withMapping(questionResponseDAO);
@@ -399,6 +407,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
         environment.jersey().register(deviceResources);
+        environment.jersey().register(new PillResource(accountDAO, pillHeartBeatDAODynamoDB, deviceDAO, deviceAdminDAO));
         environment.jersey().register(new DiagnosticResources(diagnosticDAO, accountDAO, deviceDAO, trackingDAO));
         environment.jersey().register(new DownloadResource(s3Client, "hello-firmware"));
         environment.jersey().register(new EventsResources(senseEventsDAO));
