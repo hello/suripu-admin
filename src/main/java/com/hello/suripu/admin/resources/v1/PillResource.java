@@ -56,9 +56,9 @@ public class PillResource {
     public Map<String, List<PillHeartBeat>> getPillStatus(@Auth final AccessToken accessToken,
                                             @QueryParam("email") final String email,
                                             @QueryParam("pill_id_partial") final String pillIdPartial,
-                                            @QueryParam("start_ts") final Long endTs) {
+                                            @QueryParam("start_ts") final Long startTs) {
 
-        final DateTime cursor = (endTs == null) ? DateTime.now(DateTimeZone.UTC) : new DateTime(endTs, DateTimeZone.UTC);
+        final DateTime cursor = (startTs == null) ? DateTime.now(DateTimeZone.UTC) : new DateTime(startTs, DateTimeZone.UTC);
 
         final List<DeviceAccountPair> pills = Lists.newArrayList();
         if (email == null && pillIdPartial == null){
