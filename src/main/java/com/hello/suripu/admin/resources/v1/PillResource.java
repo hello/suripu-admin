@@ -3,6 +3,7 @@ package com.hello.suripu.admin.resources.v1;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.core.db.AccountDAO;
@@ -14,6 +15,8 @@ import com.hello.suripu.core.pill.heartbeat.PillHeartBeatDAODynamoDB;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 
 @Path("/v1/pill")
 public class PillResource {
@@ -49,11 +53,12 @@ public class PillResource {
     @Timed
     @Path("/heartbeats")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PillHeartBeat> getPillStatus(@Auth final AccessToken accessToken,
+    public Map<String, List<PillHeartBeat>> getPillStatus(@Auth final AccessToken accessToken,
                                             @QueryParam("email") final String email,
                                             @QueryParam("pill_id_partial") final String pillIdPartial,
-                                            @QueryParam("end_ts") final Long endTs,
-                                            @QueryParam("limit") final Integer limitRaw) {
+                                            @QueryParam("start_ts") final Long endTs) {
+
+        final DateTime cursor = (endTs == null) ? DateTime.now(DateTimeZone.UTC) : new DateTime(endTs, DateTimeZone.UTC);
 
         final List<DeviceAccountPair> pills = Lists.newArrayList();
         if (email == null && pillIdPartial == null){
@@ -74,16 +79,12 @@ public class PillResource {
             pills.addAll(deviceAdminDAO.getPillsByPillIdHint(pillIdPartial));
         }
 
-        final List<PillHeartBeat> pillHeartBeats = Lists.newArrayList();
-        for (DeviceAccountPair pair : pills) {
-            final Optional<PillHeartBeat> pillHeartBeatOptional = pillHeartBeatDAODynamoDB.get(pair.externalDeviceId);
-            if(pillHeartBeatOptional.isPresent()) {
-                pillHeartBeats.add(pillHeartBeatOptional.get());
-            }
-
+        final Map<String, List<PillHeartBeat>> heartBeatsPerPill = Maps.newHashMap();
+        for (final DeviceAccountPair pair : pills) {
+            heartBeatsPerPill.put(pair.externalDeviceId, pillHeartBeatDAODynamoDB.get(pair.externalDeviceId, cursor));
         }
 
-        return pillHeartBeats;
+        return heartBeatsPerPill;
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
