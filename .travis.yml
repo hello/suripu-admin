@@ -3,13 +3,24 @@ install: mvn --version
 sudo: false
 script:
 - echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=512m'" > ~/.mavenrc
+- export TEMP_DIR="/tmp/suripu-admin"
+- mkdir -p $TEMP_DIR/opt/hello
+- mkdir -p $TEMP_DIR/etc/hello
+- mkdir -p $TEMP_DIR/etc/init/
 - mkdir src/main/resources
 - cp configs/suripu-admin.prod.yml src/main/resources/boxfuse.yml
+- cp configs/suripu-admin.prod.yml $TEMP_DIR/etc/hello/suripu-admin.yml
+- cp init/suripu-admin.conf $TEMP_DIR/etc/init/
 - mvn versions:set -DnewVersion=$BUILD_NUMBER
 - mvn versions:commit
 - mvn --settings settings.xml clean package
 before_deploy:
+- gem install fpm
 - mvn --settings settings.xml -DskipITs deploy
+- cp target/suripu-admin-$BUILD_NUMBER.jar $TEMP_DIR/opt/hello/suripu-admin.jar
+- fpm --force -s dir -C $TEMP_DIR -t deb --name "suripu-admin" --version $BUILD_NUMBER --config-files etc/hello .
+- mkdir pkg
+- cp suripu-admin_${BUILD_NUMBER}_amd64.deb pkg/
 after_deploy:
 - git config --global user.email "builds@travis-ci.com"
 - git config --global user.name "Travis CI"
@@ -17,18 +28,30 @@ after_deploy:
 - git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
 - git push --quiet git@github.com:hello/suripu-admin.git --tags
 deploy:
-  provider: s3
-  access_key_id: $CI_DEPLOY_USERNAME
-  secret_access_key: $CI_DEPLOY_PASSWORD
-  bucket: hello-deploy
-  skip_cleanup: true
-  local_dir: configs
-  upload-dir: configs/com/hello/suripu/suripu-admin/$BUILD_NUMBER
-  region: us-east-1
-  on:
-    tags: false
-    branch:
-    - PRODUCTION
+  - provider: s3
+    access_key_id: $CI_DEPLOY_USERNAME
+    secret_access_key: $CI_DEPLOY_PASSWORD
+    bucket: hello-deploy
+    skip_cleanup: true
+    local_dir: configs
+    upload-dir: configs/com/hello/suripu/suripu-admin/$BUILD_NUMBER
+    region: us-east-1
+    on:
+      tags: false
+      branch:
+      - PRODUCTION
+  - provider: s3
+    access_key_id: $CI_DEPLOY_USERNAME
+    secret_access_key: $CI_DEPLOY_PASSWORD
+    bucket: hello-deploy
+    skip_cleanup: true
+    local_dir: pkg
+    upload-dir: pkg/suripu-admin/$BUILD_NUMBER
+    region: us-east-1
+    on:
+      tags: false
+      branch:
+      - PRODUCTION
 branches:
   only:
   - master
