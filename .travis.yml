@@ -28,30 +28,30 @@ after_deploy:
 - git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
 - git push --quiet git@github.com:hello/suripu-admin.git --tags
 deploy:
-  - provider: s3
-    access_key_id: $CI_DEPLOY_USERNAME
-    secret_access_key: $CI_DEPLOY_PASSWORD
-    bucket: hello-deploy
-    skip_cleanup: true
-    local_dir: configs
-    upload-dir: configs/com/hello/suripu/suripu-admin/$BUILD_NUMBER
-    region: us-east-1
-    on:
-      tags: false
-      branch:
-      - PRODUCTION
-  - provider: s3
-    access_key_id: $CI_DEPLOY_USERNAME
-    secret_access_key: $CI_DEPLOY_PASSWORD
-    bucket: hello-deploy
-    skip_cleanup: true
-    local_dir: pkg
-    upload-dir: pkg/suripu-admin/$BUILD_NUMBER
-    region: us-east-1
-    on:
-      tags: false
-      branch:
-      - PRODUCTION
+- provider: s3
+  access_key_id: $CI_DEPLOY_USERNAME
+  secret_access_key: $CI_DEPLOY_PASSWORD
+  bucket: hello-deploy
+  skip_cleanup: true
+  local_dir: configs
+  upload-dir: configs/com/hello/suripu/suripu-admin/$BUILD_NUMBER
+  region: us-east-1
+  on:
+    tags: false
+    branch:
+    - PRODUCTION
+- provider: s3
+  access_key_id: $CI_DEPLOY_USERNAME
+  secret_access_key: $CI_DEPLOY_PASSWORD
+  bucket: hello-deploy
+  skip_cleanup: true
+  local_dir: pkg
+  upload-dir: pkg/suripu-admin/$BUILD_NUMBER
+  region: us-east-1
+  on:
+    tags: false
+    branch:
+    - PRODUCTION
 branches:
   only:
   - master
