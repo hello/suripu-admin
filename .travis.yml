@@ -38,20 +38,18 @@ deploy:
   region: us-east-1
   on:
     tags: false
-    branch:
-    - PRODUCTION
+    branch: PRODUCTION
 - provider: s3
   access_key_id: $CI_DEPLOY_USERNAME
   secret_access_key: $CI_DEPLOY_PASSWORD
   bucket: hello-deploy
   skip_cleanup: true
   local_dir: pkg
-  upload-dir: pkg/suripu-admin/$BUILD_NUMBER
+  upload-dir: pkg/suripu-admin
   region: us-east-1
   on:
     tags: false
-    branch:
-    - PRODUCTION
+    branch: PRODUCTION
 branches:
   only:
   - master
