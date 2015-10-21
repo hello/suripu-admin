@@ -19,7 +19,7 @@ before_deploy:
 - gem install fpm
 - cp target/suripu-admin-$BUILD_NUMBER.jar $TEMP_DIR/opt/hello/suripu-admin.jar
 - fpm --force -s dir -C $TEMP_DIR -t deb --name "suripu-admin" --version $BUILD_NUMBER --config-files etc/hello .
-- cp suripu-admin_${BUILD_NUMBER}_amd64.deb deb-pkg/
+- cp suripu-admin_${BUILD_NUMBER}_amd64.deb configs/
 - mvn --settings settings.xml -DskipITs deploy
 after_deploy:
 - git config --global user.email "builds@travis-ci.com"
@@ -35,17 +35,6 @@ deploy:
   skip_cleanup: true
   local_dir: configs
   upload-dir: configs/com/hello/suripu/suripu-admin/$BUILD_NUMBER
-  region: us-east-1
-  on:
-    tags: false
-    branch: PRODUCTION
-- provider: s3
-  access_key_id: $CI_DEPLOY_USERNAME
-  secret_access_key: $CI_DEPLOY_PASSWORD
-  bucket: hello-deploy
-  skip_cleanup: true
-  local_dir: deb-pkg
-  upload-dir: pkg/suripu-admin
   region: us-east-1
   on:
     tags: false
