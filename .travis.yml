@@ -8,6 +8,7 @@ script:
 - mkdir -p $TEMP_DIR/etc/hello
 - mkdir -p $TEMP_DIR/etc/init/
 - mkdir src/main/resources
+- mkdir deb-pkg
 - cp configs/suripu-admin.prod.yml src/main/resources/boxfuse.yml
 - cp configs/suripu-admin.prod.yml $TEMP_DIR/etc/hello/suripu-admin.yml
 - cp init/suripu-admin.conf $TEMP_DIR/etc/init/
@@ -18,7 +19,6 @@ before_deploy:
 - gem install fpm
 - cp target/suripu-admin-$BUILD_NUMBER.jar $TEMP_DIR/opt/hello/suripu-admin.jar
 - fpm --force -s dir -C $TEMP_DIR -t deb --name "suripu-admin" --version $BUILD_NUMBER --config-files etc/hello .
-- mkdir deb-pkg
 - cp suripu-admin_${BUILD_NUMBER}_amd64.deb deb-pkg/
 - mvn --settings settings.xml -DskipITs deploy
 after_deploy:
