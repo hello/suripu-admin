@@ -7,9 +7,7 @@ script:
 - mkdir -p $TEMP_DIR/opt/hello
 - mkdir -p $TEMP_DIR/etc/hello
 - mkdir -p $TEMP_DIR/etc/init/
-- mkdir src/main/resources
 - mkdir deb-pkg
-- cp configs/suripu-admin.prod.yml src/main/resources/boxfuse.yml
 - cp configs/suripu-admin.prod.yml $TEMP_DIR/etc/hello/suripu-admin.yml
 - cp init/suripu-admin.conf $TEMP_DIR/etc/init/
 - mvn versions:set -DnewVersion=$BUILD_NUMBER
@@ -34,7 +32,7 @@ deploy:
   bucket: hello-deploy
   skip_cleanup: true
   local_dir: configs
-  upload-dir: configs/com/hello/suripu/suripu-admin/$BUILD_NUMBER
+  upload-dir: packages/com/hello/suripu/suripu-admin/$BUILD_NUMBER
   region: us-east-1
   on:
     tags: false
