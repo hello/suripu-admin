@@ -733,7 +733,7 @@ public class DeviceResources {
     @PUT
     @Timed
     @Path("/{device_id}/reset_mcu")
-    public void resetDeviceToFactoryFW(@Auth final AccessToken accessToken,
+    public void resetDeviceMCU(@Auth final AccessToken accessToken,
                                        @PathParam("device_id") final String deviceId,
                                        @QueryParam("fw_version") final Integer fwVersion) {
         if(deviceId == null) {
