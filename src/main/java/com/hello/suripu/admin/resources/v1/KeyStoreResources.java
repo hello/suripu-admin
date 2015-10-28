@@ -60,9 +60,9 @@ public class KeyStoreResources {
     @Path("/sense")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Optional<byte[]>> getSenseKeyStoreByBatch(@Auth final AccessToken accessToken,
-                                                                 final Set<String> senseIds) {
-        return senseKeyStore.getBatch(senseIds);
+    public Map<String, DeviceKeyStoreRecord> getSenseKeyStoreByBatch(@Auth final AccessToken accessToken,
+                                                                     final Set<String> senseIds) {
+        return senseKeyStore.getKeyStoreRecordBatch(senseIds);
     }
 
 
@@ -89,8 +89,8 @@ public class KeyStoreResources {
     @Path("/pill")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Optional<byte[]>> getPillKeyStoreByBatch(@Auth final AccessToken accessToken,
-                                                                final Set<String> pillIds) {
-        return pillKeyStore.getBatch(pillIds);
+    public Map<String, DeviceKeyStoreRecord> getPillKeyStoreByBatch(@Auth final AccessToken accessToken,
+                                                                    final Set<String> pillIds) {
+        return pillKeyStore.getKeyStoreRecordBatch(pillIds);
     }
 }
