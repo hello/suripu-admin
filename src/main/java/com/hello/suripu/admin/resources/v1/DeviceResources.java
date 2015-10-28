@@ -4,6 +4,8 @@ import com.amazonaws.AmazonServiceException;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
@@ -735,21 +737,20 @@ public class DeviceResources {
     @Timed
     @Path("/{device_id}/reset_mcu")
     public void resetDeviceMCU(@Auth final AccessToken accessToken,
-                                       @PathParam("device_id") final String deviceId,
-                                       @QueryParam("fw_version") final Integer fwVersion) {
-        if(deviceId == null) {
-            LOGGER.error("Missing device_id parameter");
-            throw new WebApplicationException(Response.Status.BAD_REQUEST);
-        }
+                               @PathParam("device_id") final String deviceId,
+                               @QueryParam("fw_version") final Integer fwVersion) {
 
-        if(fwVersion == null) {
-            LOGGER.error("Missing fw_version parameter");
+        if (deviceId == null || fwVersion == null) {
+            LOGGER.error("One of the following parameters is missing. device_id: {}, fwVersion: {}", deviceId, fwVersion);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
 
         LOGGER.info("Resetting device: {} on FW Version: {}", deviceId, fwVersion);
-        final Map<ResponseCommand, String> issuedCommands = new HashMap<>();
-        issuedCommands.put(ResponseCommand.RESET_MCU, "true");
+
+        final Map<ResponseCommand, String> issuedCommands  = new ImmutableMap.Builder<ResponseCommand, String>()
+                .put(ResponseCommand.RESET_MCU, "true")
+                .build();
+
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
@@ -761,18 +762,9 @@ public class DeviceResources {
                                @PathParam("device_id") final String deviceId,
                                @QueryParam("fw_version") final Integer fwVersion,
                                @QueryParam("log_level") final Integer logLevel) {
-        if(deviceId == null) {
-            LOGGER.error("Missing device_id parameter");
-            throw new WebApplicationException(Response.Status.BAD_REQUEST);
-        }
 
-        if(fwVersion == null) {
-            LOGGER.error("Missing fw_version parameter");
-            throw new WebApplicationException(Response.Status.BAD_REQUEST);
-        }
-
-        if(logLevel == null) {
-            LOGGER.error("Missing log_level parameter");
+        if (deviceId == null || fwVersion == null || logLevel == null) {
+            LOGGER.error("One of the following parameters is missing. device_id: {}, fwVersion: {}, logLevel: {}", deviceId, fwVersion, logLevel);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
 
@@ -782,8 +774,11 @@ public class DeviceResources {
         }
 
         LOGGER.info("Setting log level for device: {} to '{}'", deviceId, logLevel.toString());
-        final Map<ResponseCommand, String> issuedCommands = new HashMap<>();
-        issuedCommands.put(ResponseCommand.SET_LOG_LEVEL, logLevel.toString());
+
+        final Map<ResponseCommand, String> issuedCommands  = new ImmutableMap.Builder<ResponseCommand, String>()
+                .put(ResponseCommand.SET_LOG_LEVEL, logLevel.toString())
+                .build();
+
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
