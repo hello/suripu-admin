@@ -40,6 +40,7 @@ import com.hello.suripu.core.models.UserInfo;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PillColorUtil;
+import com.hello.suripu.core.util.SenseLogLevelUtil;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
@@ -749,6 +750,40 @@ public class DeviceResources {
         LOGGER.info("Resetting device: {} on FW Version: {}", deviceId, fwVersion);
         final Map<ResponseCommand, String> issuedCommands = new HashMap<>();
         issuedCommands.put(ResponseCommand.RESET_MCU, "true");
+        responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @PUT
+    @Timed
+    @Path("/{device_id}/set_log_level")
+    public void resetDeviceMCU(@Auth final AccessToken accessToken,
+                               @PathParam("device_id") final String deviceId,
+                               @QueryParam("fw_version") final Integer fwVersion,
+                               @QueryParam("log_level") final Integer logLevel) {
+        if(deviceId == null) {
+            LOGGER.error("Missing device_id parameter");
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
+        if(fwVersion == null) {
+            LOGGER.error("Missing fw_version parameter");
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
+        if(logLevel == null) {
+            LOGGER.error("Missing log_level parameter");
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
+        if (!SenseLogLevelUtil.isAllowedLogLevel(logLevel)) {
+            LOGGER.error("Incorrect log level provided. Not sending response command.");
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
+        LOGGER.info("Setting log level for device: {} to '{}'", deviceId, logLevel.toString());
+        final Map<ResponseCommand, String> issuedCommands = new HashMap<>();
+        issuedCommands.put(ResponseCommand.SET_LOG_LEVEL, logLevel.toString());
         responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
     }
 
