@@ -31,6 +31,7 @@ import com.hello.suripu.admin.resources.v1.FeaturesResources;
 import com.hello.suripu.admin.resources.v1.FirmwareResource;
 import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.InspectionResources;
+import com.hello.suripu.admin.resources.v1.KeyStoreResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.PillResource;
@@ -428,5 +429,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
         environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
         environment.jersey().register(new WifiResources(wifiInfoDAO));
+        environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
     }
 }
