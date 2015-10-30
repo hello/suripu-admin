@@ -646,7 +646,6 @@ public class DeviceResources {
     return deviceIdsMissingColor;
   }
 
-
   @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
   @POST
   @Path("/color/{sense_id}")
@@ -660,7 +659,7 @@ public class DeviceResources {
       return 0;
     }
 
-    final Optional<Device.Color> colorOptional = serialNumberToColor(deviceKeyStoreRecordOptional.get().metadata, deviceKeyStoreRecordOptional.get().key);
+    final Optional<Device.Color> colorOptional = serialNumberToColor(deviceKeyStoreRecordOptional.get().metadata, deviceKeyStoreRecordOptional.get().deviceId);
     if (colorOptional.isPresent()) {
       return senseColorDAO.saveColorForSense(senseId, colorOptional.get().name());
     }
@@ -726,76 +725,6 @@ public class DeviceResources {
     }
 
     return defaultColorName;
-  }
-
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
-  @PUT
-  @Timed
-  @Path("/{device_id}/reset_mcu")
-  public void resetDeviceMCU(@Auth final AccessToken accessToken,
-                             @PathParam("device_id") final String deviceId,
-                             @QueryParam("fw_version") final Integer fwVersion) {
-
-    if (deviceId == null || fwVersion == null) {
-      LOGGER.error("One of the following parameters is missing. device_id: {}, fwVersion: {}", deviceId, fwVersion);
-      throw new WebApplicationException(Response.Status.BAD_REQUEST);
-    }
-
-    LOGGER.info("Resetting device: {} on FW Version: {}", deviceId, fwVersion);
-
-    final Map<ResponseCommand, String> issuedCommands = new ImmutableMap.Builder<ResponseCommand, String>()
-        .put(ResponseCommand.RESET_MCU, "true")
-        .build();
-
-    responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
-  }
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
-  @PUT
-  @Timed
-  @Path("/{device_id}/set_log_level")
-  public void setLogLevel(@Auth final AccessToken accessToken,
-                          @PathParam("device_id") final String deviceId,
-                          @QueryParam("fw_version") final Integer fwVersion,
-                          @QueryParam("log_level") final String logLevel) {
-
-    if (deviceId == null || fwVersion == null || logLevel == null) {
-      LOGGER.error("One of the following parameters is missing. device_id: {}, fwVersion: {}, logLevel: {}", deviceId, fwVersion, logLevel);
-      throw new WebApplicationException(Response.Status.BAD_REQUEST);
-    }
-
-    try {
-      final SenseLogLevelUtil.LogLevel senseLogLevel = SenseLogLevelUtil.getLogLevelFromString(logLevel);
-      LOGGER.info("Setting log level for device: {} to '{}'", deviceId, senseLogLevel.toString());
-
-      final Map<ResponseCommand, String> issuedCommands = new ImmutableMap.Builder<ResponseCommand, String>()
-          .put(ResponseCommand.SET_LOG_LEVEL, senseLogLevel.value.toString())
-          .build();
-
-      responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
-
-    } catch (Exception ex) {
-      LOGGER.error("Failed Setting Log Level: {}", ex.getMessage());
-      throw new WebApplicationException(Response.Status.BAD_REQUEST);
-    }
-  }
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
-  @GET
-  @Timed
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/get_log_levels")
-  public Set<String> getLogLevels(@Auth final AccessToken accessToken) {
-
-    final List<SenseLogLevelUtil.LogLevel> logLevels = Lists.newArrayList(SenseLogLevelUtil.LogLevel.values());
-    final Set<String> logLevelNames = Sets.newHashSet();
-
-    for (final SenseLogLevelUtil.LogLevel level : logLevels) {
-      logLevelNames.add(level.name());
-    }
-
-    return logLevelNames;
   }
 
   @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
@@ -910,6 +839,122 @@ public class DeviceResources {
     return allSeenSenses;
   }
 
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/update_timezone_by_partner/{account_id}")
+  public Response updateTimeZoneByPartner(@Auth final AccessToken accessToken,
+                                          @NotNull @PathParam("account_id") final Long accountId) {
+
+    final Optional<Long> partnerAccountIdOptional = deviceDAO.getPartnerAccountId(accountId);
+    if (!partnerAccountIdOptional.isPresent()) {
+      LOGGER.warn("Cannot update timezone by partner for {} - Partner not found", accountId);
+      throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Partner not found").build());
+    }
+
+    final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(accountId);
+    if (!deviceAccountPairOptional.isPresent()) {
+      LOGGER.warn("Cannot update timezone by partner for {} - No sense paired to this account", accountId);
+      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("No sense paired to this account").build());
+    }
+    final Optional<DateTimeZone> timeZoneOptional = mergedUserInfoDynamoDB.getTimezone(deviceAccountPairOptional.get().externalDeviceId, accountId);
+
+    if (timeZoneOptional.isPresent()) {
+      LOGGER.warn("Cannot update timezone by partner for {} - This account already got a timezone", accountId);
+      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("This account already got a timezone").build());
+    }
+
+    final Optional<DeviceAccountPair> partnerdeviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(partnerAccountIdOptional.get());
+    if (!partnerdeviceAccountPairOptional.isPresent()) {
+      LOGGER.warn("Cannot update timezone by partner for {} - Partner does not have a sense", accountId);
+      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("No sense paired to partner account").build());
+    }
+    final Optional<DateTimeZone> partnerTimeZoneOptional = mergedUserInfoDynamoDB.getTimezone(partnerdeviceAccountPairOptional.get().externalDeviceId, partnerAccountIdOptional.get());
+
+    if (!partnerAccountIdOptional.isPresent()) {
+      LOGGER.warn("Cannot update timezone by partner for {} - Partner does not have a timezone", accountId);
+      throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Partner does not have a timezone").build());
+    }
+
+    try {
+      mergedUserInfoDynamoDB.setTimeZone(deviceAccountPairOptional.get().externalDeviceId, accountId, partnerTimeZoneOptional.get());
+    } catch (AmazonServiceException awsException) {
+      LOGGER.error("Failed to set timezone for account {} by partner {} because {}", accountId, partnerAccountIdOptional.get(), awsException.getMessage());
+      throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
+    }
+
+    return Response.noContent().build();
+  }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+  @PUT
+  @Timed
+  @Path("/{device_id}/reset_mcu")
+  public void resetDeviceMCU(@Auth final AccessToken accessToken,
+                             @PathParam("device_id") final String deviceId,
+                             @QueryParam("fw_version") final Integer fwVersion) {
+
+    if (deviceId == null || fwVersion == null) {
+      LOGGER.error("One of the following parameters is missing. device_id: {}, fwVersion: {}", deviceId, fwVersion);
+      throw new WebApplicationException(Response.Status.BAD_REQUEST);
+    }
+
+    LOGGER.info("Resetting device: {} on FW Version: {}", deviceId, fwVersion);
+
+    final Map<ResponseCommand, String> issuedCommands = new ImmutableMap.Builder<ResponseCommand, String>()
+        .put(ResponseCommand.RESET_MCU, "true")
+        .build();
+
+    responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
+  }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+  @PUT
+  @Timed
+  @Path("/{device_id}/set_log_level")
+  public void setLogLevel(@Auth final AccessToken accessToken,
+                          @PathParam("device_id") final String deviceId,
+                          @QueryParam("fw_version") final Integer fwVersion,
+                          @QueryParam("log_level") final String logLevel) {
+
+    if (deviceId == null || fwVersion == null || logLevel == null) {
+      LOGGER.error("One of the following parameters is missing. device_id: {}, fwVersion: {}, logLevel: {}", deviceId, fwVersion, logLevel);
+      throw new WebApplicationException(Response.Status.BAD_REQUEST);
+    }
+
+    try {
+      final SenseLogLevelUtil.LogLevel senseLogLevel = SenseLogLevelUtil.getLogLevelFromString(logLevel);
+      LOGGER.info("Setting log level for device: {} to '{}'", deviceId, senseLogLevel.toString());
+
+      final Map<ResponseCommand, String> issuedCommands = new ImmutableMap.Builder<ResponseCommand, String>()
+          .put(ResponseCommand.SET_LOG_LEVEL, senseLogLevel.value.toString())
+          .build();
+
+      responseCommandsDAODynamoDB.insertResponseCommands(deviceId, fwVersion, issuedCommands);
+
+    } catch (Exception ex) {
+      LOGGER.error("Failed Setting Log Level: {}", ex.getMessage());
+      throw new WebApplicationException(Response.Status.BAD_REQUEST);
+    }
+  }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+  @GET
+  @Timed
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/get_log_levels")
+  public Set<String> getLogLevels(@Auth final AccessToken accessToken) {
+
+    final List<SenseLogLevelUtil.LogLevel> logLevels = Lists.newArrayList(SenseLogLevelUtil.LogLevel.values());
+    final Set<String> logLevelNames = Sets.newHashSet();
+
+    for (final SenseLogLevelUtil.LogLevel level : logLevels) {
+      logLevelNames.add(level.name());
+    }
+
+    return logLevelNames;
+  }
+
   // Helpers
   private List<DeviceAdmin> getSensesByAccountId(final Long accountId) {
     final ImmutableList<DeviceAccountPair> senseAccountPairs = deviceDAO.getSensesForAccountId(accountId);
@@ -995,52 +1040,5 @@ public class DeviceResources {
 
     LOGGER.error("Can't get color for SN {}, {}", serialNumber, deviceId);
     return Optional.absent();
-  }
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
-  @POST
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/update_timezone_by_partner/{account_id}")
-  public Response updateTimeZoneByPartner(@Auth final AccessToken accessToken,
-                                          @NotNull @PathParam("account_id") final Long accountId) {
-
-    final Optional<Long> partnerAccountIdOptional = deviceDAO.getPartnerAccountId(accountId);
-    if (!partnerAccountIdOptional.isPresent()) {
-      LOGGER.warn("Cannot update timezone by partner for {} - Partner not found", accountId);
-      throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Partner not found").build());
-    }
-
-    final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(accountId);
-    if (!deviceAccountPairOptional.isPresent()) {
-      LOGGER.warn("Cannot update timezone by partner for {} - No sense paired to this account", accountId);
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("No sense paired to this account").build());
-    }
-    final Optional<DateTimeZone> timeZoneOptional = mergedUserInfoDynamoDB.getTimezone(deviceAccountPairOptional.get().externalDeviceId, accountId);
-
-    if (timeZoneOptional.isPresent()) {
-      LOGGER.warn("Cannot update timezone by partner for {} - This account already got a timezone", accountId);
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("This account already got a timezone").build());
-    }
-
-    final Optional<DeviceAccountPair> partnerdeviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(partnerAccountIdOptional.get());
-    if (!partnerdeviceAccountPairOptional.isPresent()) {
-      LOGGER.warn("Cannot update timezone by partner for {} - Partner does not have a sense", accountId);
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("No sense paired to partner account").build());
-    }
-    final Optional<DateTimeZone> partnerTimeZoneOptional = mergedUserInfoDynamoDB.getTimezone(partnerdeviceAccountPairOptional.get().externalDeviceId, partnerAccountIdOptional.get());
-
-    if (!partnerAccountIdOptional.isPresent()) {
-      LOGGER.warn("Cannot update timezone by partner for {} - Partner does not have a timezone", accountId);
-      throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Partner does not have a timezone").build());
-    }
-
-    try {
-      mergedUserInfoDynamoDB.setTimeZone(deviceAccountPairOptional.get().externalDeviceId, accountId, partnerTimeZoneOptional.get());
-    } catch (AmazonServiceException awsException) {
-      LOGGER.error("Failed to set timezone for account {} by partner {} because {}", accountId, partnerAccountIdOptional.get(), awsException.getMessage());
-      throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
-    }
-
-    return Response.noContent().build();
   }
 }
