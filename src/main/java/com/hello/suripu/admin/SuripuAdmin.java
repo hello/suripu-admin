@@ -18,10 +18,13 @@ import com.hello.suripu.admin.cli.ScanSerialNumbers;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
+import com.hello.suripu.admin.db.TableDAO;
+import com.hello.suripu.admin.db.TableDAOPostgres;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
 import com.hello.suripu.admin.resources.v1.CalibrationResources;
+import com.hello.suripu.admin.resources.v1.DBResource;
 import com.hello.suripu.admin.resources.v1.DataResources;
 import com.hello.suripu.admin.resources.v1.DeviceResources;
 import com.hello.suripu.admin.resources.v1.DiagnosticResources;
@@ -202,6 +205,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final DeviceDataDAO deviceDataDAO = sensorsDB.onDemand(DeviceDataDAO.class);
         final DiagnosticDAO diagnosticDAO = sensorsDB.onDemand(DiagnosticDAO.class);
         final TrackerMotionDAO trackerMotionDAO = sensorsDB.onDemand(TrackerMotionDAO.class);
+        final TableDAO sensorsTableDAO = sensorsDB.onDemand(TableDAOPostgres.class);
 
         final ImmutableMap<DynamoDBTableName, String> tableNames = configuration.dynamoDBConfiguration().tables();
         final AmazonDynamoDB mergedUserInfoDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.ALARM_INFO);
@@ -430,5 +434,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
+        environment.jersey().register(new DBResource(sensorsTableDAO));
+
     }
 }
