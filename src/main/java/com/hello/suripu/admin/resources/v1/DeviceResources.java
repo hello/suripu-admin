@@ -535,52 +535,6 @@ public class DeviceResources {
     }
   }
 
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
-  @GET
-  @Timed
-  @Path("/key_store_hints/sense/{sense_id}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public DeviceKeyStoreRecord getKeyHintForSense(@Auth final AccessToken accessToken,
-                                                 @PathParam("sense_id") final String senseId) {
-    final Optional<DeviceKeyStoreRecord> senseKeyStoreRecord = senseKeyStore.getKeyStoreRecord(senseId);
-    if (!senseKeyStoreRecord.isPresent()) {
-      throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("This sense has not been properly provisioned!").build());
-    }
-    return senseKeyStoreRecord.get();
-  }
-
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
-  @GET
-  @Timed
-  @Path("/key_store_hints/pill/{pill_id}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public DeviceKeyStoreRecord getKeyHintForPill(@Auth final AccessToken accessToken,
-                                                @PathParam("pill_id") final String pillId) {
-    final Optional<DeviceKeyStoreRecord> pillKeyStoreRecord = pillKeyStore.getKeyStoreRecord(pillId);
-    if (!pillKeyStoreRecord.isPresent()) {
-      throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("This pill has not been properly provisioned!").build());
-    }
-    return pillKeyStoreRecord.get();
-  }
-
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
-  @POST
-  @Timed
-  @Path("/key_store/{device_type}")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Map<String, Optional<byte[]>> getKeyStoreByBatch(@Auth final AccessToken accessToken,
-                                                          @PathParam("device_type") final String deviceType,
-                                                          final Set<String> senseIds) {
-    if (deviceType.equals(Device.Type.PILL.toString().toLowerCase())) {
-      return pillKeyStore.getBatch(senseIds);
-    }
-    return senseKeyStore.getBatch(senseIds);
-  }
-
-
   @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
   @POST
   @Path("/provision/sense")
