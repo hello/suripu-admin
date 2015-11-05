@@ -4,6 +4,8 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
@@ -365,10 +367,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
 
         final AmazonDynamoDB calibrationDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.CALIBRATION, CalibrationDynamoDB.class);
-        final CalibrationDAO calibrationDAO = new CalibrationDynamoDB(
-                calibrationDynamoDBClient,
-                tableNames.get(DynamoDBTableName.CALIBRATION)
-        );
+        final CalibrationDAO calibrationDAO = CalibrationDynamoDB.create(calibrationDynamoDBClient, tableNames.get(DynamoDBTableName.CALIBRATION));
 
         final AmazonDynamoDB wifiInfoDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.WIFI_INFO, WifiInfoDynamoDB.class);
         final WifiInfoDAO wifiInfoDAO = new WifiInfoDynamoDB(
@@ -395,7 +394,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withAccountInfoProcessor(accountInfoProcessor)
                 .withLightData(lightData)
                 .withWakeStdDevData(wakeStdDevData)
-                .withPreferencesDAO(accountPreferencesDynamoDB);
+                .withPreferencesDAO(accountPreferencesDynamoDB)
+                .withCalibrationDAO(calibrationDAO);
 
         final InsightProcessor insightProcessor = insightBuilder.build();
 
