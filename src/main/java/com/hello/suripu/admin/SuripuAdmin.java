@@ -333,7 +333,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AmazonDynamoDB fwUpgradePathDynamoDB = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.FIRMWARE_UPGRADE_PATH, FirmwareUpgradePathDAO.class);
         final FirmwareUpgradePathDAO firmwareUpgradePathDAO = new FirmwareUpgradePathDAO(fwUpgradePathDynamoDB, tableNames.get(DynamoDBTableName.FIRMWARE_UPGRADE_PATH));
 
-        final AmazonDynamoDB sensorsViewsDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.SENSE_LAST_SEEN, SensorsViewsDynamoDB.class);
+        final AmazonDynamoDBAsync sensorsViewsDynamoDBClient = new AmazonDynamoDBAsyncClient(awsCredentialsProvider, com.hello.suripu.core.clients.AmazonDynamoDBClientFactory.getDefaultClientConfiguration());
+        sensorsViewsDynamoDBClient.setEndpoint(configuration.dynamoDBConfiguration().endpoints().get(DynamoDBTableName.SENSE_LAST_SEEN));
+
         final SensorsViewsDynamoDB sensorsViewsDynamoDB = new SensorsViewsDynamoDB(
                 sensorsViewsDynamoDBClient,
                 tableNames.get(DynamoDBTableName.SENSE_PREFIX),
