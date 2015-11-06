@@ -4,6 +4,9 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
+import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
@@ -84,6 +87,8 @@ import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
+import com.hello.suripu.core.logging.DataLogger;
+import com.hello.suripu.core.logging.KinesisLoggerFactory;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.pill.heartbeat.PillHeartBeatDAODynamoDB;
@@ -188,6 +193,10 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final AmazonS3Client s3Client = new AmazonS3Client(awsCredentialsProvider);
 
+        final ClientConfiguration clientConfiguration = new ClientConfiguration();
+        clientConfiguration.withConnectionTimeout(200); // in ms
+        clientConfiguration.withMaxErrorRetry(1);
+        final AmazonKinesisAsyncClient kinesisClient = new AmazonKinesisAsyncClient(awsCredentialsProvider, clientConfiguration);
 
         // Common DB
         final AccountDAO accountDAO = commonDB.onDemand(AccountDAOImpl.class);
@@ -284,15 +293,15 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final ImmutableMap<QueueName, String> streams = ImmutableMap.copyOf(configuration.getKinesisConfiguration().getStreams());
 
-        final ClientConfiguration clientConfiguration = new ClientConfiguration();
-        clientConfiguration.withConnectionTimeout(200); // in ms
-        clientConfiguration.withMaxErrorRetry(1);
+        final KinesisLoggerFactory kinesisLoggerFactory = new KinesisLoggerFactory(kinesisClient, streams);
+        final DataLogger activityLogger = kinesisLoggerFactory.get(QueueName.ACTIVITY_STREAM);
 
         environment.jersey().register(new AuthDynamicFeature(new OAuthCredentialAuthFilter.Builder<AccessToken>()
                 .setAuthenticator(new OAuthAuthenticator(tokenStore))
                 .setAuthorizer(new OAuthAuthorizer())
                 .setRealm("SUPER SECRET STUFF")
                 .setPrefix("Bearer")
+                .setLogger(activityLogger)
                 .buildAuthFilter()));
         environment.jersey().register(ScopesAllowedDynamicFeature.class);
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(AccessToken.class));
@@ -331,7 +340,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AmazonDynamoDB fwUpgradePathDynamoDB = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.FIRMWARE_UPGRADE_PATH, FirmwareUpgradePathDAO.class);
         final FirmwareUpgradePathDAO firmwareUpgradePathDAO = new FirmwareUpgradePathDAO(fwUpgradePathDynamoDB, tableNames.get(DynamoDBTableName.FIRMWARE_UPGRADE_PATH));
 
-        final AmazonDynamoDB sensorsViewsDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.SENSE_LAST_SEEN, SensorsViewsDynamoDB.class);
+        final AmazonDynamoDBAsync sensorsViewsDynamoDBClient = new AmazonDynamoDBAsyncClient(AmazonDynamoDBClientFactory.getDefaultClientConfiguration());
+        sensorsViewsDynamoDBClient.setEndpoint(configuration.dynamoDBConfiguration().endpoints().get(DynamoDBTableName.SENSE_LAST_SEEN));
+
         final SensorsViewsDynamoDB sensorsViewsDynamoDB = new SensorsViewsDynamoDB(
                 sensorsViewsDynamoDBClient,
                 tableNames.get(DynamoDBTableName.SENSE_PREFIX),
@@ -365,10 +376,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
 
         final AmazonDynamoDB calibrationDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.CALIBRATION, CalibrationDynamoDB.class);
-        final CalibrationDAO calibrationDAO = new CalibrationDynamoDB(
-                calibrationDynamoDBClient,
-                tableNames.get(DynamoDBTableName.CALIBRATION)
-        );
+        final CalibrationDAO calibrationDAO = CalibrationDynamoDB.create(calibrationDynamoDBClient, tableNames.get(DynamoDBTableName.CALIBRATION));
 
         final AmazonDynamoDB wifiInfoDynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.WIFI_INFO, WifiInfoDynamoDB.class);
         final WifiInfoDAO wifiInfoDAO = new WifiInfoDynamoDB(
@@ -395,7 +403,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withAccountInfoProcessor(accountInfoProcessor)
                 .withLightData(lightData)
                 .withWakeStdDevData(wakeStdDevData)
-                .withPreferencesDAO(accountPreferencesDynamoDB);
+                .withPreferencesDAO(accountPreferencesDynamoDB)
+                .withCalibrationDAO(calibrationDAO);
 
         final InsightProcessor insightProcessor = insightBuilder.build();
 
