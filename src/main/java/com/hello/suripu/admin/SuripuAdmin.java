@@ -448,7 +448,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
         environment.jersey().register(new DBResource(sensorsTableDAO));
-        environment.jersey().register(new FeedbackResources(feedbackDAO));
+        environment.jersey().register(new FeedbackResources(feedbackDAO, accountDAO));
 
     }
 }
