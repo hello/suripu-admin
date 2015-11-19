@@ -27,7 +27,7 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/v1/insights")
 
-public class InsightsResource extends BaseResource {
+public class InsightsResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InsightsResource.class);
 
