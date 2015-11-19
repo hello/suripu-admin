@@ -56,6 +56,7 @@ import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
+import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
@@ -390,13 +391,19 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.PILL_HEARTBEAT)
         );
 
+        final AmazonDynamoDB deviceDataDAODynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.DEVICE_DATA, DeviceDataDAODynamoDB.class);
+        final DeviceDataDAODynamoDB deviceDataDAODynamoDB = new DeviceDataDAODynamoDB(
+                deviceDataDAODynamoDBClient,
+                tableNames.get(DynamoDBTableName.DEVICE_DATA)
+        ) ;
+
         final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
                 .withQuestionResponseDAO(questionResponseDAO)
                 .withMapping(questionResponseDAO);
         final AccountInfoProcessor accountInfoProcessor = builder.build();
 
         final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
-                .withSenseDAOs(deviceDataDAO, deviceDAO)
+                .withSenseDAOs(deviceDataDAO, deviceDataDAODynamoDB, deviceDAO)
                 .withTrackerMotionDAO(trackerMotionDAO)
                 .withInsightsDAO(trendsInsightsDAO)
                 .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
@@ -408,7 +415,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final InsightProcessor insightProcessor = insightBuilder.build();
 
-        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO));
+        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAODynamoDB));
 
 
         environment.jersey().register(PingResource.class);

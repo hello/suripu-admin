@@ -3,10 +3,12 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.models.Insight;
+import com.hello.suripu.core.db.DeviceDataInsightQueryDAO;
+import com.hello.suripu.core.models.DeviceId;
 import com.hello.suripu.core.models.Insights.InsightCard;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.processors.InsightProcessor;
+import com.hello.suripu.core.resources.BaseResource;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
@@ -25,17 +27,20 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/v1/insights")
 
-public class InsightsResource {
+public class InsightsResource extends BaseResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InsightsResource.class);
 
     private final InsightProcessor insightProcessor;
     private final DeviceDAO deviceDAO;
+    private final DeviceDataInsightQueryDAO deviceDataInsightQueryDAO;
 
-    public InsightsResource(final InsightProcessor insightProcessor, final DeviceDAO deviceDAO) {
+    public InsightsResource(final InsightProcessor insightProcessor, final DeviceDAO deviceDAO, final DeviceDataInsightQueryDAO deviceDataInsightQueryDAO ) {
         this.insightProcessor = insightProcessor;
         this.deviceDAO = deviceDAO;
+        this.deviceDataInsightQueryDAO = deviceDataInsightQueryDAO;
     }
+
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @POST
@@ -56,7 +61,7 @@ public class InsightsResource {
 
         final Long deviceId = deviceIdOptional.get();
 
-        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceId, category);
+        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, DeviceId.create(deviceId), deviceDataInsightQueryDAO, category);
 
         if (!generatedInsight.isPresent()) {
             LOGGER.debug("Could not generate {} insight for accountId {} ", category, accountId);
