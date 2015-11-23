@@ -78,7 +78,7 @@ public class FeedbackResources {
         final int updated = feedbackDAO.undoFeedbackUpdate(id);
 
         if (updated == 0) {
-            throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity(new JsonError(404, "Feedback not found!")).build());
+            throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(new JsonError(Response.Status.NOT_FOUND.getStatusCode(), "Feedback not found!")).build());
         }
 
         return Response.noContent().build();
