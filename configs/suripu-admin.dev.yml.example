@@ -124,6 +124,7 @@ dynamodb:
   region: us-east-1
   tables:
       alarm_info : alarm_info
+      device_data : sense_data
       features : features
       firmware_upgrade_path: fw_upgrade_path
       firmware_versions : firmware_versions_mapping
@@ -151,6 +152,7 @@ dynamodb:
   
   endpoints:
       alarm_info : http://localhost:7777
+      device_data : http://localhost:7777
       features : http://localhost:7777
       firmware_upgrade_path : http://localhost:7777
       firmware_versions : http://localhost:7777
