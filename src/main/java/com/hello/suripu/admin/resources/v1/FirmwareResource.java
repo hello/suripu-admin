@@ -477,7 +477,7 @@ public class FirmwareResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/certified_combinations")
-    public Response updateSenseBlackList(@Auth final AccessToken accessToken,
+    public Response updateCertifiedCombinations(@Auth final AccessToken accessToken,
                                          @Valid final Set<String> updatedCombinations) {
         Jedis jedis = null;
         try {
@@ -518,7 +518,7 @@ public class FirmwareResource {
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/certified_combinations")
-    public Set<String> getCertifiedCombination(@Auth final AccessToken accessToken) {
+    public Set<String> retrieveCertifiedCombination(@Auth final AccessToken accessToken) {
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
