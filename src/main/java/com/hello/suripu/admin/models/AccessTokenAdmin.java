@@ -24,6 +24,9 @@ public class AccessTokenAdmin extends AccessToken {
         this.id = id;
     }
 
+    @JsonProperty("app_id")
+    public Long getAppId() { return this.appId; }
+
     @JsonProperty("created_at")
     public DateTime getCreatedAt() {
         return this.createdAt;
