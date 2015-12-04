@@ -8,7 +8,6 @@ import com.hello.suripu.core.models.DeviceId;
 import com.hello.suripu.core.models.Insights.InsightCard;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.processors.InsightProcessor;
-import com.hello.suripu.core.resources.BaseResource;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
@@ -16,10 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by jyfan on 9/2/15.
@@ -72,4 +74,12 @@ public class InsightsResource {
         return generatedInsight;
     }
 
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/categories")
+    public List<InsightCard.Category> getCategories(@Auth final AccessToken accessToken){
+        return Arrays.asList(InsightCard.Category.values());
+    }
 }
