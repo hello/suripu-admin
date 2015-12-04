@@ -1,11 +1,10 @@
 package com.hello.suripu.admin.resources.v1;
 
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
-import com.hello.suripu.coredw8.db.AccessTokenDAO;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.admin.db.AccessTokenAdminDAO;
+import com.hello.suripu.admin.models.AccessTokenAdmin;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.oauth.AccessTokenUtils;
@@ -20,7 +19,10 @@ import com.hello.suripu.core.oauth.TokenExpirationRequest;
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
 import com.hello.suripu.core.oauth.stores.OAuthTokenStore;
 import com.hello.suripu.core.util.HelloHttpHeader;
-import com.codahale.metrics.annotation.Timed;
+import com.hello.suripu.coredw8.db.AccessTokenDAO;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
@@ -31,13 +33,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.UUID;
 
 @Path("/v1/token")
@@ -48,18 +56,21 @@ public class TokenResources {
     private final ApplicationStore applicationStore;
     private final AccessTokenDAO accessTokenDAO;
     private final AccountDAO accountDAO;
+    private final AccessTokenAdminDAO  accessTokenAdminDAO;
 
     @Context
     HttpServletRequest request;
     public TokenResources(final OAuthTokenStore<AccessToken,ClientDetails, ClientCredentials> tokenStore,
                           final ApplicationStore<Application, ApplicationRegistration> applicationStore,
                           final AccessTokenDAO accessTokenDAO,
-                          final AccountDAO accountDAO) {
+                          final AccountDAO accountDAO,
+                          final AccessTokenAdminDAO accessTokenAdminDAO) {
 
         this.tokenStore = tokenStore;
         this.applicationStore = applicationStore;
         this.accessTokenDAO = accessTokenDAO;
         this.accountDAO = accountDAO;
+        this.accessTokenAdminDAO = accessTokenAdminDAO;
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
@@ -83,6 +94,40 @@ public class TokenResources {
         }
         return Days.daysBetween(DateTime.now(DateTimeZone.UTC), accessTokenOptional.get().createdAt.plusSeconds((int) accessTokenOptional.get().expiresIn.longValue())).getDays();
     }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Path("/active")
+    @Timed
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<AccessTokenAdmin> getActiveTokens(@Auth final AccessToken accessToken,
+                                                  @QueryParam("max_id") final Long maxId,
+                                                  @QueryParam("limit") @DefaultValue("50") final Integer limit){
+        if (maxId == null) {
+            return accessTokenAdminDAO.getMostRecentActiveTokens(limit);
+        }
+        return accessTokenAdminDAO.getActiveTokensWithCursor(maxId, limit);
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @PUT
+    @Path("/update_expiration/{id}")
+    @Timed
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response revokeToken(@Auth final AccessToken accessToken,
+                                @PathParam("id") final Long id,
+                                @QueryParam("expires_in") @DefaultValue("0") final Integer expiresIn){
+
+        final Integer rowAffected = accessTokenAdminDAO.updateExpiration(id, expiresIn);
+
+        if (rowAffected == 0) {
+            throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+        }
+        return Response.noContent().build();
+    }
+
+
 
     @ScopesAllowed({OAuthScope.IMPLICIT_TOKEN})
     @POST

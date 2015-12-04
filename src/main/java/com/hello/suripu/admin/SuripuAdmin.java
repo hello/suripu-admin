@@ -19,6 +19,7 @@ import com.hello.suripu.admin.cli.PopulateColors;
 import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
+import com.hello.suripu.admin.db.AccessTokenAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.db.TableDAO;
@@ -290,6 +291,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new CustomJSONExceptionMapper(configuration.getDebug()));
 
         final AccessTokenDAO accessTokenDAO = commonDB.onDemand(AccessTokenDAO.class);
+        final AccessTokenAdminDAO accessTokenAdminDAO = commonDB.onDemand(AccessTokenAdminDAO.class);
 
         final ApplicationsDAO applicationsDAO = commonDB.onDemand(ApplicationsDAO.class);
         final PersistentApplicationStore applicationStore = new PersistentApplicationStore(applicationsDAO);
@@ -450,7 +452,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 )
         );
         environment.jersey().register(new TeamsResources(teamStore));
-        environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO));
+        environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO, accessTokenAdminDAO));
         environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
