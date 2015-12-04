@@ -1,5 +1,6 @@
 package com.hello.suripu.admin.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.coredw8.oauth.AccessToken;
@@ -28,5 +29,15 @@ public class AccessTokenAdmin extends AccessToken {
     @JsonProperty("scopes")
     public List<OAuthScope> getScopes() {
         return Arrays.asList(this.scopes);
+    }
+
+    @JsonIgnore
+    public String serializeAccessToken() {
+        return super.serializeAccessToken();
+    }
+
+    @JsonIgnore
+    public String serializeRefreshToken() {
+        return super.serializeRefreshToken();
     }
 }
