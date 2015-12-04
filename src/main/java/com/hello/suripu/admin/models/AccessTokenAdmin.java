@@ -16,6 +16,9 @@ public class AccessTokenAdmin extends AccessToken {
     @JsonProperty("id")
     private Long id;
 
+    @JsonIgnore
+    public final String tokenType = "Bearer";
+
     public AccessTokenAdmin(final Long id, final UUID token, final UUID refreshToken, final Long expiresIn, final DateTime createdAt, final Long accountId, final Long appId, final OAuthScope[] scopes) {
         super(token, refreshToken, expiresIn, createdAt, accountId, appId, scopes);
         this.id = id;
@@ -39,5 +42,10 @@ public class AccessTokenAdmin extends AccessToken {
     @JsonIgnore
     public String serializeRefreshToken() {
         return super.serializeRefreshToken();
+    }
+
+    @JsonIgnore
+    public String getName() {
+        return super.getName();
     }
 }
