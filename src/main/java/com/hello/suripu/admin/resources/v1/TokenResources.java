@@ -3,6 +3,7 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
+import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.AccessTokenAdminDAO;
 import com.hello.suripu.admin.models.AccessTokenAdmin;
 import com.hello.suripu.core.db.AccountDAO;
@@ -111,6 +112,23 @@ public class TokenResources {
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Timed
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<AccessTokenAdmin> getTokenByAccountId(@Auth final AccessToken accessToken,
+                                                      @QueryParam("email") final String email,
+                                                      @QueryParam("limit") @DefaultValue("100") final Integer limit){
+        if(email == null) {
+            throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).build());
+        }
+        final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, email);
+        if (!accountIdOptional.isPresent()) {
+            throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+        }
+        return accessTokenAdminDAO.getActiveTokensByAccountId(accountIdOptional.get(), limit);
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
     @Path("/update_expiration/{id}")
     @Timed
