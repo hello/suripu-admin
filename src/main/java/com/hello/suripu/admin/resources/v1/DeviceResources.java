@@ -2,13 +2,11 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.amazonaws.AmazonServiceException;
 import com.codahale.metrics.annotation.Timed;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
@@ -49,16 +47,15 @@ import com.hello.suripu.core.util.SenseLogLevelUtil;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import javax.validation.Valid;
@@ -76,7 +73,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -907,6 +903,45 @@ public class DeviceResources {
     }
 
     return logLevelNames;
+  }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+  @GET
+  @Timed
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/active_devices_diff/{device_type}")
+  public Set<String> getDiffHourlyActiveDevices(@Auth final AccessToken accessToken,
+                                                @PathParam("device_type") final String deviceType,
+                                                @QueryParam("before") final String beforeDateTimeString,
+                                                @QueryParam("after") final String afterDateTimeString) {
+
+    if (beforeDateTimeString == null || afterDateTimeString == null) {
+      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).build());
+    }
+
+    final String beforeSetKey = String.format("hourly_active_%s_%s", deviceType, beforeDateTimeString);
+    final String afterSetKey = String.format("hourly_active_%s_%s", deviceType, afterDateTimeString);
+
+    Jedis jedis = null;
+    try {
+      jedis = jedisPool.getResource();
+      return jedis.sdiff(beforeSetKey, afterSetKey);
+    }catch (final JedisDataException jde) {
+      LOGGER.error("Failed getting data out of redis: {}", jde.getMessage());
+      jedisPool.returnBrokenResource(jedis);
+      throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+    } catch(final Exception e) {
+      LOGGER.error("Unknown error connection to redis: {}", e.getMessage());
+      jedisPool.returnBrokenResource(jedis);
+      throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+    }
+    finally {
+      try{
+        jedisPool.returnResource(jedis);
+      }catch (final JedisConnectionException jce) {
+        LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+      }
+    }
   }
 
   // Helpers
