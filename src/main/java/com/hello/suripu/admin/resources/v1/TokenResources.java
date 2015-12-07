@@ -111,6 +111,7 @@ public class TokenResources {
         return accessTokenAdminDAO.getActiveTokensWithCursor(maxId, limit);
     }
 
+
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
@@ -128,23 +129,23 @@ public class TokenResources {
         return accessTokenAdminDAO.getActiveTokensByAccountId(accountIdOptional.get(), limit);
     }
 
+
     @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
     @PUT
-    @Path("/update_expiration/{id}")
+    @Path("/invalidate/{id}")
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
     public Response revokeToken(@Auth final AccessToken accessToken,
-                                @PathParam("id") final Long id,
-                                @QueryParam("expires_in") @DefaultValue("0") final Integer expiresIn){
+                                @PathParam("id") final Long id){
 
-        final Integer rowAffected = accessTokenAdminDAO.updateExpiration(id, expiresIn);
+        final Integer rowAffected = accessTokenAdminDAO.updateExpiration(id, 0);
 
         if (rowAffected == 0) {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
         }
+
         return Response.noContent().build();
     }
-
 
 
     @ScopesAllowed({OAuthScope.IMPLICIT_TOKEN})
