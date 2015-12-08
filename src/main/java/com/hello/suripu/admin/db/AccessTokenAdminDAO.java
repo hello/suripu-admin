@@ -26,6 +26,6 @@ public interface AccessTokenAdminDAO extends AccessTokenDAO {
     @SqlUpdate("UPDATE oauth_tokens SET expires_in = :expires_in WHERE id = :id;")
     Integer updateExpiration(@Bind("id") final Long id, @Bind("expires_in") final Integer expiresIn);
 
-    @SqlQuery("SELECT * FROM oauth_tokens WHERE account_id = :account_id AND expires_in > 0 ORDER BY id DESC LIMIT :limit;")
+    @SqlQuery("SELECT * FROM oauth_tokens AS t LEFT OUTER JOIN oauth_applications AS a ON t.app_id = a.id WHERE account_id = :account_id AND expires_in > 0 ORDER BY t.id DESC LIMIT :limit;")
     List<AccessTokenAdmin> getActiveTokensByAccountId(@Bind("account_id") final Long accountId, @Bind("limit") final Integer limit);
 }

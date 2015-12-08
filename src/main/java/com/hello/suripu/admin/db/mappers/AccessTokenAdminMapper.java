@@ -32,8 +32,8 @@ public class AccessTokenAdminMapper implements ResultSetMapper<AccessTokenAdmin>
                 new DateTime(r.getTimestamp("created_at"), DateTimeZone.UTC),
                 r.getLong("account_id"),
                 r.getLong("app_id"),
-                scopeArray
-
+                scopeArray,
+                r.getString("name")
         );
     }
 }
