@@ -23,6 +23,7 @@ import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.db.TableDAO;
 import com.hello.suripu.admin.db.TableDAOPostgres;
+import com.hello.suripu.admin.processors.ActiveDevicesTracker;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
@@ -45,6 +46,7 @@ import com.hello.suripu.admin.resources.v1.PillResource;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
+import com.hello.suripu.admin.resources.v1.TrackingResources;
 import com.hello.suripu.admin.resources.v1.WifiResources;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
@@ -418,6 +420,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withCalibrationDAO(calibrationDAO);
 
         final InsightProcessor insightProcessor = insightBuilder.build();
+        final ActiveDevicesTracker activeDevicesTracker = new ActiveDevicesTracker(jedisPool);
 
         environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAODynamoDB));
 
@@ -456,6 +459,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
         environment.jersey().register(new DBResource(sensorsTableDAO));
         environment.jersey().register(new FeedbackResources(feedbackDAO, accountDAO));
-
+        environment.jersey().register(new TrackingResources(activeDevicesTracker));
     }
 }
