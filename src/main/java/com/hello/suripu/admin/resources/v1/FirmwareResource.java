@@ -1,13 +1,11 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
@@ -23,9 +21,11 @@ import com.hello.suripu.core.models.FirmwareInfo;
 import com.hello.suripu.core.models.OTAHistory;
 import com.hello.suripu.core.models.Team;
 import com.hello.suripu.core.models.UpgradeNodeRequest;
-
-import com.codahale.metrics.annotation.Timed;
 import com.hello.suripu.core.oauth.OAuthScope;
+import com.hello.suripu.core.util.JsonError;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +33,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Tuple;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -68,6 +69,7 @@ public class FirmwareResource {
     private final DeviceDAO deviceDAO;
     private final JedisPool jedisPool;
     private static final String REDIS_SEEN_FIRMWARE_KEY = "firmwares_seen";
+    private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
 
     public FirmwareResource(final JedisPool jedisPool,
                             final FirmwareVersionMappingDAO firmwareVersionMappingDAO,
@@ -467,6 +469,84 @@ public class FirmwareResource {
         LOGGER.info("Deleting FW upgrade node for group: {} on FW Version: {}", groupName, fromFWVersion);
         firmwareUpgradePathDAO.deleteFWUpgradeNode(groupName, fromFWVersion);
     }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @PUT
+    @Timed
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/certified_combinations")
+    public Response updateCertifiedCombinations(@Auth final AccessToken accessToken,
+                                         @Valid final Set<String> updatedCombinations) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            final Pipeline pipe = jedis.pipelined();
+            pipe.multi();
+            pipe.del(CERTIFIED_FIRMWARE_SET_KEY);
+            for (final String combination : updatedCombinations) {
+                pipe.sadd(CERTIFIED_FIRMWARE_SET_KEY, combination);
+            }
+            pipe.exec();
+        } catch (JedisDataException e) {
+            if (jedis != null) {
+                jedisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                            String.format("Failed to get data from redis - %s", e.getMessage()))).build());
+        } catch (Exception e) {
+            if (jedis != null) {
+                jedisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                            String.format("Failed to update certified combined firmware versions because %s", e.getMessage()))).build());
+        } finally {
+            if (jedis != null) {
+                jedisPool.returnResource(jedis);
+            }
+        }
+        return Response.noContent().build();
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Timed
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/certified_combinations")
+    public Set<String> retrieveCertifiedCombination(@Auth final AccessToken accessToken) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return jedis.smembers(CERTIFIED_FIRMWARE_SET_KEY);
+        } catch (JedisDataException e) {
+            if (jedis != null) {
+                jedisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                            String.format("Failed to get data from redis - %s", e.getMessage()))).build());
+        } catch (Exception e) {
+            if (jedis != null) {
+                jedisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JsonError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                            String.format("Failed to retrieve certified combined firmware versions because %s", e.getMessage()))).build());
+        } finally {
+            if (jedis != null) {
+                jedisPool.returnResource(jedis);
+            }
+        }
+    }
+
+
 
     private Optional<FirmwareInfo> getFirmwareVersionForDevice(final String deviceId) {
         final List<DeviceAccountPair> pairs = deviceDAO.getAccountIdsForDeviceId(deviceId);
