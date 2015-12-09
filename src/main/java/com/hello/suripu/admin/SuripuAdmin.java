@@ -47,6 +47,7 @@ import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
 import com.hello.suripu.admin.resources.v1.WifiResources;
+import com.hello.suripu.admin.resources.v2.AccountAdminResources;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
@@ -457,6 +458,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
         environment.jersey().register(new DBResource(sensorsTableDAO));
+        environment.jersey().register(new AccountAdminResources(accountDAO));
         environment.jersey().register(new FeedbackResources(feedbackDAO, accountDAO));
 
     }
