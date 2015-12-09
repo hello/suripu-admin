@@ -127,6 +127,7 @@ dynamodb:
   region: us-east-1
   tables:
     alarm_info : prod_alarm_info
+    device_data : prod_sense_data
     features : features
     firmware_upgrade_path : fw_upgrade_path
     firmware_versions : prod_firmware_versions_mapping
@@ -153,6 +154,7 @@ dynamodb:
 
   endpoints:
       alarm_info : http://dynamodb.us-east-1.amazonaws.com
+      device_data : http://dynamodb.us-east-1.amazonaws.com
       features : http://dynamodb.us-east-1.amazonaws.com
       firmware_upgrade_path : http://dynamodb.us-east-1.amazonaws.com
       firmware_versions : http://dynamodb.us-east-1.amazonaws.com

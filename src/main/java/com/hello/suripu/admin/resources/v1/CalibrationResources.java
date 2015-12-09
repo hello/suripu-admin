@@ -4,7 +4,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.models.UpdateCalibrationResponse;
 import com.hello.suripu.core.db.CalibrationDAO;
-import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.oauth.OAuthScope;
@@ -39,8 +38,13 @@ import java.util.Set;
 public class CalibrationResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CalibrationResources.class);
+    private static final Integer MAX_PUT_SIZE = 50;
+    private static final Integer MAX_PUT_FORCE_SIZE = 500;
+
     private final CalibrationDAO calibrationDAO;
     private final DeviceDataDAO deviceDataDAO;
+
+
 
     public CalibrationResources(final CalibrationDAO calibrationDAO, final DeviceDataDAO deviceDataDAO) {
         this.calibrationDAO = calibrationDAO;
@@ -116,8 +120,8 @@ public class CalibrationResources {
     public UpdateCalibrationResponse putBatchCalibration(@Auth final AccessToken accessToken,
                                                          final List<Calibration> calibrations) {
 
-        if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_SIZE){
-            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", CalibrationDynamoDB.MAX_PUT_SIZE))).build());
+        if (calibrations.size() > MAX_PUT_SIZE){
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", MAX_PUT_SIZE))).build());
         }
         final Map<String, Optional<Boolean>> putBatchResponse = calibrationDAO.putBatch(calibrations);
         return UpdateCalibrationResponse.createFromPutBatchResponse(putBatchResponse);
@@ -131,8 +135,8 @@ public class CalibrationResources {
     public UpdateCalibrationResponse putBatchForceCalibration(@Auth final AccessToken accessToken,
                                                               final List<Calibration> calibrations) {
 
-        if (calibrations.size() > CalibrationDynamoDB.MAX_PUT_FORCE_SIZE){
-            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", CalibrationDynamoDB.MAX_PUT_FORCE_SIZE))).build());
+        if (calibrations.size() > MAX_PUT_FORCE_SIZE){
+            throw new WebApplicationException(Response.status(400).entity(new JsonError(400, String.format("Batch size should be less than %s", MAX_PUT_FORCE_SIZE))).build());
         }
 
         final Map<String, Optional<Boolean>> putBatchForceResponse = calibrationDAO.putBatchForce(calibrations);
