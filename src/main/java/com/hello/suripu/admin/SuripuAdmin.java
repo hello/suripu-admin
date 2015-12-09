@@ -5,8 +5,6 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClient;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
@@ -37,7 +35,6 @@ import com.hello.suripu.admin.resources.v1.FirmwareResource;
 import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.InspectionResources;
 import com.hello.suripu.admin.resources.v1.KeyStoreResources;
-import com.hello.suripu.admin.resources.v1.NotificationResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.PillResource;
@@ -88,8 +85,6 @@ import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.diagnostic.DiagnosticDAO;
-import com.hello.suripu.core.notifications.MobilePushNotificationProcessor;
-import com.hello.suripu.core.notifications.NotificationSubscriptionsDAO;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.pill.heartbeat.PillHeartBeatDAODynamoDB;
@@ -443,9 +438,5 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new DBResource(sensorsTableDAO));
         environment.jersey().register(new AccountAdminResources(accountDAO));
 
-        final AmazonSNS amazonSNS = new AmazonSNSClient(awsCredentialsProvider);
-        final NotificationSubscriptionsDAO notificationSubscriptionsDAO = commonDB.onDemand(NotificationSubscriptionsDAO.class);
-        final MobilePushNotificationProcessor pushNotificationProcessor = new MobilePushNotificationProcessor(amazonSNS, notificationSubscriptionsDAO);
-        environment.jersey().register(new NotificationResources(accountDAO, pushNotificationProcessor));
     }
 }
