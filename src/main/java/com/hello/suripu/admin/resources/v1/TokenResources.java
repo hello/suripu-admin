@@ -53,7 +53,7 @@ import java.util.UUID;
 public class TokenResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenResources.class);
-    private final OAuthTokenStore<AccessToken,ClientDetails, ClientCredentials> tokenStore;
+    private final OAuthTokenStore<AccessToken,ClientDetails, ClientCredentials> implicitTokenStore;
     private final ApplicationStore applicationStore;
     private final AccessTokenDAO accessTokenDAO;
     private final AccountDAO accountDAO;
@@ -61,13 +61,13 @@ public class TokenResources {
 
     @Context
     HttpServletRequest request;
-    public TokenResources(final OAuthTokenStore<AccessToken,ClientDetails, ClientCredentials> tokenStore,
+    public TokenResources(final OAuthTokenStore<AccessToken,ClientDetails, ClientCredentials> implicitTokenStore,
                           final ApplicationStore<Application, ApplicationRegistration> applicationStore,
                           final AccessTokenDAO accessTokenDAO,
                           final AccountDAO accountDAO,
                           final AccessTokenAdminDAO accessTokenAdminDAO) {
 
-        this.tokenStore = tokenStore;
+        this.implicitTokenStore = implicitTokenStore;
         this.applicationStore = applicationStore;
         this.accessTokenDAO = accessTokenDAO;
         this.accountDAO = accountDAO;
@@ -191,7 +191,8 @@ public class TokenResources {
         details.setApp(application);
         AccessToken implicitToken;
         try {
-            implicitToken = tokenStore.storeAccessToken(details);
+            implicitToken = implicitTokenStore.storeAccessToken(details);
+
         } catch (ClientAuthenticationException e) {
             LOGGER.error("Failed to generate token on behalf of account {} because {}", implicitTokenRequest.email, e.getMessage());
             throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).build());

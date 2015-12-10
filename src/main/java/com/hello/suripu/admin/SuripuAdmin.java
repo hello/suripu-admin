@@ -298,6 +298,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final PersistentAccessTokenStore tokenStore = new PersistentAccessTokenStore(accessTokenDAO, applicationStore);
 
+        final PersistentAccessTokenStore implicitTokenStore = new PersistentAccessTokenStore(accessTokenDAO, applicationStore, configuration.getTokenExpiration());
+
         final ImmutableMap<QueueName, String> streams = ImmutableMap.copyOf(configuration.getKinesisConfiguration().getStreams());
 
         final KinesisLoggerFactory kinesisLoggerFactory = new KinesisLoggerFactory(kinesisClient, streams);
@@ -452,7 +454,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 )
         );
         environment.jersey().register(new TeamsResources(teamStore));
-        environment.jersey().register(new TokenResources(tokenStore, applicationStore, accessTokenDAO, accountDAO, accessTokenAdminDAO));
+        environment.jersey().register(new TokenResources(implicitTokenStore, applicationStore, accessTokenDAO, accountDAO, accessTokenAdminDAO));
         environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
