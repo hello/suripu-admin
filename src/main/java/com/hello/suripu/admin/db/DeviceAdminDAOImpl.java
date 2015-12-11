@@ -89,4 +89,28 @@ public abstract class DeviceAdminDAOImpl implements DeviceAdminDAO {
             @Bind("limit") final Integer limit,
             @Bind("max_id") final Integer maxId
     );
+
+    @RegisterMapper(DeviceAccountPairMapper.class)
+    @SingleValueResult(DeviceAccountPair.class)
+    @SqlQuery("SELECT * FROM account_device_map AS adm " +
+              "NATURAL JOIN " +
+              "(SELECT device_id, MAX(id) AS id FROM account_device_map " +
+              "WHERE active=true AND id < :max_id GROUP BY device_id) " +
+              "mostrecent ORDER BY id DESC LIMIT :limit;")
+    public abstract ImmutableList<DeviceAccountPair> getLatestUniqueActiveSensePairs(
+            @Bind("max_id") final Integer maxId,
+            @Bind("limit") final Integer limit
+    );
+
+    @RegisterMapper(DeviceAccountPairMapper.class)
+    @SingleValueResult(DeviceAccountPair.class)
+    @SqlQuery("SELECT * FROM account_tracker_map AS atm " +
+              "NATURAL JOIN " +
+              "(SELECT device_id, MAX(id) AS id FROM account_tracker_map " +
+              "WHERE active=true AND id < :max_id GROUP BY device_id) " +
+              "mostrecent ORDER BY id DESC LIMIT :limit;")
+    public abstract ImmutableList<DeviceAccountPair> getLatestUniqueActivePillPairs(
+            @Bind("max_id") final Integer maxId,
+            @Bind("limit") final Integer limit
+    );
 }

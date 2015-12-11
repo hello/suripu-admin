@@ -15,4 +15,6 @@ public interface DeviceAdminDAO {
     ImmutableList<Account> getAccountsWithSenseWithoutPill(final Integer limit);
     ImmutableList<Account> getAccountsWithLowPillBattery(final Integer criticalBatteryLevel, final Integer limit);
     ImmutableList<DeviceAccountPair> getMostRecentPairsQualifiedForDustCalibration(final Integer limit, final Integer maxId, final Integer minUpDays);
+    ImmutableList<DeviceAccountPair> getLatestUniqueActiveSensePairs(Integer maxId, Integer limit);
+    ImmutableList<DeviceAccountPair> getLatestUniqueActivePillPairs(Integer maxId, Integer limit);
 }
