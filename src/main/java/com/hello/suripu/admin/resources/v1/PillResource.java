@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
+import com.hello.suripu.admin.models.PillAdmin;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.models.DeviceAccountPair;
@@ -20,6 +21,7 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -110,5 +112,37 @@ public class PillResource {
 
         throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
                 .entity("No heartbeat found!").build());
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Timed
+    @Path("/latest/pair")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DeviceAccountPair> getLatestUniqueActivePillPairs(@Auth final AccessToken accessToken,
+                                                                  @QueryParam("max_id") @DefaultValue("1000000") final Integer maxId,
+                                                                  @QueryParam("limit") @DefaultValue("100") final Integer limit) {
+
+        return deviceAdminDAO.getLatestUniqueActivePillPairs(maxId, limit);
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Timed
+    @Path("/latest/data")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<PillAdmin> getLatestUniqueActivePillData(@Auth final AccessToken accessToken,
+                                                         @QueryParam("max_id") @DefaultValue("1000000") final Integer maxId,
+                                                         @QueryParam("limit") @DefaultValue("100") final Integer limit) {
+
+        final List<PillAdmin> pillAdmins = Lists.newArrayList();
+        final List<DeviceAccountPair> pillAccountPairs = deviceAdminDAO.getLatestUniqueActivePillPairs(maxId, limit);
+        for (final DeviceAccountPair pillAccountPair : pillAccountPairs) {
+            pillAdmins.add(new PillAdmin(
+                pillAccountPair,
+                pillHeartBeatDAODynamoDB.get(pillAccountPair.externalDeviceId, pillAccountPair.created)
+            ));
+        }
+        return  pillAdmins;
     }
 }
