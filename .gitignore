@@ -3,3 +3,4 @@
 *.releaseBackup
 *.dev*.yml
 target
+dump.rdb
