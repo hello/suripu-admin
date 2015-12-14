@@ -23,11 +23,19 @@ public class ActiveDevicesTracker {
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
+
+            if (!(jedis.exists(beforeSetKey) && jedis.exists(afterSetKey))){
+                LOGGER.error("Redis key not found");
+                return Optional.absent();
+            }
             return Optional.of(jedis.sdiff(beforeSetKey, afterSetKey));
-        }catch (final JedisDataException jde) {
+        }
+        catch (final JedisDataException jde) {
             LOGGER.error("Failed getting data out of redis: {}", jde.getMessage());
             jedisPool.returnBrokenResource(jedis);
-        } catch(final Exception e) {
+
+        }
+        catch(final Exception e) {
             LOGGER.error("Unknown error connection to redis: {}", e.getMessage());
             jedisPool.returnBrokenResource(jedis);
         }

@@ -45,7 +45,7 @@ public class TrackingResources {
 
         final Optional<Set<String>> diffDevicesOptional = activeDevicesTracker.getDiff(beforeSetKey, afterSetKey);
         if (!diffDevicesOptional.isPresent()) {
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         return diffDevicesOptional.get();
     }
