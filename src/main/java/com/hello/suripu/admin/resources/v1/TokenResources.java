@@ -24,11 +24,15 @@ import com.hello.suripu.coredw8.db.AccessTokenDAO;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -46,15 +50,13 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.UUID;
 
 @Path("/v1/token")
 public class TokenResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenResources.class);
     private final OAuthTokenStore<AccessToken,ClientDetails, ClientCredentials> implicitTokenStore;
-    private final ApplicationStore applicationStore;
+    private final ApplicationStore<Application, ApplicationRegistration> applicationStore;
     private final AccessTokenDAO accessTokenDAO;
     private final AccountDAO accountDAO;
     private final AccessTokenAdminDAO  accessTokenAdminDAO;

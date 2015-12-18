@@ -16,10 +16,15 @@ import com.hello.suripu.core.pill.heartbeat.PillHeartBeatDAODynamoDB;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -30,8 +35,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.Map;
 
 @Path("/v1/pill")
 public class PillResource {
@@ -134,15 +137,11 @@ public class PillResource {
     public List<PillAdmin> getLatestUniqueActivePillData(@Auth final AccessToken accessToken,
                                                          @QueryParam("max_id") @DefaultValue("1000000") final Integer maxId,
                                                          @QueryParam("limit") @DefaultValue("100") final Integer limit) {
-
-        final List<PillAdmin> pillAdmins = Lists.newArrayList();
         final List<DeviceAccountPair> pillAccountPairs = deviceAdminDAO.getLatestUniqueActivePillPairs(maxId, limit);
-        for (final DeviceAccountPair pillAccountPair : pillAccountPairs) {
-            pillAdmins.add(new PillAdmin(
-                pillAccountPair,
-                pillHeartBeatDAODynamoDB.get(pillAccountPair.externalDeviceId, pillAccountPair.created)
-            ));
-        }
-        return  pillAdmins;
+        return pillAccountPairs.stream()
+                               .map(pillAccountPair -> new PillAdmin(pillAccountPair,
+                                                                     pillHeartBeatDAODynamoDB.get(pillAccountPair.externalDeviceId,
+                                                                                                  pillAccountPair.created)))
+                               .collect(Collectors.toList());
     }
 }

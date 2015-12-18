@@ -26,14 +26,18 @@ import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.Tuple;
-import redis.clients.jedis.exceptions.JedisDataException;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -49,11 +53,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Tuple;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 @Path("/v1/firmware")
 public class FirmwareResource {
@@ -114,20 +119,19 @@ public class FirmwareResource {
 
         final Jedis jedis = jedisPool.getResource();
         final String fwVersion = firmwareVersion.toString();
-        final List<FirmwareInfo> deviceInfo = Lists.newArrayList();
         try {
             //Get all elements in the index range provided
             final Set<Tuple> allFWDevices = jedis.zrevrangeWithScores(fwVersion, rangeStart, rangeEnd);
-            for(final Tuple device: allFWDevices){
-                deviceInfo.add(new FirmwareInfo(fwVersion, device.getElement(), (long)device.getScore()));
-            }
+            return allFWDevices.stream()
+                               .map(device -> new FirmwareInfo(fwVersion, device.getElement(), (long) device.getScore()))
+                               .collect(Collectors.toList());
         } catch (Exception e) {
             LOGGER.error("Failed retrieving firmware device list.", e.getMessage());
         } finally {
             jedisPool.returnResource(jedis);
         }
 
-        return deviceInfo;
+        return Collections.emptyList();
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
