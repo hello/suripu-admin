@@ -1,17 +1,20 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.oauth.Application;
 import com.hello.suripu.core.oauth.ApplicationRegistration;
 import com.hello.suripu.core.oauth.OAuthScope;
-
 import com.hello.suripu.core.oauth.stores.ApplicationStore;
+import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredw8.oauth.Auth;
+import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -24,8 +27,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
 
 @Path("/v1/applications")
 public class ApplicationResources {
@@ -73,9 +74,7 @@ public class ApplicationResources {
     @Produces(MediaType.APPLICATION_JSON)
     public List<OAuthScope> scopes(@Auth final AccessToken accessToken) {
         final List<OAuthScope> scopes = new ArrayList<>();
-        for(OAuthScope scope : OAuthScope.values()) {
-            scopes.add(scope);
-        }
+        Collections.addAll(scopes, OAuthScope.values());
         return scopes;
     }
 
@@ -93,10 +92,7 @@ public class ApplicationResources {
         }
 
         final List<OAuthScope> scopes = new ArrayList<>();
-
-        for(OAuthScope scope : applicationOptional.get().scopes) {
-            scopes.add(scope);
-        }
+        Collections.addAll(scopes, applicationOptional.get().scopes);
 
         return scopes;
     }

@@ -6,7 +6,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
@@ -47,15 +46,20 @@ import com.hello.suripu.core.util.SenseLogLevelUtil;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.exceptions.JedisDataException;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -72,12 +76,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 @Path("/v1/devices")
 public class DeviceResources {
@@ -435,10 +438,9 @@ public class DeviceResources {
           .entity(new JsonError(400, String.format("Sense %s has not been paired to any account", senseId))).build());
     }
 
-    final List<Long> pairedAccountIdList = new ArrayList<>();
-    for (final UserInfo pairUser : pairedUsers) {
-      pairedAccountIdList.add(pairUser.accountId);
-    }
+    final List<Long> pairedAccountIdList = pairedUsers.stream()
+                                                      .map(pairUser -> pairUser.accountId)
+                                                      .collect(Collectors.toList());
 
     if (!pairedAccountIdList.contains(accountId)) {
       throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
@@ -893,15 +895,10 @@ public class DeviceResources {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/get_log_levels")
   public Set<String> getLogLevels(@Auth final AccessToken accessToken) {
-
     final List<SenseLogLevelUtil.LogLevel> logLevels = Lists.newArrayList(SenseLogLevelUtil.LogLevel.values());
-    final Set<String> logLevelNames = Sets.newHashSet();
-
-    for (final SenseLogLevelUtil.LogLevel level : logLevels) {
-      logLevelNames.add(level.name());
-    }
-
-    return logLevelNames;
+    return logLevels.stream()
+                    .map(SenseLogLevelUtil.LogLevel::name)
+                    .collect(Collectors.toSet());
   }
 
   // Helpers
