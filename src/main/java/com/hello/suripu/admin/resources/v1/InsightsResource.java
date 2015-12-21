@@ -3,6 +3,7 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
+import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.DeviceDataInsightQueryDAO;
 import com.hello.suripu.core.models.DeviceId;
 import com.hello.suripu.core.models.Insights.InsightCard;
@@ -35,11 +36,13 @@ public class InsightsResource {
 
     private final InsightProcessor insightProcessor;
     private final DeviceDAO deviceDAO;
+    private final DeviceDataDAO deviceDataDAO;
     private final DeviceDataInsightQueryDAO deviceDataInsightQueryDAO;
 
-    public InsightsResource(final InsightProcessor insightProcessor, final DeviceDAO deviceDAO, final DeviceDataInsightQueryDAO deviceDataInsightQueryDAO ) {
+    public InsightsResource(final InsightProcessor insightProcessor, final DeviceDAO deviceDAO, final DeviceDataDAO deviceDataDAO, final DeviceDataInsightQueryDAO deviceDataInsightQueryDAO ) {
         this.insightProcessor = insightProcessor;
         this.deviceDAO = deviceDAO;
+        this.deviceDataDAO = deviceDataDAO;
         this.deviceDataInsightQueryDAO = deviceDataInsightQueryDAO;
     }
 
@@ -63,7 +66,7 @@ public class InsightsResource {
 
         final Long deviceId = deviceIdOptional.get();
 
-        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, DeviceId.create(deviceId), deviceDataInsightQueryDAO, category);
+        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, DeviceId.create(deviceId), deviceDataDAO, category);
 
         if (!generatedInsight.isPresent()) {
             LOGGER.debug("Could not generate {} insight for accountId {} ", category, accountId);

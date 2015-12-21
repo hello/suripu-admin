@@ -417,16 +417,16 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withTrackerMotionDAO(trackerMotionDAO)
                 .withInsightsDAO(trendsInsightsDAO)
                 .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
+                .withPreferencesDAO(accountPreferencesDynamoDB)
                 .withAccountInfoProcessor(accountInfoProcessor)
                 .withLightData(lightData)
                 .withWakeStdDevData(wakeStdDevData)
-                .withPreferencesDAO(accountPreferencesDynamoDB)
                 .withCalibrationDAO(calibrationDAO);
 
         final InsightProcessor insightProcessor = insightBuilder.build();
         final ActiveDevicesTracker activeDevicesTracker = new ActiveDevicesTracker(jedisPool);
 
-        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAODynamoDB));
+        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAO, deviceDataDAODynamoDB));
 
 
         environment.jersey().register(PingResource.class);
