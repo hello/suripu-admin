@@ -63,6 +63,7 @@ import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.db.FeedbackDAO;
+import com.hello.suripu.core.db.FeedbackReadDAO;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.db.InsightsDAODynamoDB;
@@ -209,6 +210,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AccountDAOAdmin accountDAOAdmin = commonDB.onDemand(AccountDAOAdmin.class);
         final DeviceDAO deviceDAO = commonDB.onDemand(DeviceDAO.class);
         final DeviceAdminDAO deviceAdminDAO = commonDB.onDemand(DeviceAdminDAOImpl.class);
+        final FeedbackReadDAO feedbackReadDAO = commonDB.onDemand(FeedbackReadDAO.class);
         final FeedbackDAO feedbackDAO = commonDB.onDemand(FeedbackDAO.class);
         final OnBoardingLogDAO onBoardingLogDAO = commonDB.onDemand(OnBoardingLogDAO.class);
         final PillHeartBeatDAO pillHeartBeatDAO = commonDB.onDemand(PillHeartBeatDAO.class);
@@ -462,7 +464,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
         environment.jersey().register(new DBResource(sensorsTableDAO));
-        environment.jersey().register(new FeedbackResources(feedbackDAO, accountDAO));
+        environment.jersey().register(new FeedbackResources(feedbackReadDAO, feedbackDAO, accountDAO));
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
     }
 }
