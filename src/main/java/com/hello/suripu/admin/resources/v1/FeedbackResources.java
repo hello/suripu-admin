@@ -5,6 +5,7 @@ import com.google.common.base.Optional;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.FeedbackDAO;
+import com.hello.suripu.core.db.FeedbackReadDAO;
 import com.hello.suripu.core.models.TimelineFeedback;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
@@ -32,10 +33,12 @@ import java.util.List;
 public class FeedbackResources {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedbackResources.class);
 
+    private final FeedbackReadDAO feedbackReadDAO;
     private final FeedbackDAO feedbackDAO;
     private final AccountDAO accountDAO;
 
-    public FeedbackResources(final FeedbackDAO feedbackDAO, final AccountDAO accountDAO) {
+    public FeedbackResources(final FeedbackReadDAO feedbackReadDAO, final FeedbackDAO feedbackDAO, final AccountDAO accountDAO) {
+        this.feedbackReadDAO = feedbackReadDAO;
         this.feedbackDAO = feedbackDAO;
         this.accountDAO = accountDAO;
     }
@@ -62,7 +65,7 @@ public class FeedbackResources {
 
         final DateTime dateOfNight = DateTime.parse(night);
         final DateTime dateOfNightUTC = new DateTime(dateOfNight.getMillis(), DateTimeZone.UTC).withTimeAtStartOfDay();
-        return feedbackDAO.getForNight(accountIdOptional.get(), dateOfNightUTC);
+        return feedbackReadDAO.getCorrectedForNight(accountIdOptional.get(), dateOfNightUTC);
     }
 
 
