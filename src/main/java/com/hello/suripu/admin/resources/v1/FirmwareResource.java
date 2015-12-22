@@ -33,6 +33,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Tuple;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import javax.validation.Valid;
@@ -121,10 +122,18 @@ public class FirmwareResource {
             for(final Tuple device: allFWDevices){
                 deviceInfo.add(new FirmwareInfo(fwVersion, device.getElement(), (long)device.getScore()));
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed retrieving firmware device list.", e.getMessage());
+        } catch (JedisDataException exception) {
+            LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } catch (Exception exception) {
+            LOGGER.error("Failed retrieving FW device list: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
         } finally {
-            jedisPool.returnResource(jedis);
+            try {
+                jedisPool.returnResource(jedis);
+            } catch (JedisConnectionException e) {
+                LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+            }
         }
 
         return deviceInfo;
@@ -149,10 +158,18 @@ public class FirmwareResource {
         try {
             devicesOnFirmware = jedis.zcard(fwVersion);
 
-        } catch (Exception e) {
-            LOGGER.error("Failed retrieving firmware device count.", e.getMessage());
+        } catch (JedisDataException exception) {
+            LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } catch (Exception exception) {
+            LOGGER.error("Failed retrieving FW device count: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
         } finally {
-            jedisPool.returnResource(jedis);
+            try {
+                jedisPool.returnResource(jedis);
+            } catch (JedisConnectionException e) {
+                LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+            }
         }
 
         return devicesOnFirmware;
@@ -183,10 +200,18 @@ public class FirmwareResource {
                     firmwareCounts.add(new FirmwareCountInfo(fwInfo.getElement(), fwCount, lastSeen));
                 }
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed retrieving all seen firmwares.", e.getMessage());
+        } catch (JedisDataException exception) {
+            LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } catch (Exception exception) {
+            LOGGER.error("Failed retrieving FW list: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
         } finally {
-            jedisPool.returnResource(jedis);
+            try {
+                jedisPool.returnResource(jedis);
+            } catch (JedisConnectionException e) {
+                LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+            }
         }
 
         return firmwareCounts;
@@ -229,10 +254,18 @@ public class FirmwareResource {
                 }
             }
 
-        } catch (Exception e) {
-            LOGGER.error("Failed retrieving all seen firmware by time.", e.getMessage());
+        } catch (JedisDataException exception) {
+            LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } catch (Exception exception) {
+            LOGGER.error("Failed retrieving FW list by time: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
         } finally {
-            jedisPool.returnResource(jedis);
+            try {
+                jedisPool.returnResource(jedis);
+            } catch (JedisConnectionException e) {
+                LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+            }
         }
 
         return firmwareCounts;
@@ -263,10 +296,18 @@ public class FirmwareResource {
                     fwHistory.put(score.longValue(), fwVersion);
                 }
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed retrieving fw history for device.", e.getMessage());
+        } catch (JedisDataException exception) {
+            LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } catch (Exception exception) {
+            LOGGER.error("Failed retrieving FW history for device {}: {}", deviceId, exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
         } finally {
-            jedisPool.returnResource(jedis);
+            try {
+                jedisPool.returnResource(jedis);
+            } catch (JedisConnectionException e) {
+                LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+            }
         }
 
         return fwHistory;
