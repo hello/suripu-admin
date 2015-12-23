@@ -72,6 +72,7 @@ import com.hello.suripu.core.db.KeyStoreDynamoDB;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
 import com.hello.suripu.core.db.OTAHistoryDAODynamoDB;
 import com.hello.suripu.core.db.OnBoardingLogDAO;
+import com.hello.suripu.core.db.PillDataDAODynamoDB;
 import com.hello.suripu.core.db.PillHeartBeatDAO;
 import com.hello.suripu.core.db.PillViewsDynamoDB;
 import com.hello.suripu.core.db.QuestionResponseDAO;
@@ -428,15 +429,21 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final InsightProcessor insightProcessor = insightBuilder.build();
         final ActiveDevicesTracker activeDevicesTracker = new ActiveDevicesTracker(jedisPool);
 
+
         environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAO, deviceDataDAODynamoDB));
 
+        final AmazonDynamoDB pillDataDAODynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.PILL_DATA);
+        final PillDataDAODynamoDB pillDataDAODynamoDB = new PillDataDAODynamoDB(
+                pillDataDAODynamoDBClient,
+                configuration.dynamoDBConfiguration().tables().get(DynamoDBTableName.PILL_DATA)
+        );
 
         environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO));
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
         environment.jersey().register(new ApplicationResources(applicationStore));
-        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO));
+        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, trackerMotionDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO, pillDataDAODynamoDB));
         final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceAdminDAO, deviceDataDAO, trackerMotionDAO, accountDAO,
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
