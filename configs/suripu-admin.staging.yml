@@ -135,6 +135,7 @@ dynamodb:
     pill_key_store : pill_key_store
     pill_last_seen: pill_last_seen
     pill_heartbeat: pill_heartbeat
+    pill_data: pill_data
     sense_events : sense_events
     sense_key_store : key_store
     sense_last_seen : sense_last_seen
@@ -163,6 +164,7 @@ dynamodb:
     pill_key_store : http://dynamodb.us-east-1.amazonaws.com
     pill_last_seen : http://dynamodb.us-east-1.amazonaws.com
     pill_heartbeat : http://dynamodb.us-east-1.amazonaws.com
+    pill_data: http://dynamodb.us-east-1.amazonaws.com
     sense_events : http://dynamodb.us-east-1.amazonaws.com
     sense_key_store : http://dynamodb.us-east-1.amazonaws.com
     sense_last_seen : http://dynamodb.us-east-1.amazonaws.com
