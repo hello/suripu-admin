@@ -145,7 +145,7 @@ public class DataResources {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        final List<TrackerMotion> trackerMotions = trackerMotionDAO.getBetween(accountId.get(), targetDate, endDate);
+        final List<TrackerMotion> trackerMotions = trackerMotionDAO.getBetweenLocalUTC(accountId.get(), targetDate, endDate);
         LOGGER.debug("Length of trackerMotion: {}", trackerMotions.size());
 
         return trackerMotions;
