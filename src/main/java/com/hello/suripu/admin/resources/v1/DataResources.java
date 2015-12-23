@@ -7,6 +7,7 @@ import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
+import com.hello.suripu.core.db.PillDataDAODynamoDB;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
 import com.hello.suripu.core.db.TrackerMotionDAO;
 import com.hello.suripu.core.db.UserLabelDAO;
@@ -66,6 +67,7 @@ public class DataResources {
     private final SensorsViewsDynamoDB sensorsViewsDynamoDB;
     private final SenseColorDAO senseColorDAO;
     private final CalibrationDAO calibrationDAO;
+    private final PillDataDAODynamoDB pillDataDAODynamoDB;
 
     public DataResources(final DeviceDataDAO deviceDataDAO,
                          final DeviceDAO deviceDAO,
@@ -74,7 +76,8 @@ public class DataResources {
                          final TrackerMotionDAO trackerMotionDAO,
                          final SensorsViewsDynamoDB sensorsViewsDynamoDB,
                          final SenseColorDAO senseColorDAO,
-                         final CalibrationDAO calibrationDAO) {
+                         final CalibrationDAO calibrationDAO,
+                         final PillDataDAODynamoDB pillDataDAODynamoDB) {
 
         this.deviceDataDAO = deviceDataDAO;
         this.deviceDAO = deviceDAO;
@@ -84,6 +87,7 @@ public class DataResources {
         this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
         this.senseColorDAO = senseColorDAO;
         this.calibrationDAO = calibrationDAO;
+        this.pillDataDAODynamoDB = pillDataDAODynamoDB;
     }
 
     @ScopesAllowed({OAuthScope.SENSORS_BASIC, OAuthScope.RESEARCH})
@@ -128,6 +132,7 @@ public class DataResources {
     public List<TrackerMotion> getMotionAdmin(@Auth final AccessToken accessToken,
                                               @PathParam("query_date_local_utc") String date,
                                               @PathParam("email") String email) {
+
         final DateTime targetDate = DateTime.parse(date, DateTimeFormat.forPattern(DateTimeUtil.DYNAMO_DB_DATE_FORMAT))
                 .withZone(DateTimeZone.UTC).withHourOfDay(20);
         final DateTime endDate = targetDate.plusHours(16);
@@ -140,11 +145,37 @@ public class DataResources {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        final List<TrackerMotion> trackerMotions = trackerMotionDAO.getBetweenLocalUTC(accountId.get(), targetDate, endDate);
+        final List<TrackerMotion> trackerMotions = trackerMotionDAO.getBetween(accountId.get(), targetDate, endDate);
         LOGGER.debug("Length of trackerMotion: {}", trackerMotions.size());
 
         return trackerMotions;
     }
+
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Path("/pill/last24/{email}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<TrackerMotion> getMotionAdminLast24(@Auth final AccessToken accessToken, @PathParam("email") String email){
+
+        final DateTime endDate = DateTime.now(DateTimeZone.UTC);
+        final DateTime startDate = endDate.minusDays(1);
+        LOGGER.debug("Start date: {}", startDate);
+        LOGGER.debug("End date: {}", endDate);
+
+        final Optional<Long> accountId = Util.getAccountIdByEmail(accountDAO, email);
+        if (!accountId.isPresent()) {
+            LOGGER.debug("ID not found for account {}", email);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+
+        final List<TrackerMotion> trackerMotions = pillDataDAODynamoDB.getBetween(accountId.get(), startDate, endDate);
+        LOGGER.debug("Length of trackerMotion: {}", trackerMotions.size());
+
+        return trackerMotions;
+    }
+
+
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @Timed
