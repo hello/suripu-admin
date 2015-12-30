@@ -9,7 +9,6 @@ import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.PillDataDAODynamoDB;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
-import com.hello.suripu.core.db.TrackerMotionDAO;
 import com.hello.suripu.core.db.UserLabelDAO;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.logging.SenseLogTag;
@@ -63,7 +62,6 @@ public class DataResources {
     private final DeviceDAO deviceDAO;
     private final AccountDAO accountDAO;
     private final UserLabelDAO userLabelDAO;
-    private final TrackerMotionDAO trackerMotionDAO;
     private final SensorsViewsDynamoDB sensorsViewsDynamoDB;
     private final SenseColorDAO senseColorDAO;
     private final CalibrationDAO calibrationDAO;
@@ -73,7 +71,6 @@ public class DataResources {
                          final DeviceDAO deviceDAO,
                          final AccountDAO accountDAO,
                          final UserLabelDAO userLabelDAO,
-                         final TrackerMotionDAO trackerMotionDAO,
                          final SensorsViewsDynamoDB sensorsViewsDynamoDB,
                          final SenseColorDAO senseColorDAO,
                          final CalibrationDAO calibrationDAO,
@@ -83,7 +80,6 @@ public class DataResources {
         this.deviceDAO = deviceDAO;
         this.accountDAO = accountDAO;
         this.userLabelDAO = userLabelDAO;
-        this.trackerMotionDAO = trackerMotionDAO;
         this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
         this.senseColorDAO = senseColorDAO;
         this.calibrationDAO = calibrationDAO;
