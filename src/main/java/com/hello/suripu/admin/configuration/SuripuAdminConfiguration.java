@@ -34,6 +34,14 @@ public class SuripuAdminConfiguration extends Configuration {
         return commonDB;
     }
 
+    @Valid
+    @NotNull
+    @JsonProperty("redshift")
+    private DataSourceFactory redshiftDB = new DataSourceFactory();
+
+    public DataSourceFactory getRedshiftDB() {
+        return redshiftDB;
+    }
 
     @Valid
     @JsonProperty("debug")

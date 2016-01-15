@@ -59,6 +59,16 @@ insights_db:
   properties:
     hibernate.dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
 
+redshift:
+  driverClass: org.postgresql.Driver
+  user: admin_tool
+  password: enciphers56491Zeppelins
+  url: jdbc:postgresql://sensors2.cy7n0vzxfedi.us-east-1.redshift.amazonaws.com:5439/sensors1
+  properties:
+    charSet: UTF-8
+  initialSize: 2
+  minSize: 2
+  maxSize: 4
 
 server:
   adminMinThreads: 1
