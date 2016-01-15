@@ -24,6 +24,7 @@ import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.db.TableDAO;
 import com.hello.suripu.admin.db.TableDAOPostgres;
+import com.hello.suripu.admin.db.UptimeDAO;
 import com.hello.suripu.admin.processors.ActiveDevicesTracker;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
@@ -94,7 +95,6 @@ import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
-import com.hello.suripu.core.diagnostic.DiagnosticDAO;
 import com.hello.suripu.core.logging.DataLogger;
 import com.hello.suripu.core.logging.KinesisLoggerFactory;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
@@ -163,6 +163,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final DBI commonDB = factory.build(environment, configuration.getCommonDB(), "postgresql-common");
         final DBI sensorsDB = factory.build(environment, configuration.getSensorsDB(), "postgresql-sensors");
 
+        final DBI redshiftDB = factory.build(environment, configuration.getRedshiftDB(), "postgresql-redshift");
+
         sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
         sensorsDB.registerContainerFactory(new OptionalContainerFactory());
         sensorsDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
@@ -172,6 +174,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         commonDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
         commonDB.registerContainerFactory(new ImmutableListContainerFactory());
         commonDB.registerContainerFactory(new ImmutableSetContainerFactory());
+
+        // not registering any additional container factory for redshift
 
         if(configuration.getMetricsEnabled()) {
             final String graphiteHostName = configuration.getGraphite().getHost();
@@ -223,9 +227,11 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         // Sensor DB
         final DeviceDataDAO deviceDataDAO = sensorsDB.onDemand(DeviceDataDAO.class);
-        final DiagnosticDAO diagnosticDAO = sensorsDB.onDemand(DiagnosticDAO.class);
         final TrackerMotionDAO trackerMotionDAO = sensorsDB.onDemand(TrackerMotionDAO.class);
         final TableDAO sensorsTableDAO = sensorsDB.onDemand(TableDAOPostgres.class);
+
+        // Redshift
+        final UptimeDAO uptimeDAO = redshiftDB.onDemand(UptimeDAO.class);
 
         final ImmutableMap<DynamoDBTableName, String> tableNames = configuration.dynamoDBConfiguration().tables();
         final AmazonDynamoDB mergedUserInfoDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.ALARM_INFO);
@@ -449,7 +455,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         environment.jersey().register(deviceResources);
         environment.jersey().register(new PillResource(accountDAO, pillHeartBeatDAODynamoDB, deviceDAO, deviceAdminDAO));
-        environment.jersey().register(new DiagnosticResources(diagnosticDAO, accountDAO, deviceDAO, trackingDAO));
+        environment.jersey().register(new DiagnosticResources(accountDAO, deviceDAO, trackingDAO, uptimeDAO));
         environment.jersey().register(new DownloadResource(s3Client, "hello-firmware"));
         environment.jersey().register(new EventsResources(senseEventsDAO));
         environment.jersey().register(new FeaturesResources(featureStore));
