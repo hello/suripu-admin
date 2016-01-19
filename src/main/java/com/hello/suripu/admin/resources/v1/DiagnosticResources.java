@@ -2,9 +2,9 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Longs;
+import com.hello.suripu.admin.UptimeBucketing;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.UptimeDAO;
 import com.hello.suripu.core.db.AccountDAO;
@@ -21,7 +21,6 @@ import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Hours;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -34,7 +33,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.Map;
 
 @Path("/v1/diagnostic")
 public class DiagnosticResources {
@@ -81,22 +79,7 @@ public class DiagnosticResources {
                     new JsonError(Response.Status.NOT_FOUND.getStatusCode(), "Device not found")).build());
         }
 
-        final DateTime start = DateTime.now(DateTimeZone.UTC).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
-
-        final Hours hours = Hours.hoursBetween(start, DateTime.now(DateTimeZone.UTC).minusDays(10));
-        final Map<Long, Count> pad = Maps.newHashMap();
-        for(int i =1; i < hours.getHours(); i++) {
-            final DateTime dt = start.minusHours(i);
-            pad.put(dt.getMillis(), new Count(dt, 0));
-        }
-
-        final List<Count> counts = uptimeDAO.uptime(accountIdOptional.get());
-        for(final Count c : counts) {
-            pad.put(c.date.getMillis(), c);
-        }
-
-        return byMillisOrdering.sortedCopy(pad.values());
-
+        return UptimeBucketing.padded(DateTime.now(DateTimeZone.UTC), uptimeDAO.uptime(deviceAccountPairOptional.get().accountId));
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
