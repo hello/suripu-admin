@@ -45,6 +45,7 @@ import com.hello.suripu.admin.resources.v1.KeyStoreResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.PillResource;
+import com.hello.suripu.admin.resources.v1.TagsResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
@@ -83,6 +84,7 @@ import com.hello.suripu.core.db.SenseEventsDAO;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
 import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
 import com.hello.suripu.core.db.SmartAlarmLoggerDynamoDB;
+import com.hello.suripu.core.db.TagStoreDAODynamoDB;
 import com.hello.suripu.core.db.TeamStore;
 import com.hello.suripu.core.db.TimeZoneHistoryDAODynamoDB;
 import com.hello.suripu.core.db.TimelineAnalyticsDAO;
@@ -344,6 +346,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AmazonDynamoDB teamStoreDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.TEAMS, TeamStore.class);
         final TeamStore teamStore = new TeamStore(teamStoreDBClient, tableNames.get(DynamoDBTableName.TEAMS));
 
+        final AmazonDynamoDB tagStoreDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.TAGS, TagStoreDAODynamoDB.class);
+        final TagStoreDAODynamoDB tagStore = new TagStoreDAODynamoDB(tagStoreDBClient, tableNames.get(DynamoDBTableName.TAGS));
+
         final AmazonDynamoDB senseEventsDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.SENSE_EVENTS, SenseEventsDAO.class);
         final SenseEventsDAO senseEventsDAO = new SenseEventsDAO(senseEventsDBClient, tableNames.get(DynamoDBTableName.SENSE_EVENTS));
 
@@ -472,6 +477,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 )
         );
         environment.jersey().register(new TeamsResources(teamStore));
+        environment.jersey().register(new TagsResources(tagStore));
         environment.jersey().register(new TokenResources(implicitTokenStore, applicationStore, accessTokenDAO, accountDAO, accessTokenAdminDAO));
         environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
         environment.jersey().register(new WifiResources(wifiInfoDAO));
