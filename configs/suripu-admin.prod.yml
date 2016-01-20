@@ -152,6 +152,7 @@ dynamodb:
     sense_last_seen : prod_sense_last_seen
     sense_prefix : prod_sense
     sync_response_commands : prod_response_commands
+    tags: prod_tags
     teams : teams
     timezone_history : prod_timezone_history
     ring_time_history: prod_ring_history_by_account
@@ -180,6 +181,7 @@ dynamodb:
       sense_last_seen : http://dynamodb.us-east-1.amazonaws.com
       sense_prefix : http://dynamodb.us-east-1.amazonaws.com
       sync_response_commands : http://dynamodb.us-east-1.amazonaws.com
+      tags: http://dynamodb.us-east-1.amazonaws.com
       teams : http://dynamodb.us-east-1.amazonaws.com
       timezone_history : http://dynamodb.us-east-1.amazonaws.com
       smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
