@@ -12,6 +12,8 @@ import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.db.PillViewsDynamoDB;
 import com.hello.suripu.core.db.SenseEventsDAO;
+import com.hello.suripu.core.db.TagStoreDAODynamoDB;
+
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -31,6 +33,7 @@ public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfigura
         createSenseLastSeen(configuration, awsCredentialsProvider);
         createPillLastSeen(configuration, awsCredentialsProvider);
         createFWUpgradePath(configuration, awsCredentialsProvider);
+        createTags(configuration, awsCredentialsProvider);
     }
 
     private void createSenseEventsTable(final SuripuAdminConfiguration configuration, final AWSCredentialsProvider awsCredentialsProvider) {
@@ -109,7 +112,21 @@ public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfigura
             client.describeTable(tableName);
             System.out.println(String.format("%s already exists.", tableName));
         } catch (AmazonServiceException exception) {
-            final CreateTableResult result = PillViewsDynamoDB.createLastSeenTable(tableName, client);
+
+        }
+    }
+
+    private void createTags(final SuripuAdminConfiguration configuration, final AWSCredentialsProvider awsCredentialsProvider) {
+        final NewDynamoDBConfiguration config = configuration.dynamoDBConfiguration();
+        final AmazonDynamoDBClient client = new AmazonDynamoDBClient(awsCredentialsProvider);
+
+        client.setEndpoint(config.endpoints().get(DynamoDBTableName.TAGS));
+        final String tableName = config.tables().get(DynamoDBTableName.TAGS);
+        try {
+            client.describeTable(tableName);
+            System.out.println(String.format("%s already exists.", tableName));
+        } catch (AmazonServiceException exception) {
+            final CreateTableResult result = TagStoreDAODynamoDB.createTable(tableName, client);
             final TableDescription description = result.getTableDescription();
             System.out.println(tableName + " " + description.getTableStatus());
         }
