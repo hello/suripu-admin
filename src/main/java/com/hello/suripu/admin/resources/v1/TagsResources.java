@@ -2,6 +2,7 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import com.hello.suripu.core.db.TagStoreDAODynamoDB;
 import com.hello.suripu.core.models.Tag;
@@ -10,8 +11,6 @@ import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -119,7 +118,7 @@ public class TagsResources {
     public void deleteDevicesTag(
             @Auth final AccessToken accessToken,
             @PathParam("tag_name") final String tagName) {
-        final Tag deleteTag = Tag.create(tagName, new HashSet<String>());
+        final Tag deleteTag = Tag.create(tagName, Sets.<String>newHashSet());
         tagStore.delete(deleteTag, TagStoreDAODynamoDB.Type.DEVICES);
     }
 
@@ -129,8 +128,9 @@ public class TagsResources {
     public void deleteUsersTag(
             @Auth final AccessToken accessToken,
             @PathParam("tag_name") final String tagName) {
-        final Tag deleteTag = Tag.create(tagName, new HashSet<String>());
+        final Tag deleteTag = Tag.create(tagName, Sets.<String>newHashSet());
         tagStore.delete(deleteTag, TagStoreDAODynamoDB.Type.USERS);
+
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
@@ -141,7 +141,7 @@ public class TagsResources {
             @Auth final AccessToken accessToken,
             @PathParam("tag_name") final String tagName,
             @PathParam("device_id") final String deviceId){
-        final List<String> ids = new ArrayList<>();
+        final List<String> ids = Lists.newArrayList();
         ids.add(deviceId);
         tagStore.remove(tagName, TagStoreDAODynamoDB.Type.DEVICES, ids);
     }
@@ -153,7 +153,7 @@ public class TagsResources {
             @Auth final AccessToken accessToken,
             @PathParam("tag_name") final String tagName,
             @PathParam("user_id") final Long userId) {
-        final List<String> ids = new ArrayList<>();
+        final List<String> ids = Lists.newArrayList();
         ids.add(String.valueOf(userId));
         tagStore.remove(tagName, TagStoreDAODynamoDB.Type.USERS, ids);
     }
