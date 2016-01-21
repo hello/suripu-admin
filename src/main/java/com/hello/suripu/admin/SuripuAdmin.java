@@ -464,7 +464,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new DownloadResource(s3Client, "hello-firmware"));
         environment.jersey().register(new EventsResources(senseEventsDAO));
         environment.jersey().register(new FeaturesResources(featureStore));
-        environment.jersey().register(new FirmwareResource(jedisPool, firmwareVersionMappingDAO, otaHistoryDAODynamoDB, respCommandsDAODynamoDB, firmwareUpgradePathDAO, deviceDAO, sensorsViewsDynamoDB, teamStore));
+        environment.jersey().register(new FirmwareResource(jedisPool, firmwareVersionMappingDAO, otaHistoryDAODynamoDB, respCommandsDAODynamoDB, firmwareUpgradePathDAO, deviceDAO, teamStore));
         environment.jersey().register(new InspectionResources(deviceAdminDAO));
         environment.jersey().register(new OnBoardingLogResource(accountDAO, onBoardingLogDAO));
         environment.jersey().register(new TimelineResources(timelineAnalyticsDAO));
