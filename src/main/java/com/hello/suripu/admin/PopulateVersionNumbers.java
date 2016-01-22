@@ -33,11 +33,11 @@ public class PopulateVersionNumbers {
         final AWSCredentialsProvider awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         final AmazonS3 amazonS3 = new AmazonS3Client(awsCredentialsProvider);
         final AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(awsCredentialsProvider);
-        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "prod_firmware_versions_mapping");
+        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "firmware_versions_mapping");
         ObjectListing objectListing;
 
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
-                .withBucketName("hello-firmware").withPrefix("sense/1.");
+                .withBucketName("hello-firmware").withPrefix("sense/1.0.5");
 
         final List<String> keys = Lists.newArrayList();
         int i = 0;

@@ -67,10 +67,8 @@ public class FirmwareResource {
     private final DeviceDAO deviceDAO;
     private final JedisPool jedisPool;
     private static final String FIRMWARES_SEEN_SET_KEY = "firmwares_seen";
-    private static final String TOP_FIRMWARES_SEEN_SET_KEY = "top_firmwares_seen";
     private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
-    private static final String DEVICE_TOP_FIRMWARE_SET_KEY = "device_top_firmware";
-    private static final String DEVICE_MIDDLE_FIRMWARE_SET_KEY = "device_middle_firmware";
+    private static final String DEVICE_KEY_BASE = "device_id:";
 
     public FirmwareResource(final JedisPool jedisPool,
                             final FirmwareVersionMappingDAO firmwareVersionMappingDAO,
@@ -118,17 +116,17 @@ public class FirmwareResource {
             //Get all elements in the index range provided
             final Set<Tuple> allFWDevices = jedis.zrevrangeWithScores(middleFWVersion, rangeStart, rangeEnd);
             final Pipeline pipe = jedis.pipelined();
-            final Map<String, redis.clients.jedis.Response<Double>> responseMap = Maps.newHashMap();
+            final Map<String, redis.clients.jedis.Response<String>> responseMap = Maps.newHashMap();
             for(final Tuple device: allFWDevices){
                 final String deviceId = device.getElement();
-                responseMap.put(device.getElement(), pipe.zscore(DEVICE_TOP_FIRMWARE_SET_KEY, deviceId));
+                responseMap.put(device.getElement(), pipe.hget(DEVICE_KEY_BASE.concat(deviceId), "top_version"));
             }
             pipe.sync();
             for (final Tuple device:allFWDevices) {
                 final String deviceId = device.getElement();
-                final Integer topFWVersion = (responseMap.get(deviceId) == null) ? responseMap.get(deviceId).get().intValue() : 0;
+                final String topFWVersion = (responseMap.get(deviceId) != null) ? responseMap.get(deviceId).get() : "0";
                 final long lastSeen = (long) device.getScore();
-                deviceInfo.add(new FirmwareInfo(middleFWVersion, topFWVersion.toString(), deviceId, lastSeen));
+                deviceInfo.add(new FirmwareInfo(middleFWVersion, topFWVersion, deviceId, lastSeen));
             }
 
         } catch (JedisDataException exception) {
@@ -627,14 +625,14 @@ public class FirmwareResource {
         try {
 
             final List<FirmwareInfo> fwInfo = Lists.newArrayList();
-            final Map<String, redis.clients.jedis.Response<Double>> topResponseMap = Maps.newHashMap();
-            final Map<String, redis.clients.jedis.Response<Double>> middleResponseMap = Maps.newHashMap();
+            final Map<String, redis.clients.jedis.Response<String>> topResponseMap = Maps.newHashMap();
+            final Map<String, redis.clients.jedis.Response<String>> middleResponseMap = Maps.newHashMap();
             final Map<String, redis.clients.jedis.Response<Double>> timestampResponseMap = Maps.newHashMap();
 
             Pipeline pipe = jedis.pipelined();
             for (final String deviceId : deviceIds) {
-                topResponseMap.put(deviceId, pipe.zscore(DEVICE_TOP_FIRMWARE_SET_KEY, deviceId));
-                middleResponseMap.put(deviceId, pipe.zscore(DEVICE_MIDDLE_FIRMWARE_SET_KEY, deviceId));
+                topResponseMap.put(deviceId, pipe.hget(DEVICE_KEY_BASE.concat(deviceId), "top_version"));
+                middleResponseMap.put(deviceId, pipe.hget(DEVICE_KEY_BASE.concat(deviceId), "middle_version"));
             }
             pipe.sync();
 
@@ -644,25 +642,25 @@ public class FirmwareResource {
                     continue;
                 }
 
-                final Integer middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get().intValue() : 0;
-                timestampResponseMap.put(deviceId, pipe.zscore(middleFWVersion.toString(), deviceId));
+                final String middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get() : "0";
+                timestampResponseMap.put(deviceId, pipe.zscore(middleFWVersion, deviceId));
             }
             pipe.sync();
 
             for (final String deviceId : deviceIds) {
-                Integer topFWVersion = 0;
+                String topFWVersion = "0";
                 if (topResponseMap.containsKey(deviceId) && topResponseMap.get(deviceId).get() != null) {
-                    topFWVersion = topResponseMap.get(deviceId).get().intValue();
+                    topFWVersion = topResponseMap.get(deviceId).get();
                 }
 
                 if (!middleResponseMap.containsKey(deviceId) || middleResponseMap.get(deviceId).get() == null) {
                     continue;
                 }
 
-                final Integer middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get().intValue() : 0;
+                final String middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get() : "0";
                 final Long middleFWTimestamp = (timestampResponseMap.get(deviceId) != null) ? timestampResponseMap.get(deviceId).get().longValue() : 0;
 
-                fwInfo.add(new FirmwareInfo(middleFWVersion.toString(), topFWVersion.toString(), deviceId, middleFWTimestamp));
+                fwInfo.add(new FirmwareInfo(middleFWVersion, topFWVersion, deviceId, middleFWTimestamp));
             }
 
             if (fwInfo.size() < 1) {
