@@ -44,6 +44,15 @@ public class SuripuAdminConfiguration extends Configuration {
     }
 
     @Valid
+    @NotNull
+    @JsonProperty("store_db")
+    private DataSourceFactory storedDB = new DataSourceFactory();
+
+    public DataSourceFactory getStoredDB() {
+        return storedDB;
+    }
+
+    @Valid
     @JsonProperty("debug")
     private Boolean debug = Boolean.FALSE;
 

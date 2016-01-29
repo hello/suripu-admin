@@ -51,6 +51,8 @@ import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
 import com.hello.suripu.admin.resources.v1.TrackingResources;
 import com.hello.suripu.admin.resources.v1.WifiResources;
+import com.hello.suripu.admin.store.StoreResources;
+import com.hello.suripu.admin.store.StoreDAO;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
@@ -166,7 +168,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final DBI sensorsDB = factory.build(environment, configuration.getSensorsDB(), "postgresql-sensors");
 
         final DBI redshiftDB = factory.build(environment, configuration.getRedshiftDB(), "postgresql-redshift");
-
+        final DBI storeDB = factory.build(environment, configuration.getStoredDB(), "postgresql-store");
         sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
         sensorsDB.registerContainerFactory(new OptionalContainerFactory());
         sensorsDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
@@ -178,6 +180,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         commonDB.registerContainerFactory(new ImmutableSetContainerFactory());
 
         // not registering any additional container factory for redshift
+        // not registering any additional container factory for store db
 
         if(configuration.getMetricsEnabled()) {
             final String graphiteHostName = configuration.getGraphite().getHost();
@@ -485,5 +488,10 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new DBResource(sensorsTableDAO));
         environment.jersey().register(new FeedbackResources(feedbackReadDAO, feedbackDAO, accountDAO));
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
+
+
+        // Store
+        final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
+        environment.jersey().register(new StoreResources(storeDAO));
     }
 }
