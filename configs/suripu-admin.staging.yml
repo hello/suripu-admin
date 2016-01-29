@@ -72,9 +72,9 @@ redshift:
 
 store_db:
   driverClass: org.postgresql.Driver
-  user: preorders_user
-  password: hello preorders user
-  url: jdbc:postgresql://research.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/preorders
+  user: ingress_user
+  password: hello ingress user
+  url: jdbc:postgresql://chanku-test.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/chanku
   properties:
     charSet: UTF-8
   initialSize: 2
