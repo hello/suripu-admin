@@ -10,7 +10,7 @@ import java.util.List;
 public interface StoreDAO {
 
     @RegisterMapper(OrderMapper.class)
-    @SqlQuery("SELECT * FROM preorders WHERE external_id ILIKE '%'||:query||'%'OR shipping_address_name ILIKE '%'||:query||'%'")
+    @SqlQuery("SELECT * FROM preorders WHERE external_id ILIKE '%'||:query||'%' OR shipping_address_name ILIKE '%'||:query||'%' OR email ILIKE '%'||:query||'%';")
     List<Order> searchOrder(final @Bind("query") String query);
 
     @RegisterMapper(PaymentUpdateMapper.class)
