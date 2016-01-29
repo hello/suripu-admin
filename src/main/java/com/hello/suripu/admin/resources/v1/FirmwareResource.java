@@ -120,7 +120,7 @@ public class FirmwareResource {
             //Get all elements in the index range provided
             final Set<Tuple> allFWDevices = jedis.zrevrangeWithScores(fwVersion, rangeStart, rangeEnd);
             for(final Tuple device: allFWDevices){
-                deviceInfo.add(new FirmwareInfo(fwVersion, device.getElement(), (long)device.getScore()));
+                deviceInfo.add(new FirmwareInfo(fwVersion, "0", device.getElement(), (long)device.getScore()));
             }
         } catch (JedisDataException exception) {
             LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
@@ -601,7 +601,7 @@ public class FirmwareResource {
         if(!deviceDataOptional.isPresent()) {
             return Optional.absent();
         }
-        final FirmwareInfo fwInfo = new FirmwareInfo(deviceDataOptional.get().firmwareVersion.toString(), deviceId, deviceDataOptional.get().dateTimeUTC.getMillis());
+        final FirmwareInfo fwInfo = new FirmwareInfo(deviceDataOptional.get().firmwareVersion.toString(), "0", deviceId, deviceDataOptional.get().dateTimeUTC.getMillis());
         return Optional.of(fwInfo);
     }
 

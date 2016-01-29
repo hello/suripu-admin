@@ -70,6 +70,17 @@ redshift:
   minSize: 2
   maxSize: 4
 
+store_db:
+  driverClass: org.postgresql.Driver
+  user: preorders_user
+  password: hello preorders user
+  url: jdbc:postgresql://research.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432/preorders
+  properties:
+    charSet: UTF-8
+  initialSize: 2
+  minSize: 2
+  maxSize: 4
+
 server:
   adminMinThreads: 1
   adminMaxThreads: 64
