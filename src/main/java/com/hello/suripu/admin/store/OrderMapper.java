@@ -10,6 +10,10 @@ public class OrderMapper implements ResultSetMapper<Order> {
 
     @Override
     public Order map(int index, ResultSet r, StatementContext ctx) throws SQLException {
-        return Order.create(r.getString("shipping_address_name"), r.getString("external_id"));
+        return Order.create(
+                r.getString("shipping_address_name"),
+                r.getString("email"),
+                r.getString("external_id")
+        );
     }
 }

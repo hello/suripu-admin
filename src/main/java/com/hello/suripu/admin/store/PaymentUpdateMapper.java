@@ -12,7 +12,7 @@ public class PaymentUpdateMapper implements ResultSetMapper<PaymentUpdate>{
         return PaymentUpdate.create(
                 r.getString("external_id"),
                 r.getString("status"),
-                r.getString("error_message")
+                r.getString("error_msg")
         );
     }
 }
