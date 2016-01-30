@@ -45,6 +45,7 @@ import com.hello.suripu.admin.resources.v1.KeyStoreResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.PillResource;
+import com.hello.suripu.admin.resources.v1.QuestionResources;
 import com.hello.suripu.admin.resources.v1.TagsResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
@@ -228,7 +229,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final TrackingDAO trackingDAO = commonDB.onDemand(TrackingDAO.class);
         final UserLabelDAO userLabelDAO = commonDB.onDemand(UserLabelDAO.class);
         final TimelineAnalyticsDAO timelineAnalyticsDAO = commonDB.onDemand(TimelineAnalyticsDAO.class);
-
 
         // Sensor DB
         final DeviceDataDAO deviceDataDAO = sensorsDB.onDemand(DeviceDataDAO.class);
@@ -488,7 +488,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new DBResource(sensorsTableDAO));
         environment.jersey().register(new FeedbackResources(feedbackReadDAO, feedbackDAO, accountDAO));
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
-
+        environment.jersey().register(new QuestionResources(questionResponseDAO, timeZoneHistoryDAODynamoDB));
 
         // Store
         final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
