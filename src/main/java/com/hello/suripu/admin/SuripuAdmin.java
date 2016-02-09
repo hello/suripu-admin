@@ -506,6 +506,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withCheckSkipsNum(numSkips)
                 .withQuestions(questionResponseDAO)
                 .build();
-        environment.jersey().register(new QuestionResources(questionProcessor, timeZoneHistoryDAODynamoDB));
+        environment.jersey().register(new QuestionResources(accountDAO, questionProcessor, timeZoneHistoryDAODynamoDB));
     }
 }
