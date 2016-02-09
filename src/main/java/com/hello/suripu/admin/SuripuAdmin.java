@@ -46,6 +46,7 @@ import com.hello.suripu.admin.resources.v1.KeyStoreResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.PillResource;
+import com.hello.suripu.admin.resources.v1.QuestionResources;
 import com.hello.suripu.admin.resources.v1.TagsResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
@@ -505,6 +506,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withCheckSkipsNum(numSkips)
                 .withQuestions(questionResponseDAO)
                 .build();
-        // environment.jersey().register(new QuestionResources(questionProcessor, timeZoneHistoryDAODynamoDB));
+        environment.jersey().register(new QuestionResources(questionProcessor, timeZoneHistoryDAODynamoDB));
     }
 }
