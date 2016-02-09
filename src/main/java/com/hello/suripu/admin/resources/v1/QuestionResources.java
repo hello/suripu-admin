@@ -43,7 +43,7 @@ public class QuestionResources {
         this.tzHistoryDAO = tzHistoryDAO;
     }
 
-    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @ScopesAllowed({OAuthScope.ADMIN_QUESTIONS_WRITE})
     @POST
     @Path("/anomaly")
     @Consumes(MediaType.APPLICATION_JSON)
