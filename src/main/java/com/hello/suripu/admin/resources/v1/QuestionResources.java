@@ -1,5 +1,6 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.models.AnomalyQuestion;
 import com.hello.suripu.core.db.AccountReadDAO;
@@ -44,6 +45,7 @@ public class QuestionResources {
     }
 
     @ScopesAllowed({OAuthScope.ADMIN_QUESTIONS_WRITE})
+    @Timed
     @POST
     @Path("/anomaly")
     @Consumes(MediaType.APPLICATION_JSON)
