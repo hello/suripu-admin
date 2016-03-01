@@ -10,22 +10,24 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.hello.suripu.admin.models.FirmwareUpdate;
+import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
-import com.hello.suripu.core.oauth.OAuthScope;
+
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URL;
+import java.util.Date;
+import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.net.URL;
-import java.util.Date;
-import java.util.List;
 
 @Path("/v1/download")
 public class DownloadResource {
@@ -90,7 +92,7 @@ public class DownloadResource {
     public List<FirmwareUpdate> getUnstablePillFirmware(@Auth AccessToken accessToken) {
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
         listObjectsRequest.withBucketName(bucketName);
-        listObjectsRequest.withPrefix("pill_unstable");
+        listObjectsRequest.withPrefix("kodobannin/alpha");
 
         final ObjectListing objectListing = amazonS3Client.listObjects(listObjectsRequest);
         return createFirmwareUpdatesFromListing(objectListing.getObjectSummaries());
