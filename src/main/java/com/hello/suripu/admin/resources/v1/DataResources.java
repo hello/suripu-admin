@@ -58,7 +58,7 @@ import java.util.List;
 public class DataResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataResources.class);
-    private static final Boolean USE_AUDIO_PEAK_ENERGY_DB = false; // feature flipped to no one, so set to false
+    private static final Boolean USE_AUDIO_PEAK_ENERGY_DB = true; // always show new audio peak energy in admin tool
     private final DeviceDataDAO deviceDataDAO;
     private final DeviceDAO deviceDAO;
     private final AccountDAO accountDAO;
