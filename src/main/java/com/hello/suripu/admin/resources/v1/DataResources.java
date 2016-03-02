@@ -58,6 +58,7 @@ import java.util.List;
 public class DataResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataResources.class);
+    private static final Boolean USE_AUDIO_PEAK_ENERGY_DB = false; // feature flipped to no one, so set to false
     private final DeviceDataDAO deviceDataDAO;
     private final DeviceDAO deviceDAO;
     private final AccountDAO accountDAO;
@@ -230,7 +231,8 @@ public class DataResources {
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
         final List<Sample> timeSeries = deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
-                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId, withCalibratedDust));
+                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId,
+                        withCalibratedDust), USE_AUDIO_PEAK_ENERGY_DB);
 
         if (Sensor.PARTICULATES.name().equalsIgnoreCase(sensor)) {
             if (smooth) {
@@ -372,7 +374,8 @@ public class DataResources {
                 slotDurationInMinutes,
                 missingDataDefaultValue,
                 color,
-                getCalibration(deviceAccountPairOptional.get().externalDeviceId, withCalibratedDust)
+                getCalibration(deviceAccountPairOptional.get().externalDeviceId, withCalibratedDust),
+                USE_AUDIO_PEAK_ENERGY_DB
         );
 
         final List<UserInteraction> userInteractions = new ArrayList<>();
