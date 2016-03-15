@@ -25,6 +25,7 @@ import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.db.TableDAO;
 import com.hello.suripu.admin.db.TableDAOPostgres;
 import com.hello.suripu.admin.db.UptimeDAO;
+import com.hello.suripu.admin.modules.AdminRolloutModule;
 import com.hello.suripu.admin.processors.ActiveDevicesTracker;
 import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
@@ -45,6 +46,7 @@ import com.hello.suripu.admin.resources.v1.KeyStoreResources;
 import com.hello.suripu.admin.resources.v1.OnBoardingLogResource;
 import com.hello.suripu.admin.resources.v1.PCHResources;
 import com.hello.suripu.admin.resources.v1.PillResource;
+import com.hello.suripu.admin.resources.v1.QuestionResources;
 import com.hello.suripu.admin.resources.v1.TagsResources;
 import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
@@ -52,8 +54,9 @@ import com.hello.suripu.admin.resources.v1.TokenResources;
 import com.hello.suripu.admin.resources.v1.TrackingResources;
 import com.hello.suripu.admin.resources.v1.UptimeResources;
 import com.hello.suripu.admin.resources.v1.WifiResources;
-import com.hello.suripu.admin.store.StoreResources;
 import com.hello.suripu.admin.store.StoreDAO;
+import com.hello.suripu.admin.store.StoreResources;
+import com.hello.suripu.core.ObjectGraphRoot;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
@@ -109,6 +112,7 @@ import com.hello.suripu.core.preferences.AccountPreferencesDAO;
 import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
 import com.hello.suripu.core.processors.AccountInfoProcessor;
 import com.hello.suripu.core.processors.InsightProcessor;
+import com.hello.suripu.core.processors.QuestionProcessor;
 import com.hello.suripu.core.processors.insights.LightData;
 import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.core.tracking.TrackingDAO;
@@ -230,7 +234,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final UserLabelDAO userLabelDAO = commonDB.onDemand(UserLabelDAO.class);
         final TimelineAnalyticsDAO timelineAnalyticsDAO = commonDB.onDemand(TimelineAnalyticsDAO.class);
 
-
         // Sensor DB
         final DeviceDataDAO deviceDataDAO = sensorsDB.onDemand(DeviceDataDAO.class);
         final TrackerMotionDAO trackerMotionDAO = sensorsDB.onDemand(TrackerMotionDAO.class);
@@ -346,6 +349,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.FEATURES),
                 namespace
         );
+
+        final AdminRolloutModule rolloutModule = new AdminRolloutModule(featureStore, 30);
+        ObjectGraphRoot.getInstance().init(rolloutModule);
 
         final AmazonDynamoDB teamStoreDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.TEAMS, TeamStore.class);
         final TeamStore teamStore = new TeamStore(teamStoreDBClient, tableNames.get(DynamoDBTableName.TEAMS));
@@ -494,5 +500,14 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         // Store
         final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
         environment.jersey().register(new StoreResources(storeDAO));
+
+        // questions
+        final int numSkips = 5;
+        final QuestionProcessor questionProcessor = new QuestionProcessor.Builder()
+                .withQuestionResponseDAO(questionResponseDAO)
+                .withCheckSkipsNum(numSkips)
+                .withQuestions(questionResponseDAO)
+                .build();
+        environment.jersey().register(new QuestionResources(accountDAO, questionProcessor, timeZoneHistoryDAODynamoDB));
     }
 }
