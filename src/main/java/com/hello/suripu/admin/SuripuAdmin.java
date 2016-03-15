@@ -50,6 +50,7 @@ import com.hello.suripu.admin.resources.v1.TeamsResources;
 import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
 import com.hello.suripu.admin.resources.v1.TrackingResources;
+import com.hello.suripu.admin.resources.v1.UptimeResources;
 import com.hello.suripu.admin.resources.v1.WifiResources;
 import com.hello.suripu.admin.store.StoreResources;
 import com.hello.suripu.admin.store.StoreDAO;
@@ -488,7 +489,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new DBResource(sensorsTableDAO));
         environment.jersey().register(new FeedbackResources(feedbackReadDAO, feedbackDAO, accountDAO));
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
-
+        environment.jersey().register(new UptimeResources(teamStore, jedisPool));
 
         // Store
         final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
