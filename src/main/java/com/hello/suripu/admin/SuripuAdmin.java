@@ -39,6 +39,7 @@ import com.hello.suripu.admin.resources.v1.DownloadResource;
 import com.hello.suripu.admin.resources.v1.EventsResources;
 import com.hello.suripu.admin.resources.v1.FeaturesResources;
 import com.hello.suripu.admin.resources.v1.FeedbackResources;
+import com.hello.suripu.admin.resources.v1.FileResources;
 import com.hello.suripu.admin.resources.v1.FirmwareResource;
 import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.admin.resources.v1.InspectionResources;
@@ -72,6 +73,7 @@ import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.db.FeedbackDAO;
 import com.hello.suripu.core.db.FeedbackReadDAO;
+import com.hello.suripu.core.db.FileManifestDynamoDB;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.db.InsightsDAODynamoDB;
@@ -431,6 +433,12 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.DEVICE_DATA)
         ) ;
 
+        final AmazonDynamoDB fileManifestDAODynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.FILE_MANIFEST, FileManifestDynamoDB.class);
+        final FileManifestDynamoDB fileManifestDynamoDB = new FileManifestDynamoDB(
+                fileManifestDAODynamoDBClient,
+                tableNames.get(DynamoDBTableName.FILE_MANIFEST)
+        ) ;
+
         final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
                 .withQuestionResponseDAO(questionResponseDAO)
                 .withMapping(questionResponseDAO);
@@ -496,6 +504,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new FeedbackResources(feedbackReadDAO, feedbackDAO, accountDAO));
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
         environment.jersey().register(new UptimeResources(teamStore, jedisPool));
+        environment.jersey().register(new FileResources(fileManifestDynamoDB));
 
         // Store
         final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
