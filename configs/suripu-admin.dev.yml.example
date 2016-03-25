@@ -148,6 +148,7 @@ dynamodb:
       alarm_info : alarm_info
       device_data : sense_data
       features : features
+      file_manifest: file_manifest
       firmware_upgrade_path: fw_upgrade_path
       firmware_versions : firmware_versions_mapping
       ota_history : ota_history
@@ -178,6 +179,7 @@ dynamodb:
       alarm_info : http://localhost:7777
       device_data : http://localhost:7777
       features : http://localhost:7777
+      file_manifest: http://localhost:7777
       firmware_upgrade_path : http://localhost:7777
       firmware_versions : http://localhost:7777
       ota_history : http://localhost:7777
