@@ -76,6 +76,7 @@ import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.db.InsightsDAODynamoDB;
 import com.hello.suripu.core.db.KeyStore;
 import com.hello.suripu.core.db.KeyStoreDynamoDB;
+import com.hello.suripu.core.db.MarketingInsightsSeenDAODynamoDB;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
 import com.hello.suripu.core.db.OTAHistoryDAODynamoDB;
 import com.hello.suripu.core.db.OnBoardingLogDAO;
@@ -428,7 +429,13 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final DeviceDataDAODynamoDB deviceDataDAODynamoDB = new DeviceDataDAODynamoDB(
                 deviceDataDAODynamoDBClient,
                 tableNames.get(DynamoDBTableName.DEVICE_DATA)
-        ) ;
+        );
+
+        final AmazonDynamoDB marketingInsightsClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.MARKETING_INSIGHTS_SEEN, MarketingInsightsSeenDAODynamoDB.class);
+        final MarketingInsightsSeenDAODynamoDB marketingInsightsSeenDAODynamoDB = new MarketingInsightsSeenDAODynamoDB(
+                marketingInsightsClient,
+                tableNames.get(DynamoDBTableName.MARKETING_INSIGHTS_SEEN)
+        );
 
         final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
                 .withQuestionResponseDAO(questionResponseDAO)
@@ -444,7 +451,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withAccountInfoProcessor(accountInfoProcessor)
                 .withLightData(lightData)
                 .withWakeStdDevData(wakeStdDevData)
-                .withCalibrationDAO(calibrationDAO);
+                .withCalibrationDAO(calibrationDAO)
+                .withMarketingInsightsSeenDAO(marketingInsightsSeenDAODynamoDB);
 
         final InsightProcessor insightProcessor = insightBuilder.build();
         final ActiveDevicesTracker activeDevicesTracker = new ActiveDevicesTracker(jedisPool);

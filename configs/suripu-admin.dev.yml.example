@@ -172,6 +172,8 @@ dynamodb:
       preferences : preferences
       sleep_score : sleep_score
       wifi_info : wifi_info
+      marketing_insights_seen : marketing_insight_seen
+
 
   
   endpoints:
@@ -202,6 +204,7 @@ dynamodb:
       preferences : http://localhost:7777
       sleep_score : http://localhost:7777
       wifi_info : http://localhost:7777
+      marketing_insights_seen: http://localhost:7777
 
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
