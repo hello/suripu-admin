@@ -153,6 +153,7 @@ dynamodb:
     file_manifest: file_manifest
     firmware_upgrade_path: fw_upgrade_path
     firmware_versions : prod_firmware_versions_mapping
+    marketing_insights_seen : marketing_insight_seen
     ota_history : ota_history
     password_reset : password_reset
     pill_key_store : pill_key_store
@@ -175,7 +176,7 @@ dynamodb:
     preferences : preferences
     sleep_score : sleep_score
     wifi_info : wifi_info
-    marketing_insights_seen : marketing_insight_seen
+
 
 
   endpoints:
@@ -186,6 +187,7 @@ dynamodb:
     firmware_upgrade_path : http://dynamodb.us-east-1.amazonaws.com
     firmware_versions : http://dynamodb.us-east-1.amazonaws.com
     ota_history : http://dynamodb.us-east-1.amazonaws.com
+    marketing_insights_seen : http://dynamodb.us-east-1.amazonaws.com
     password_reset : http://dynamodb.us-east-1.amazonaws.com
     pill_key_store : http://dynamodb.us-east-1.amazonaws.com
     pill_last_seen : http://dynamodb.us-east-1.amazonaws.com
@@ -207,7 +209,7 @@ dynamodb:
     preferences : http://dynamodb.us-east-1.amazonaws.com
     sleep_score : http://dynamodb.us-east-1.amazonaws.com
     wifi_info : http://dynamodb.us-east-1.amazonaws.com
-    marketing_insights_seen : http://dynamodb.us-east-1.amazonaws.com
+
 
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
