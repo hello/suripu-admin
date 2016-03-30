@@ -151,6 +151,7 @@ dynamodb:
       file_manifest: file_manifest
       firmware_upgrade_path: fw_upgrade_path
       firmware_versions : firmware_versions_mapping
+      marketing_insights_seen : marketing_insight_seen
       ota_history : ota_history
       password_reset : password_reset
       pill_key_store : pill_key_store
@@ -174,6 +175,7 @@ dynamodb:
       sleep_score : sleep_score
       wifi_info : wifi_info
 
+
   
   endpoints:
       alarm_info : http://localhost:7777
@@ -182,6 +184,7 @@ dynamodb:
       file_manifest: http://localhost:7777
       firmware_upgrade_path : http://localhost:7777
       firmware_versions : http://localhost:7777
+      marketing_insights_seen: http://localhost:7777
       ota_history : http://localhost:7777
       password_reset : http://localhost:7777
       pill_key_store : http://localhost:7777
