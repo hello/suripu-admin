@@ -59,6 +59,8 @@ public class DataResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataResources.class);
     private static final Boolean USE_AUDIO_PEAK_ENERGY_DB = true; // always show new audio peak energy in admin tool
+    private static final Float NO_SOUND_FILL_VALUE_DB = (float) 25; // Replace with 25 decibels when Sense isn't capturing audio
+
     private final DeviceDataDAO deviceDataDAO;
     private final DeviceDAO deviceDAO;
     private final AccountDAO accountDAO;
@@ -418,7 +420,7 @@ public class DataResources {
         if(!deviceDataOptional.isPresent()) {
             return CurrentRoomState.empty(withCalibratedDust);
         }
-        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", getCalibration(senseId, withCalibratedDust)).withDust(withCalibratedDust);
+        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", getCalibration(senseId, withCalibratedDust), NO_SOUND_FILL_VALUE_DB).withDust(withCalibratedDust);
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
