@@ -12,6 +12,7 @@
     <metrics.version>3.1.0</metrics.version>
     <java.version>1.7</java.version>
     <suripu.version>0.6.98</suripu.version>
+    <aws.sdk.version>1.10.34</aws.sdk.version> <!-- keep in sync with core -->
     <jodatime.version>20150319</jodatime.version>
     </properties>
 
@@ -56,6 +57,57 @@
     </pluginRepositories>
 
     <dependencies>
+        <!-- hello projects -->
+        <dependency>
+            <groupId>com.hello.suripu</groupId>
+            <artifactId>suripu-core</artifactId>
+            <version>${suripu.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.hello.suripu</groupId>
+            <artifactId>suripu-coredw8</artifactId>
+            <version>${suripu.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>suripu-jodatime</groupId>
+            <artifactId>suripu-jodatime</artifactId>
+            <version>${jodatime.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.yammer.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.hello.suripu</groupId>
+            <artifactId>suripu-api</artifactId>
+            <version>${suripu.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- end hello projects -->
+
+
+        <!-- testing -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -69,6 +121,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.183</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- end testing -->
+
+        <dependency>
             <groupId>com.squareup.dagger</groupId>
             <artifactId>dagger</artifactId>
             <version>1.2.2</version>
@@ -79,12 +145,8 @@
             <version>1.2.2</version>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
+
+        <!-- DW -->
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
@@ -127,86 +189,39 @@
             <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>amazon-kinesis-client</artifactId>
-            <version>1.5.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.codehaus.jackson</groupId>
-                    <artifactId>jackson-core-asl</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.codehaus.jackson</groupId>
-                    <artifactId>jackson-mapper-asl</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.dcsquare</groupId>
+            <artifactId>dropwizard-papertrail</artifactId>
+            <version>1.1</version>
         </dependency>
+        <!-- end DW -->
+
+        <!-- AWS -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-core</artifactId>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-dynamodb</artifactId>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-kinesis</artifactId>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+        <!-- end AWS -->
+
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>2.6.1</version>
         </dependency>
         <dependency>
-            <groupId>com.hello.suripu</groupId>
-            <artifactId>suripu-core</artifactId>
-            <version>${suripu.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.yammer.dropwizard</groupId>
-                    <artifactId>dropwizard-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.hello.suripu</groupId>
-            <artifactId>suripu-coredw8</artifactId>
-            <version>${suripu.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hello.suripu</groupId>
-            <artifactId>suripu-api</artifactId>
-            <version>${suripu.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.yammer.dropwizard</groupId>
-                    <artifactId>dropwizard-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>18.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hello.dropwizard</groupId>
-            <artifactId>dropwizard-mikkusu</artifactId>
-            <version>0.0.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.yammer.dropwizard</groupId>
-                    <artifactId>dropwizard-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>suripu-jodatime</groupId>
-            <artifactId>suripu-jodatime</artifactId>
-            <version>${jodatime.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.yammer.dropwizard</groupId>
-                    <artifactId>dropwizard-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -217,17 +232,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>9.2-1004-jdbc4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.dcsquare</groupId>
-            <artifactId>dropwizard-papertrail</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.183</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
