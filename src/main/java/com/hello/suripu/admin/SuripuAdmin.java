@@ -12,7 +12,6 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.common.collect.ImmutableMap;
-import com.hello.dropwizard.mikkusu.resources.PingResource;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
 import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
@@ -54,6 +53,7 @@ import com.hello.suripu.admin.resources.v1.TimelineResources;
 import com.hello.suripu.admin.resources.v1.TokenResources;
 import com.hello.suripu.admin.resources.v1.TrackingResources;
 import com.hello.suripu.admin.resources.v1.UptimeResources;
+import com.hello.suripu.admin.resources.v1.VersionResources;
 import com.hello.suripu.admin.resources.v1.WifiResources;
 import com.hello.suripu.admin.store.StoreDAO;
 import com.hello.suripu.admin.store.StoreResources;
@@ -475,7 +475,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 configuration.dynamoDBConfiguration().tables().get(DynamoDBTableName.PILL_DATA)
         );
 
-        environment.jersey().register(PingResource.class);
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO));
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
@@ -513,6 +512,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
         environment.jersey().register(new UptimeResources(teamStore, jedisPool));
         environment.jersey().register(new FileResources(fileManifestDynamoDB));
+        environment.jersey().register(new VersionResources());
 
         // Store
         final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);

@@ -1,11 +1,10 @@
 package com.hello.suripu.admin.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hello.suripu.core.configuration.KinesisLoggerConfiguration;
-import com.hello.suripu.core.configuration.NewDynamoDBConfiguration;
 import com.hello.suripu.coredw8.configuration.GraphiteConfiguration;
 import com.hello.suripu.coredw8.configuration.KinesisConfiguration;
 import com.hello.suripu.coredw8.configuration.RedisConfiguration;
+import com.hello.suripu.coredw8.configuration.NewDynamoDBConfiguration;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import jersey.repackaged.com.google.common.base.MoreObjects;
@@ -88,17 +87,6 @@ public class SuripuAdminConfiguration extends Configuration {
     public KinesisConfiguration getKinesisConfiguration() {
         return kinesisConfiguration;
     }
-
-
-    @Valid
-    @NotNull
-    @JsonProperty("kinesis_logger")
-    private KinesisLoggerConfiguration kinesisLoggerConfiguration;
-
-    public KinesisLoggerConfiguration getKinesisLoggerConfiguration() {
-        return kinesisLoggerConfiguration;
-    }
-
 
     @Valid
     @NotNull
