@@ -132,12 +132,6 @@ kinesis:
     batch_pill_data : batch_pill_data
     sense_sensors_data : sense_sensors_data
 
-kinesis_logger:
-  stream_name: logs
-  enabled : false
-  buffer_size: 100
-  origin: suripu-admin
-
 redis:
   host: localhost
   port: 6379
