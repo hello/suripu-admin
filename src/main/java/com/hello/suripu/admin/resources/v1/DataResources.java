@@ -57,6 +57,8 @@ import java.util.List;
 @Path("/v1/data")
 public class DataResources {
 
+    private static final Float NO_SOUND_FILL_VALUE_DB = (float) 35; // Replace with this value when Sense isn't capturing audio
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataResources.class);
     private final DeviceDataDAO deviceDataDAO;
     private final DeviceDAO deviceDAO;
@@ -230,7 +232,7 @@ public class DataResources {
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
         final List<Sample> timeSeries = deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
-                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId, withCalibratedDust));
+                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId, withCalibratedDust), true);
 
         if (Sensor.PARTICULATES.name().equalsIgnoreCase(sensor)) {
             if (smooth) {
@@ -372,7 +374,8 @@ public class DataResources {
                 slotDurationInMinutes,
                 missingDataDefaultValue,
                 color,
-                getCalibration(deviceAccountPairOptional.get().externalDeviceId, withCalibratedDust)
+                getCalibration(deviceAccountPairOptional.get().externalDeviceId, withCalibratedDust),
+            true
         );
 
         final List<UserInteraction> userInteractions = new ArrayList<>();
@@ -415,7 +418,7 @@ public class DataResources {
         if(!deviceDataOptional.isPresent()) {
             return CurrentRoomState.empty(withCalibratedDust);
         }
-        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", getCalibration(senseId, withCalibratedDust)).withDust(withCalibratedDust);
+        return CurrentRoomState.fromDeviceData(deviceDataOptional.get().withCalibratedLight(senseColorDAO.getColorForSense(senseId)), DateTime.now(), 15, "c", getCalibration(senseId, withCalibratedDust), NO_SOUND_FILL_VALUE_DB).withDust(withCalibratedDust);
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})

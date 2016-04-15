@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
-import com.hello.suripu.core.configuration.NewDynamoDBConfiguration;
+import com.hello.suripu.coredw8.configuration.NewDynamoDBConfiguration;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.db.PillViewsDynamoDB;

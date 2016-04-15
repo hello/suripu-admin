@@ -70,11 +70,15 @@ public class PopulateVersionNumbers {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             String[] parts = firstLine.split(":");
-            final String hash = parts[1].trim();
+            final String hash = (isNewVersionFormat(parts[1].trim())) ? Integer.toHexString(Integer.valueOf(parts[1].trim())) : parts[1].trim();
             final String humanVersion = key.split("/")[1];
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("Hash = {} and Key = {}", hash, key);
             Thread.sleep(1200L);
         }
+    }
+    private static boolean isNewVersionFormat(final String version) {
+        //Better logic should be employed here
+        return (version.length() < 6) ;
     }
 }
