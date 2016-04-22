@@ -147,7 +147,7 @@ dynamodb:
     file_manifest: file_manifest
     firmware_upgrade_path: fw_upgrade_path
     firmware_versions : prod_firmware_versions_mapping
-    marketing_insights_seen : marketing_insight_seen
+    marketing_insights_seen : marketing_insights_seen
     ota_history : ota_history
     password_reset : password_reset
     pill_key_store : pill_key_store
