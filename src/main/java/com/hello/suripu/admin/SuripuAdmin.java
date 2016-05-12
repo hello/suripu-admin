@@ -8,9 +8,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
 import com.hello.suripu.admin.cli.ManageKinesisStreams;
@@ -70,6 +71,7 @@ import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
+import com.hello.suripu.core.db.DeviceReadDAO;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.db.FeedbackDAO;
 import com.hello.suripu.core.db.FeedbackReadDAO;
@@ -121,6 +123,7 @@ import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.coredw8.db.AccessTokenDAO;
+import com.hello.suripu.coredw8.metrics.RegexMetricFilter;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.AuthDynamicFeature;
 import com.hello.suripu.coredw8.oauth.AuthValueFactoryProvider;
@@ -198,13 +201,16 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
             final String env = (configuration.getDebug()) ? "dev" : "prod";
             final String prefix = String.format("%s.%s.suripu-admin", apiKey, env);
 
+            final ImmutableList<String> metrics = ImmutableList.copyOf(configuration.getGraphite().getIncludeMetrics());
+            final RegexMetricFilter metricFilter = new RegexMetricFilter(metrics);
+
             final Graphite graphite = new Graphite(new InetSocketAddress(graphiteHostName, 2003));
 
             final GraphiteReporter reporter = GraphiteReporter.forRegistry(environment.metrics())
                     .prefixedWith(prefix)
                     .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .filter(MetricFilter.ALL)
+                    .filter(metricFilter)
                     .build(graphite);
             reporter.start(interval, TimeUnit.SECONDS);
 
@@ -227,6 +233,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AccountDAO accountDAO = commonDB.onDemand(AccountDAOImpl.class);
         final AccountDAOAdmin accountDAOAdmin = commonDB.onDemand(AccountDAOAdmin.class);
         final DeviceDAO deviceDAO = commonDB.onDemand(DeviceDAO.class);
+        final DeviceReadDAO deviceReadDAO = commonDB.onDemand(DeviceReadDAO.class);
         final DeviceAdminDAO deviceAdminDAO = commonDB.onDemand(DeviceAdminDAOImpl.class);
         final FeedbackReadDAO feedbackReadDAO = commonDB.onDemand(FeedbackReadDAO.class);
         final FeedbackDAO feedbackDAO = commonDB.onDemand(FeedbackDAO.class);
@@ -335,9 +342,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .setPrefix("Bearer")
                 .setLogger(activityLogger)
                 .buildAuthFilter()));
-        environment.jersey().register(ScopesAllowedDynamicFeature.class);
+        environment.jersey().register(new ScopesAllowedDynamicFeature(applicationStore));
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(AccessToken.class));
-
 
         final JedisPool jedisPool = new JedisPool(
                 configuration.getRedisConfiguration().getHost(),
@@ -452,8 +458,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AccountInfoProcessor accountInfoProcessor = builder.build();
 
         final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
-                .withSenseDAOs(deviceDataDAO, deviceDataDAODynamoDB, deviceDAO)
-                .withTrackerMotionDAO(trackerMotionDAO)
+                .withSenseDAOs(deviceDataDAODynamoDB, deviceReadDAO)
                 .withInsightsDAO(trendsInsightsDAO)
                 .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
                 .withPreferencesDAO(accountPreferencesDynamoDB)
