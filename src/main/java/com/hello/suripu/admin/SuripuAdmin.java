@@ -180,6 +180,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final DBI redshiftDB = factory.build(environment, configuration.getRedshiftDB(), "postgresql-redshift");
         final DBI storeDB = factory.build(environment, configuration.getStoredDB(), "postgresql-store");
+        environment.healthChecks().unregister("postgresql-store");
         sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
         sensorsDB.registerContainerFactory(new OptionalContainerFactory());
         sensorsDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
