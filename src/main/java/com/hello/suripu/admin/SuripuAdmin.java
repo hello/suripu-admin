@@ -179,7 +179,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final DBI sensorsDB = factory.build(environment, configuration.getSensorsDB(), "postgresql-sensors");
 
         final DBI redshiftDB = factory.build(environment, configuration.getRedshiftDB(), "postgresql-redshift");
-        final DBI storeDB = factory.build(environment, configuration.getStoredDB(), "postgresql-store");
+//        final DBI storeDB = factory.build(environment, configuration.getStoredDB(), "postgresql-store");
         sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
         sensorsDB.registerContainerFactory(new OptionalContainerFactory());
         sensorsDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
@@ -520,8 +520,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new VersionResources());
 
         // Store
-        final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
-        environment.jersey().register(new StoreResources(storeDAO));
+        //TODO: RE-Enable THIS!
+//        final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
+//        environment.jersey().register(new StoreResources(storeDAO));
 
         // questions
         final int numSkips = 5;
