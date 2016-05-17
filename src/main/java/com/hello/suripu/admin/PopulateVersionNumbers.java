@@ -50,7 +50,7 @@ public class PopulateVersionNumbers {
                 }
             }
             listObjectsRequest.setMarker(objectListing.getNextMarker());
-            i ++;
+            i++;
             LOGGER.info("Iteration: {}", i);
         } while (objectListing.isTruncated() && i < 5);
 
@@ -70,7 +70,7 @@ public class PopulateVersionNumbers {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             String[] parts = firstLine.split(":");
-            final String hash = parts[1].trim();
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toHexString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
             final String humanVersion = key.split("/")[1];
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("Hash = {} and Key = {}", hash, key);
