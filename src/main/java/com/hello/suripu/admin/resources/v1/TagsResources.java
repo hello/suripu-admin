@@ -11,6 +11,7 @@ import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -41,6 +42,21 @@ public class TagsResources {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Tag> allDeviceTags(@Auth final AccessToken accessToken) {
         return tagStore.getTags(TagStoreDAODynamoDB.Type.DEVICES);
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Path("/device_tags/{device_id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<String> allTagsForDevice(@Auth final AccessToken accessToken, @PathParam("device_id") String deviceId) {
+        final List<String> deviceTags = Lists.newArrayList();
+        final List<Tag> allTags = tagStore.getTags(TagStoreDAODynamoDB.Type.DEVICES);
+        for (final Tag tag : allTags) {
+            if (tag.ids.contains(deviceId)) {
+                deviceTags.add(tag.name);
+            }
+        }
+        return deviceTags;
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
