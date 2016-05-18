@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
@@ -223,7 +224,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AWSCredentialsProvider awsCredentialsProvider= new DefaultAWSCredentialsProviderChain();
         final AmazonDynamoDBClientFactory dynamoDBClientFactory = AmazonDynamoDBClientFactory.create(awsCredentialsProvider, configuration.dynamoDBConfiguration());
 
-        final AmazonS3Client s3Client = new AmazonS3Client(awsCredentialsProvider);
+        final AmazonS3 s3Client = new AmazonS3Client(awsCredentialsProvider);
 
         final ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.withConnectionTimeout(200); // in ms

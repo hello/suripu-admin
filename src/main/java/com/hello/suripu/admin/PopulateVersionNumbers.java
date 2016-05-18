@@ -57,10 +57,8 @@ public class PopulateVersionNumbers {
 
         for(final String key: keys) {
             final S3Object s3Object = amazonS3.getObject("hello-firmware", key);
-
-            final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
             String text;
-            try {
+            try(final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent()) {
                 text = CharStreams.toString(new InputStreamReader(s3ObjectInputStream, Charsets.UTF_8));
             } catch (IOException e) {
                 LOGGER.error("Failed reading build_info for key {} from s3 : {}", key, e.getMessage());

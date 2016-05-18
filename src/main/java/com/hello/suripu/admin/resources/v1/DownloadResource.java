@@ -1,7 +1,7 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.amazonaws.HttpMethod;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
@@ -34,10 +34,10 @@ public class DownloadResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadResource.class);
 
-    final private AmazonS3Client amazonS3Client;
+    final private AmazonS3 amazonS3Client;
     final private String bucketName;
 
-    public DownloadResource(final AmazonS3Client amazonS3Client, final String bucketName) {
+    public DownloadResource(final AmazonS3 amazonS3Client, final String bucketName) {
         this.amazonS3Client = amazonS3Client;
         this.bucketName = bucketName;
     }

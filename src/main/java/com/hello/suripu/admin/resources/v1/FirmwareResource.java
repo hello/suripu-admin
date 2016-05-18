@@ -1,6 +1,6 @@
 package com.hello.suripu.admin.resources.v1;
 
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3Object;
@@ -11,6 +11,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -84,7 +85,7 @@ public class FirmwareResource {
     private final TeamStore teamStore;
     private final DeviceDAO deviceDAO;
     private final JedisPool jedisPool;
-    private final AmazonS3Client s3Client;
+    private final AmazonS3 s3Client;
     private static final String REDIS_SEEN_FIRMWARE_KEY = "firmwares_seen";
     private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
 
@@ -96,7 +97,7 @@ public class FirmwareResource {
                             final DeviceDAO deviceDAO,
                             final SensorsViewsDynamoDB sensorsViewsDynamoDB,
                             final TeamStore teamStore,
-                            final AmazonS3Client s3Client) {
+                            final AmazonS3 s3Client) {
         this.jedisPool = jedisPool;
         this.firmwareVersionMappingDAO = firmwareVersionMappingDAO;
         this.otaHistoryDAO = otaHistoryDAODynamoDB;
@@ -469,9 +470,8 @@ public class FirmwareResource {
             }
 
             final S3Object s3Object = s3Client.getObject("hello-firmware", key);
-            final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
             String text;
-            try {
+            try(final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent()) {
                 text = CharStreams.toString(new InputStreamReader(s3ObjectInputStream, Charsets.UTF_8));
             } catch (IOException e) {
                 LOGGER.error("error=build_info_read_failure key={} message={}", key, e.getMessage());
@@ -486,9 +486,7 @@ public class FirmwareResource {
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("action=put_fw_map hash={} key={}", hash, key);
 
-            final Map<String, String> results = Maps.newHashMap();
-            results.put("fw_hash", hash);
-            return results;
+            return ImmutableMap.of("fw_hash", hash);
         }
         return Collections.EMPTY_MAP;
     }
