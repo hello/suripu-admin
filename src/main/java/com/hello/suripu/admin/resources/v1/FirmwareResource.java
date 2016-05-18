@@ -1,11 +1,23 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.codahale.metrics.annotation.Timed;
+
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.CharStreams;
+
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
@@ -50,6 +62,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +85,7 @@ public class FirmwareResource {
     private final TeamStore teamStore;
     private final DeviceDAO deviceDAO;
     private final JedisPool jedisPool;
+    private final AmazonS3 s3Client;
     private static final String REDIS_SEEN_FIRMWARE_KEY = "firmwares_seen";
     private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
 
@@ -79,7 +96,8 @@ public class FirmwareResource {
                             final FirmwareUpgradePathDAO firmwareUpgradePathDAO,
                             final DeviceDAO deviceDAO,
                             final SensorsViewsDynamoDB sensorsViewsDynamoDB,
-                            final TeamStore teamStore) {
+                            final TeamStore teamStore,
+                            final AmazonS3 s3Client) {
         this.jedisPool = jedisPool;
         this.firmwareVersionMappingDAO = firmwareVersionMappingDAO;
         this.otaHistoryDAO = otaHistoryDAODynamoDB;
@@ -88,6 +106,7 @@ public class FirmwareResource {
         this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
         this.deviceDAO = deviceDAO;
         this.teamStore = teamStore;
+        this.s3Client = s3Client;
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ, OAuthScope.ADMINISTRATION_WRITE})
@@ -417,6 +436,62 @@ public class FirmwareResource {
         return firmwareVersionMappingDAO.getBatch(fwHashSet);
     }
 
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
+    @POST
+    @Path("/names/add_map/{fw_version}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, String> addFWNameMap(
+        @Auth final AccessToken accessToken,
+        @PathParam("fw_version") final String fwVersion) {
+
+        ObjectListing objectListing;
+
+        final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+            .withBucketName("hello-firmware").withPrefix("sense/" + fwVersion);
+
+        final List<String> keys = Lists.newArrayList();
+        int i = 0;
+        do {
+            objectListing = s3Client.listObjects(listObjectsRequest);
+            for (S3ObjectSummary objectSummary :
+                objectListing.getObjectSummaries()) {
+                if(objectSummary.getKey().contains("build_info.txt")) {
+                    keys.add(objectSummary.getKey());
+                }
+            }
+            listObjectsRequest.setMarker(objectListing.getNextMarker());
+            i++;
+        } while (objectListing.isTruncated() && i < 5);
+
+        for(final String key: keys) {
+            final String humanVersion = key.split("/")[1];
+            if (!humanVersion.equals(fwVersion)) {
+                continue;
+            }
+
+            final S3Object s3Object = s3Client.getObject("hello-firmware", key);
+            String text;
+            try(final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent()) {
+                text = CharStreams.toString(new InputStreamReader(s3ObjectInputStream, Charsets.UTF_8));
+            } catch (IOException e) {
+                LOGGER.error("error=build_info_read_failure key={} message={}", key, e.getMessage());
+                continue;
+            }
+
+            final Iterable<String> strings = Splitter.on("\n").split(text);
+            final String firstLine = strings.iterator().next();
+            final String[] parts = firstLine.split(":");
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toHexString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
+
+            firmwareVersionMappingDAO.put(hash, humanVersion);
+            LOGGER.info("action=put_fw_map hash={} key={}", hash, key);
+
+            return ImmutableMap.of("fw_hash", hash);
+        }
+        return Collections.EMPTY_MAP;
+    }
+
+
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
     @Timed
@@ -586,8 +661,6 @@ public class FirmwareResource {
             }
         }
     }
-
-
 
     private Optional<FirmwareInfo> getFirmwareVersionForDevice(final String deviceId) {
         final List<DeviceAccountPair> pairs = deviceDAO.getAccountIdsForDeviceId(deviceId);
