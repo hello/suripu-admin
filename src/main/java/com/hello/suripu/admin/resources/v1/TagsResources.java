@@ -11,7 +11,6 @@ import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;

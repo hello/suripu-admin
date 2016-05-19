@@ -280,6 +280,25 @@ public class DeviceResources {
   }
 
   @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+  @Timed
+  @GET
+  @Path("/totals")
+  @Produces(MediaType.APPLICATION_JSON)
+  public DeviceStatusBreakdown getTotalDeviceStatusBreakdown(@Auth final AccessToken accessToken) {
+    final Optional<Long> sensesCount = deviceAdminDAO.getAllSensesCount();
+    final Optional<Long> pillsCount = deviceAdminDAO.getAllPillsCount();
+
+    if(!sensesCount.isPresent()) {
+      throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+    }
+    if(!pillsCount.isPresent()) {
+      throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+    }
+
+    return new DeviceStatusBreakdown(sensesCount.get(), pillsCount.get());
+  }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
   @GET
   @Timed
   @Path("/inactive/sense")

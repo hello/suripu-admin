@@ -1,6 +1,7 @@
 package com.hello.suripu.admin.db;
 
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.DeviceAccountPair;
@@ -17,4 +18,6 @@ public interface DeviceAdminDAO {
     ImmutableList<DeviceAccountPair> getMostRecentPairsQualifiedForDustCalibration(final Integer limit, final Integer maxId, final Integer minUpDays);
     ImmutableList<DeviceAccountPair> getLatestUniqueActiveSensePairs(final Integer maxId, final Integer limit);
     ImmutableList<DeviceAccountPair> getLatestUniqueActivePillPairs(final Integer maxId, final Integer limit);
+    Optional<Long> getAllSensesCount();
+    Optional<Long> getAllPillsCount();
 }
