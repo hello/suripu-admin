@@ -280,6 +280,18 @@ public class DeviceResources {
   }
 
   @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+  @Timed
+  @GET
+  @Path("/totals")
+  @Produces(MediaType.APPLICATION_JSON)
+  public DeviceStatusBreakdown getTotalDeviceStatusBreakdown(@Auth final AccessToken accessToken) {
+    final Long sensesCount = deviceAdminDAO.getAllSensesCount();
+    final Long pillsCount = deviceAdminDAO.getAllPillsCount();
+
+    return new DeviceStatusBreakdown(sensesCount, pillsCount);
+  }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
   @GET
   @Timed
   @Path("/inactive/sense")

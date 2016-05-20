@@ -17,4 +17,6 @@ public interface DeviceAdminDAO {
     ImmutableList<DeviceAccountPair> getMostRecentPairsQualifiedForDustCalibration(final Integer limit, final Integer maxId, final Integer minUpDays);
     ImmutableList<DeviceAccountPair> getLatestUniqueActiveSensePairs(final Integer maxId, final Integer limit);
     ImmutableList<DeviceAccountPair> getLatestUniqueActivePillPairs(final Integer maxId, final Integer limit);
+    Long getAllSensesCount();
+    Long getAllPillsCount();
 }
