@@ -1,6 +1,5 @@
 package com.hello.suripu.admin.db;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.core.db.mappers.AccountMapper;
 import com.hello.suripu.core.db.mappers.DeviceAccountPairMapper;
@@ -115,11 +114,9 @@ public abstract class DeviceAdminDAOImpl implements DeviceAdminDAO {
             @Bind("limit") final Integer limit
     );
 
-    @SingleValueResult(Long.class)
     @SqlQuery("SELECT COUNT(DISTINCT device_id) FROM account_device_map;")
-    public abstract Optional<Long> getAllSensesCount();
+    public abstract Long getAllSensesCount();
 
-    @SingleValueResult(Long.class)
     @SqlQuery("SELECT COUNT(DISTINCT device_id) FROM account_tracker_map;")
-    public abstract Optional<Long> getAllPillsCount();
+    public abstract Long getAllPillsCount();
 }
