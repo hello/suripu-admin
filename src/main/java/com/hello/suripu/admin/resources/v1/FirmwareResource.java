@@ -87,6 +87,7 @@ public class FirmwareResource {
     private static final String FIRMWARES_SEEN_SET_KEY = "firmwares_seen";
     private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
     private static final String DEVICE_KEY_BASE = "device_id:";
+    private static final String MIDDLE_FIRMWARE_KEY_BASE = "middle:";
 
     public FirmwareResource(final JedisPool jedisPool,
                             final FirmwareVersionMappingDAO firmwareVersionMappingDAO,
@@ -321,7 +322,7 @@ public class FirmwareResource {
             final Pipeline pipe = jedis.pipelined();
             for (final Tuple fwInfo:seenFirmwares) {
                 final String fwVersion = fwInfo.getElement();
-                responseMap.put(fwVersion, pipe.zscore(fwVersion, deviceId));
+                responseMap.put(fwVersion, pipe.zscore(MIDDLE_FIRMWARE_KEY_BASE.concat(fwVersion), deviceId));
             }
             pipe.sync();
 
@@ -719,7 +720,7 @@ public class FirmwareResource {
                 }
 
                 final String middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get() : "0";
-                timestampResponseMap.put(deviceId, pipe.zscore(middleFWVersion, deviceId));
+                timestampResponseMap.put(deviceId, pipe.zscore(MIDDLE_FIRMWARE_KEY_BASE.concat(middleFWVersion), deviceId));
             }
             pipe.sync();
 
