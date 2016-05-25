@@ -24,7 +24,6 @@ import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.db.OTAHistoryDAODynamoDB;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB.ResponseCommand;
-import com.hello.suripu.core.db.SensorsViewsDynamoDB;
 import com.hello.suripu.core.db.TeamStore;
 import com.hello.suripu.core.models.FirmwareCountInfo;
 import com.hello.suripu.core.models.FirmwareInfo;
@@ -88,6 +87,7 @@ public class FirmwareResource {
     private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
     private static final String DEVICE_KEY_BASE = "device_id:";
     private static final String MIDDLE_FIRMWARE_KEY_BASE = "middle:";
+    private static final Integer MAX_REDIS_PIPELINE_COMMANDS_PER_BATCH = 1000;
 
     public FirmwareResource(final JedisPool jedisPool,
                             final FirmwareVersionMappingDAO firmwareVersionMappingDAO,
@@ -395,7 +395,7 @@ public class FirmwareResource {
         final List<String> groupIds = Lists.newArrayList(group.ids);
 
         final List<FirmwareInfo> firmwares = Lists.newArrayList();
-        final List<List<String>> devices = Lists.partition(groupIds, SensorsViewsDynamoDB.MAX_LAST_SEEN_DEVICES);
+        final List<List<String>> devices = Lists.partition(groupIds, MAX_REDIS_PIPELINE_COMMANDS_PER_BATCH);
 
         for (final List<String> deviceSubList : devices) {
             final Optional<List<FirmwareInfo>> fwInfo = getFirmwareInfoForDevices(Sets.newHashSet(deviceSubList));
