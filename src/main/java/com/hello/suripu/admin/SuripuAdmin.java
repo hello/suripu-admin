@@ -464,6 +464,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withInsightsDAO(trendsInsightsDAO)
                 .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
                 .withPreferencesDAO(accountPreferencesDynamoDB)
+                .withAccountReadDAO(accountDAO)
                 .withAccountInfoProcessor(accountInfoProcessor)
                 .withLightData(lightData)
                 .withWakeStdDevData(wakeStdDevData)
