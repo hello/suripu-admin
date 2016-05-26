@@ -33,7 +33,7 @@ public class PopulateVersionNumbers {
         final AWSCredentialsProvider awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         final AmazonS3 amazonS3 = new AmazonS3Client(awsCredentialsProvider);
         final AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(awsCredentialsProvider);
-        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "prod_firmware_versions_mapping");
+        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "firmware_versions_mapping");
         ObjectListing objectListing;
 
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
@@ -68,7 +68,7 @@ public class PopulateVersionNumbers {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             String[] parts = firstLine.split(":");
-            final String hash = (parts[1].trim().length() < 6) ? Integer.toHexString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
             final String humanVersion = key.split("/")[1];
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("Hash = {} and Key = {}", hash, key);

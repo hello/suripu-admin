@@ -24,10 +24,7 @@ import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.db.OTAHistoryDAODynamoDB;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB.ResponseCommand;
-import com.hello.suripu.core.db.SensorsViewsDynamoDB;
 import com.hello.suripu.core.db.TeamStore;
-import com.hello.suripu.core.models.DeviceAccountPair;
-import com.hello.suripu.core.models.DeviceData;
 import com.hello.suripu.core.models.FirmwareCountInfo;
 import com.hello.suripu.core.models.FirmwareInfo;
 import com.hello.suripu.core.models.OTAHistory;
@@ -81,13 +78,16 @@ public class FirmwareResource {
     final FirmwareUpgradePathDAO firmwareUpgradePathDAO;
     private final OTAHistoryDAODynamoDB otaHistoryDAO;
     private final ResponseCommandsDAODynamoDB responseCommandsDAODynamoDB;
-    private final SensorsViewsDynamoDB sensorsViewsDynamoDB;
     private final TeamStore teamStore;
     private final DeviceDAO deviceDAO;
     private final JedisPool jedisPool;
     private final AmazonS3 s3Client;
-    private static final String REDIS_SEEN_FIRMWARE_KEY = "firmwares_seen";
+
+    private static final String FIRMWARES_SEEN_SET_KEY = "firmwares_seen";
     private static final String CERTIFIED_FIRMWARE_SET_KEY = "certified_firmware";
+    private static final String DEVICE_KEY_BASE = "device_id:";
+    private static final String MIDDLE_FIRMWARE_KEY_BASE = "middle:";
+    private static final Integer MAX_REDIS_PIPELINE_COMMANDS_PER_BATCH = 1000;
 
     public FirmwareResource(final JedisPool jedisPool,
                             final FirmwareVersionMappingDAO firmwareVersionMappingDAO,
@@ -95,7 +95,6 @@ public class FirmwareResource {
                             final ResponseCommandsDAODynamoDB responseCommandsDAODynamoDB,
                             final FirmwareUpgradePathDAO firmwareUpgradePathDAO,
                             final DeviceDAO deviceDAO,
-                            final SensorsViewsDynamoDB sensorsViewsDynamoDB,
                             final TeamStore teamStore,
                             final AmazonS3 s3Client) {
         this.jedisPool = jedisPool;
@@ -103,7 +102,6 @@ public class FirmwareResource {
         this.otaHistoryDAO = otaHistoryDAODynamoDB;
         this.responseCommandsDAODynamoDB = responseCommandsDAODynamoDB;
         this.firmwareUpgradePathDAO = firmwareUpgradePathDAO;
-        this.sensorsViewsDynamoDB = sensorsViewsDynamoDB;
         this.deviceDAO = deviceDAO;
         this.teamStore = teamStore;
         this.s3Client = s3Client;
@@ -115,7 +113,7 @@ public class FirmwareResource {
     @Path("/devices")
     @Produces(MediaType.APPLICATION_JSON)
     public List<FirmwareInfo> getFirmwareDeviceList(@Auth final AccessToken accessToken,
-                                              @QueryParam("firmware_version") final Long firmwareVersion,
+                                              @QueryParam("firmware_version") final String firmwareVersion,
                                               @QueryParam("range_start") final Long rangeStart,
                                               @QueryParam("range_end") final Long rangeEnd) {
         if(firmwareVersion == null) {
@@ -133,19 +131,29 @@ public class FirmwareResource {
         }
 
         final Jedis jedis = jedisPool.getResource();
-        final String fwVersion = firmwareVersion.toString();
         final List<FirmwareInfo> deviceInfo = Lists.newArrayList();
         try {
             //Get all elements in the index range provided
-            final Set<Tuple> allFWDevices = jedis.zrevrangeWithScores(fwVersion, rangeStart, rangeEnd);
+            final Set<Tuple> allFWDevices = jedis.zrevrangeWithScores(MIDDLE_FIRMWARE_KEY_BASE.concat(firmwareVersion), rangeStart, rangeEnd);
+            final Pipeline pipe = jedis.pipelined();
+            final Map<String, redis.clients.jedis.Response<String>> responseMap = Maps.newHashMap();
             for(final Tuple device: allFWDevices){
-                deviceInfo.add(new FirmwareInfo(fwVersion, "0", device.getElement(), (long)device.getScore()));
+                final String deviceId = device.getElement();
+                responseMap.put(device.getElement(), pipe.hget(DEVICE_KEY_BASE.concat(deviceId), "top_version"));
             }
+            pipe.sync();
+            for (final Tuple device:allFWDevices) {
+                final String deviceId = device.getElement();
+                final String topFWVersion = (responseMap.get(deviceId) != null) ? responseMap.get(deviceId).get() : "0";
+                final long lastSeen = (long) device.getScore();
+                deviceInfo.add(new FirmwareInfo(firmwareVersion, topFWVersion, deviceId, lastSeen));
+            }
+
         } catch (JedisDataException exception) {
             LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
             jedisPool.returnBrokenResource(jedis);
         } catch (Exception exception) {
-            LOGGER.error("Failed retrieving FW device list: {}", exception.getMessage());
+            LOGGER.error("Failed retrieving FW list: {}", exception.getMessage());
             jedisPool.returnBrokenResource(jedis);
         } finally {
             try {
@@ -164,18 +172,17 @@ public class FirmwareResource {
     @Path("/count")
     @Produces(MediaType.APPLICATION_JSON)
     public Long getFirmwareDeviceCount(@Auth final AccessToken accessToken,
-                                       @QueryParam("firmware_version") final Long firmwareVersion) {
+                                       @QueryParam("firmware_version") final String firmwareVersion) {
         if(firmwareVersion == null) {
             LOGGER.error("Missing firmwareVersion parameter");
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
 
         final Jedis jedis = jedisPool.getResource();
-        final String fwVersion = firmwareVersion.toString();
         Long devicesOnFirmware = 0L;
 
         try {
-            devicesOnFirmware = jedis.zcard(fwVersion);
+            devicesOnFirmware = jedis.zcard(MIDDLE_FIRMWARE_KEY_BASE.concat(firmwareVersion));
 
         } catch (JedisDataException exception) {
             LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
@@ -204,11 +211,11 @@ public class FirmwareResource {
         final Jedis jedis = jedisPool.getResource();
         final List<FirmwareCountInfo> firmwareCounts = Lists.newArrayList();
         try {
-            final Set<Tuple> seenFirmwares = jedis.zrangeWithScores(REDIS_SEEN_FIRMWARE_KEY, 0, -1);
+            final Set<Tuple> seenFirmwares = jedis.zrangeWithScores(FIRMWARES_SEEN_SET_KEY, 0, -1);
             final Pipeline pipe = jedis.pipelined();
             final Map<String, redis.clients.jedis.Response<Long>> responseMap = Maps.newHashMap();
             for (final Tuple fwInfo:seenFirmwares) {
-                responseMap.put(fwInfo.getElement(), pipe.zcard(fwInfo.getElement()));
+                responseMap.put(fwInfo.getElement(), pipe.zcard(MIDDLE_FIRMWARE_KEY_BASE.concat(fwInfo.getElement())));
             }
             pipe.sync();
             for (final Tuple fwInfo:seenFirmwares) {
@@ -257,11 +264,11 @@ public class FirmwareResource {
         final Jedis jedis = jedisPool.getResource();
         final List<FirmwareCountInfo> firmwareCounts = Lists.newArrayList();
         try {
-            final Set<Tuple> seenFirmwares = jedis.zrangeByScoreWithScores(REDIS_SEEN_FIRMWARE_KEY, rangeStart, rangeEnd);
+            final Set<Tuple> seenFirmwares = jedis.zrangeByScoreWithScores(FIRMWARES_SEEN_SET_KEY, rangeStart, rangeEnd);
             final Pipeline pipe = jedis.pipelined();
             final Map<String, redis.clients.jedis.Response<Long>> responseMap = Maps.newHashMap();
             for (final Tuple fwInfo:seenFirmwares) {
-                responseMap.put(fwInfo.getElement(), pipe.zcount(fwInfo.getElement(), rangeStart, rangeEnd));
+                responseMap.put(fwInfo.getElement(), pipe.zcount(MIDDLE_FIRMWARE_KEY_BASE.concat(fwInfo.getElement()), rangeStart, rangeEnd));
             }
             pipe.sync();
             for (final Tuple fwInfo:seenFirmwares) {
@@ -269,7 +276,7 @@ public class FirmwareResource {
                 final long fwCount = responseMap.get(fwVersion).get();
                 final long lastSeen = (long) fwInfo.getScore();
                 if (fwCount > 0) {
-                    firmwareCounts.add(new FirmwareCountInfo(fwInfo.getElement(), fwCount, lastSeen));
+                    firmwareCounts.add(new FirmwareCountInfo(fwVersion, fwCount, lastSeen));
                 }
             }
 
@@ -307,14 +314,24 @@ public class FirmwareResource {
         final TreeMap<Long, String> fwHistory = Maps.newTreeMap();
 
         try {
-            final Set<Tuple> seenFirmwares = jedis.zrangeWithScores(REDIS_SEEN_FIRMWARE_KEY, 0, -1);
+            final Set<Tuple> seenFirmwares = jedis.zrangeWithScores(FIRMWARES_SEEN_SET_KEY, 0, -1);
+            final Map<String, redis.clients.jedis.Response<Double>> responseMap = Maps.newHashMap();
+
+            final Pipeline pipe = jedis.pipelined();
             for (final Tuple fwInfo:seenFirmwares) {
                 final String fwVersion = fwInfo.getElement();
-                final Double score = jedis.zscore(fwVersion, deviceId);
-                if(score != null) {
-                    fwHistory.put(score.longValue(), fwVersion);
+                responseMap.put(fwVersion, pipe.zscore(MIDDLE_FIRMWARE_KEY_BASE.concat(fwVersion), deviceId));
+            }
+            pipe.sync();
+
+            for (final Tuple fwInfo:seenFirmwares) {
+                final String fwVersion = fwInfo.getElement();
+                final Double timestamp = responseMap.get(fwVersion).get();
+                if(timestamp != null) {
+                    fwHistory.put(timestamp.longValue(), fwVersion);
                 }
             }
+
         } catch (JedisDataException exception) {
             LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
             jedisPool.returnBrokenResource(jedis);
@@ -345,7 +362,7 @@ public class FirmwareResource {
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
 
-        final Optional<FirmwareInfo> latestInfo = getFirmwareVersionForDevice(deviceId);
+        final Optional<FirmwareInfo> latestInfo = getFirmwareInfoForDevice(deviceId);
         if (!latestInfo.isPresent()) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -372,13 +389,16 @@ public class FirmwareResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
+
+
         final Team group = team.get();
         final List<String> groupIds = Lists.newArrayList(group.ids);
-        final List<List<String>> devices = Lists.partition(groupIds, SensorsViewsDynamoDB.MAX_LAST_SEEN_DEVICES);
 
         final List<FirmwareInfo> firmwares = Lists.newArrayList();
+        final List<List<String>> devices = Lists.partition(groupIds, MAX_REDIS_PIPELINE_COMMANDS_PER_BATCH);
+
         for (final List<String> deviceSubList : devices) {
-            final Optional<List<FirmwareInfo>> fwInfo = sensorsViewsDynamoDB.lastSeenFirmwareBatch(Sets.newHashSet(deviceSubList));
+            final Optional<List<FirmwareInfo>> fwInfo = getFirmwareInfoForDevices(Sets.newHashSet(deviceSubList));
             if (fwInfo.isPresent()) {
                 firmwares.addAll(fwInfo.get());
             }
@@ -400,8 +420,8 @@ public class FirmwareResource {
 
         final Jedis jedis = jedisPool.getResource();
         try {
-            if (jedis.zrem(REDIS_SEEN_FIRMWARE_KEY, fwVersion) > 0) {
-                jedis.del(fwVersion);
+            if (jedis.zrem(FIRMWARES_SEEN_SET_KEY, fwVersion) > 0) {
+                jedis.del(MIDDLE_FIRMWARE_KEY_BASE.concat(fwVersion));
             } else {
                 LOGGER.error("Attempted to delete non-existent Redis member: {}", fwVersion);
             }
@@ -481,7 +501,7 @@ public class FirmwareResource {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             final String[] parts = firstLine.split(":");
-            final String hash = (parts[1].trim().length() < 6) ? Integer.toHexString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
 
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("action=put_fw_map hash={} key={}", hash, key);
@@ -662,20 +682,81 @@ public class FirmwareResource {
         }
     }
 
-    private Optional<FirmwareInfo> getFirmwareVersionForDevice(final String deviceId) {
-        final List<DeviceAccountPair> pairs = deviceDAO.getAccountIdsForDeviceId(deviceId);
-        if(pairs.isEmpty()) {
-           return Optional.absent();
+    private Optional<FirmwareInfo> getFirmwareInfoForDevice(final String deviceId) {
+
+        final Optional<List<FirmwareInfo>> fwInfo = getFirmwareInfoForDevices(Sets.newHashSet(deviceId));
+
+        if (fwInfo.isPresent()) {
+            return Optional.of(fwInfo.get().get(0));
         }
 
-        final DeviceAccountPair pair = pairs.get(0);
+        return Optional.absent();
+    }
 
-        final Optional<DeviceData> deviceDataOptional = sensorsViewsDynamoDB.lastSeen(deviceId, pair.accountId, pair.internalDeviceId);
-        if(!deviceDataOptional.isPresent()) {
-            return Optional.absent();
+    private Optional<List<FirmwareInfo>> getFirmwareInfoForDevices(final Set<String> deviceIds) {
+
+        final Jedis jedis = jedisPool.getResource();
+
+        try {
+
+            final List<FirmwareInfo> fwInfo = Lists.newArrayList();
+            final Map<String, redis.clients.jedis.Response<String>> topResponseMap = Maps.newHashMap();
+            final Map<String, redis.clients.jedis.Response<String>> middleResponseMap = Maps.newHashMap();
+            final Map<String, redis.clients.jedis.Response<Double>> timestampResponseMap = Maps.newHashMap();
+
+            Pipeline pipe = jedis.pipelined();
+            for (final String deviceId : deviceIds) {
+                topResponseMap.put(deviceId, pipe.hget(DEVICE_KEY_BASE.concat(deviceId), "top_version"));
+                middleResponseMap.put(deviceId, pipe.hget(DEVICE_KEY_BASE.concat(deviceId), "middle_version"));
+            }
+            pipe.sync();
+
+            pipe = jedis.pipelined();
+            for (final String deviceId : deviceIds) {
+                if (!middleResponseMap.containsKey(deviceId) || middleResponseMap.get(deviceId).get() == null) {
+                    continue;
+                }
+
+                final String middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get() : "0";
+                timestampResponseMap.put(deviceId, pipe.zscore(MIDDLE_FIRMWARE_KEY_BASE.concat(middleFWVersion), deviceId));
+            }
+            pipe.sync();
+
+            for (final String deviceId : deviceIds) {
+                String topFWVersion = "0";
+                if (topResponseMap.containsKey(deviceId) && topResponseMap.get(deviceId).get() != null) {
+                    topFWVersion = topResponseMap.get(deviceId).get();
+                }
+
+                if (!middleResponseMap.containsKey(deviceId) || middleResponseMap.get(deviceId).get() == null) {
+                    continue;
+                }
+
+                final String middleFWVersion = (middleResponseMap.get(deviceId) != null) ? middleResponseMap.get(deviceId).get() : "0";
+                final Long middleFWTimestamp = (timestampResponseMap.get(deviceId) != null) ? timestampResponseMap.get(deviceId).get().longValue() : 0;
+
+                fwInfo.add(new FirmwareInfo(middleFWVersion, topFWVersion, deviceId, middleFWTimestamp));
+            }
+
+            if (fwInfo.size() < 1) {
+                return Optional.absent();
+            }
+            return Optional.of(fwInfo);
+
+        } catch (JedisDataException exception) {
+            LOGGER.error("Failed getting data out of redis: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } catch (Exception exception) {
+            LOGGER.error("Failed retrieving FW list: {}", exception.getMessage());
+            jedisPool.returnBrokenResource(jedis);
+        } finally {
+            try {
+                jedisPool.returnResource(jedis);
+            } catch (JedisConnectionException e) {
+                LOGGER.error("Jedis Connection Exception while returning resource to pool. Redis server down?");
+            }
         }
-        final FirmwareInfo fwInfo = new FirmwareInfo(deviceDataOptional.get().firmwareVersion.toString(), "0", deviceId, deviceDataOptional.get().dateTimeUTC.getMillis());
-        return Optional.of(fwInfo);
+        return Optional.absent();
     }
 
 }

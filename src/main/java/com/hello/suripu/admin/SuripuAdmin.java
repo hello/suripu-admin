@@ -504,7 +504,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
             respCommandsDAODynamoDB,
             firmwareUpgradePathDAO,
             deviceDAO,
-            sensorsViewsDynamoDB,
             teamStore,
             s3Client)
         );
