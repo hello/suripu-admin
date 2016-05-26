@@ -501,7 +501,7 @@ public class FirmwareResource {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             final String[] parts = firstLine.split(":");
-            final String hash = (parts[1].trim().length() < 6) ? Integer.toHexString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
 
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("action=put_fw_map hash={} key={}", hash, key);

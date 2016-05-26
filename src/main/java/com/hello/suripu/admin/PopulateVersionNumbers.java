@@ -37,7 +37,7 @@ public class PopulateVersionNumbers {
         ObjectListing objectListing;
 
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
-                .withBucketName("hello-firmware").withPrefix("sense/1.0.5");
+                .withBucketName("hello-firmware").withPrefix("sense/1.");
 
         final List<String> keys = Lists.newArrayList();
         int i = 0;
@@ -68,7 +68,7 @@ public class PopulateVersionNumbers {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             String[] parts = firstLine.split(":");
-            final String hash = (parts[1].trim().length() < 6) ? Integer.toHexString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
             final String humanVersion = key.split("/")[1];
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("Hash = {} and Key = {}", hash, key);
