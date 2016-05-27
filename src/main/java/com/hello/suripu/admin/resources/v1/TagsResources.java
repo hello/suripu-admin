@@ -45,6 +45,21 @@ public class TagsResources {
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
+    @Path("/device_tags/{device_id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<String> allTagsForDevice(@Auth final AccessToken accessToken, @PathParam("device_id") String deviceId) {
+        final List<String> deviceTags = Lists.newArrayList();
+        final List<Tag> allTags = tagStore.getTags(TagStoreDAODynamoDB.Type.DEVICES);
+        for (final Tag tag : allTags) {
+            if (tag.ids.contains(deviceId)) {
+                deviceTags.add(tag.name);
+            }
+        }
+        return deviceTags;
+    }
+
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
     @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     public List<Tag> allUsersTags(@Auth final AccessToken accessToken) {

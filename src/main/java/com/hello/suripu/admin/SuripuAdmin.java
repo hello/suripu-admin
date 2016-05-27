@@ -7,10 +7,12 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
 import com.hello.suripu.admin.cli.ManageKinesisStreams;
@@ -70,6 +72,7 @@ import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
+import com.hello.suripu.core.db.DeviceReadDAO;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.db.FeedbackDAO;
 import com.hello.suripu.core.db.FeedbackReadDAO;
@@ -121,6 +124,7 @@ import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.coredw8.db.AccessTokenDAO;
+import com.hello.suripu.coredw8.metrics.RegexMetricFilter;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.AuthDynamicFeature;
 import com.hello.suripu.coredw8.oauth.AuthValueFactoryProvider;
@@ -177,6 +181,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final DBI redshiftDB = factory.build(environment, configuration.getRedshiftDB(), "postgresql-redshift");
         final DBI storeDB = factory.build(environment, configuration.getStoredDB(), "postgresql-store");
+        environment.healthChecks().unregister("postgresql-store");
         sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
         sensorsDB.registerContainerFactory(new OptionalContainerFactory());
         sensorsDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
@@ -198,13 +203,16 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
             final String env = (configuration.getDebug()) ? "dev" : "prod";
             final String prefix = String.format("%s.%s.suripu-admin", apiKey, env);
 
+            final ImmutableList<String> metrics = ImmutableList.copyOf(configuration.getGraphite().getIncludeMetrics());
+            final RegexMetricFilter metricFilter = new RegexMetricFilter(metrics);
+
             final Graphite graphite = new Graphite(new InetSocketAddress(graphiteHostName, 2003));
 
             final GraphiteReporter reporter = GraphiteReporter.forRegistry(environment.metrics())
                     .prefixedWith(prefix)
                     .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .filter(MetricFilter.ALL)
+                    .filter(metricFilter)
                     .build(graphite);
             reporter.start(interval, TimeUnit.SECONDS);
 
@@ -216,7 +224,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AWSCredentialsProvider awsCredentialsProvider= new DefaultAWSCredentialsProviderChain();
         final AmazonDynamoDBClientFactory dynamoDBClientFactory = AmazonDynamoDBClientFactory.create(awsCredentialsProvider, configuration.dynamoDBConfiguration());
 
-        final AmazonS3Client s3Client = new AmazonS3Client(awsCredentialsProvider);
+        final AmazonS3 s3Client = new AmazonS3Client(awsCredentialsProvider);
 
         final ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.withConnectionTimeout(200); // in ms
@@ -227,6 +235,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AccountDAO accountDAO = commonDB.onDemand(AccountDAOImpl.class);
         final AccountDAOAdmin accountDAOAdmin = commonDB.onDemand(AccountDAOAdmin.class);
         final DeviceDAO deviceDAO = commonDB.onDemand(DeviceDAO.class);
+        final DeviceReadDAO deviceReadDAO = commonDB.onDemand(DeviceReadDAO.class);
         final DeviceAdminDAO deviceAdminDAO = commonDB.onDemand(DeviceAdminDAOImpl.class);
         final FeedbackReadDAO feedbackReadDAO = commonDB.onDemand(FeedbackReadDAO.class);
         final FeedbackDAO feedbackDAO = commonDB.onDemand(FeedbackDAO.class);
@@ -335,9 +344,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .setPrefix("Bearer")
                 .setLogger(activityLogger)
                 .buildAuthFilter()));
-        environment.jersey().register(ScopesAllowedDynamicFeature.class);
+        environment.jersey().register(new ScopesAllowedDynamicFeature(applicationStore));
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(AccessToken.class));
-
 
         final JedisPool jedisPool = new JedisPool(
                 configuration.getRedisConfiguration().getHost(),
@@ -452,11 +460,11 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AccountInfoProcessor accountInfoProcessor = builder.build();
 
         final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
-                .withSenseDAOs(deviceDataDAO, deviceDataDAODynamoDB, deviceDAO)
-                .withTrackerMotionDAO(trackerMotionDAO)
+                .withSenseDAOs(deviceDataDAODynamoDB, deviceReadDAO)
                 .withInsightsDAO(trendsInsightsDAO)
                 .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
                 .withPreferencesDAO(accountPreferencesDynamoDB)
+                .withAccountReadDAO(accountDAO)
                 .withAccountInfoProcessor(accountInfoProcessor)
                 .withLightData(lightData)
                 .withWakeStdDevData(wakeStdDevData)
@@ -489,7 +497,16 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new DownloadResource(s3Client, "hello-firmware"));
         environment.jersey().register(new EventsResources(senseEventsDAO));
         environment.jersey().register(new FeaturesResources(featureStore));
-        environment.jersey().register(new FirmwareResource(jedisPool, firmwareVersionMappingDAO, otaHistoryDAODynamoDB, respCommandsDAODynamoDB, firmwareUpgradePathDAO, deviceDAO, sensorsViewsDynamoDB, teamStore));
+        environment.jersey().register(new FirmwareResource(
+            jedisPool,
+            firmwareVersionMappingDAO,
+            otaHistoryDAODynamoDB,
+            respCommandsDAODynamoDB,
+            firmwareUpgradePathDAO,
+            deviceDAO,
+            teamStore,
+            s3Client)
+        );
         environment.jersey().register(new InspectionResources(deviceAdminDAO));
         environment.jersey().register(new OnBoardingLogResource(accountDAO, onBoardingLogDAO));
         environment.jersey().register(new TimelineResources(timelineAnalyticsDAO));

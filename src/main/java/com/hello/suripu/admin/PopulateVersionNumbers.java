@@ -33,7 +33,7 @@ public class PopulateVersionNumbers {
         final AWSCredentialsProvider awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         final AmazonS3 amazonS3 = new AmazonS3Client(awsCredentialsProvider);
         final AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(awsCredentialsProvider);
-        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "prod_firmware_versions_mapping");
+        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "firmware_versions_mapping");
         ObjectListing objectListing;
 
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
@@ -50,17 +50,15 @@ public class PopulateVersionNumbers {
                 }
             }
             listObjectsRequest.setMarker(objectListing.getNextMarker());
-            i ++;
+            i++;
             LOGGER.info("Iteration: {}", i);
         } while (objectListing.isTruncated() && i < 5);
 
 
         for(final String key: keys) {
             final S3Object s3Object = amazonS3.getObject("hello-firmware", key);
-
-            final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
             String text;
-            try {
+            try(final S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent()) {
                 text = CharStreams.toString(new InputStreamReader(s3ObjectInputStream, Charsets.UTF_8));
             } catch (IOException e) {
                 LOGGER.error("Failed reading build_info for key {} from s3 : {}", key, e.getMessage());
@@ -70,7 +68,7 @@ public class PopulateVersionNumbers {
             final Iterable<String> strings = Splitter.on("\n").split(text);
             final String firstLine = strings.iterator().next();
             String[] parts = firstLine.split(":");
-            final String hash = parts[1].trim();
+            final String hash = (parts[1].trim().length() < 6) ? Integer.toString(Integer.parseInt(parts[1].trim())) : parts[1].trim();
             final String humanVersion = key.split("/")[1];
             firmwareVersionMappingDAO.put(hash, humanVersion);
             LOGGER.info("Hash = {} and Key = {}", hash, key);

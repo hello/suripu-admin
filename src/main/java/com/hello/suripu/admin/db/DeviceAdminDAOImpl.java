@@ -113,4 +113,10 @@ public abstract class DeviceAdminDAOImpl implements DeviceAdminDAO {
             @Bind("max_id") final Integer maxId,
             @Bind("limit") final Integer limit
     );
+
+    @SqlQuery("SELECT COUNT(DISTINCT device_id) FROM account_device_map;")
+    public abstract Long getAllSensesCount();
+
+    @SqlQuery("SELECT COUNT(DISTINCT device_id) FROM account_tracker_map;")
+    public abstract Long getAllPillsCount();
 }

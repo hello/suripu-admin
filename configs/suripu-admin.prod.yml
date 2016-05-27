@@ -145,7 +145,7 @@ dynamodb:
     device_data : prod_sense_data
     features : features
     file_manifest: prod_file_manifest
-    firmware_upgrade_path : fw_upgrade_path
+    firmware_upgrade_path : prod_fw_upgrade_path
     firmware_versions : prod_firmware_versions_mapping
     marketing_insights_seen : prod_marketing_insights_seen
     ota_history : ota_history
