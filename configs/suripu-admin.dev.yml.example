@@ -166,6 +166,7 @@ dynamodb:
       insights : insights
       sleep_stats : sleep_stats
       preferences : preferences
+      profile_photo : profile_photo
       sleep_score : sleep_score
       wifi_info : wifi_info
 
@@ -199,6 +200,7 @@ dynamodb:
       insights: http://localhost:7777
       sleep_stats : http://localhost:7777
       preferences : http://localhost:7777
+      profile_photo : http://localhost:7777
       sleep_score : http://localhost:7777
       wifi_info : http://localhost:7777
 

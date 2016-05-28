@@ -168,6 +168,7 @@ dynamodb:
     insights : prod_insights
     sleep_stats : prod_sleep_stats
     preferences : prod_preferences
+    profile_photo: prod_profile_photo
     sleep_score : prod_sleep_score
     wifi_info : prod_wifi_info
 
@@ -200,6 +201,7 @@ dynamodb:
       insights : http://dynamodb.us-east-1.amazonaws.com
       sleep_stats : http://dynamodb.us-east-1.amazonaws.com
       preferences : http://dynamodb.us-east-1.amazonaws.com
+      profile_photo: http://dynamodb.us-east-1.amazonaws.com
       sleep_score : http://dynamodb.us-east-1.amazonaws.com
       wifi_info : http://dynamodb.us-east-1.amazonaws.com
 

@@ -121,6 +121,8 @@ import com.hello.suripu.core.processors.InsightProcessor;
 import com.hello.suripu.core.processors.QuestionProcessor;
 import com.hello.suripu.core.processors.insights.LightData;
 import com.hello.suripu.core.processors.insights.WakeStdDevData;
+import com.hello.suripu.core.profile.ProfilePhotoStore;
+import com.hello.suripu.core.profile.ProfilePhotoStoreDynamoDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.coredw8.db.AccessTokenDAO;
@@ -454,6 +456,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 tableNames.get(DynamoDBTableName.FILE_MANIFEST)
         ) ;
 
+        final AmazonDynamoDB profilePhotoClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.PROFILE_PHOTO, ProfilePhotoStoreDynamoDB.class);
+        final ProfilePhotoStore photoStore = ProfilePhotoStoreDynamoDB.create(profilePhotoClient, tableNames.get(DynamoDBTableName.PROFILE_PHOTO));
+
         final AccountInfoProcessor.Builder builder = new AccountInfoProcessor.Builder()
                 .withQuestionResponseDAO(questionResponseDAO)
                 .withMapping(questionResponseDAO);
@@ -484,7 +489,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         );
 
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
-                timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO));
+                timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO, photoStore));
+
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
         environment.jersey().register(new ApplicationResources(applicationStore));
         environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO, pillDataDAODynamoDB));
