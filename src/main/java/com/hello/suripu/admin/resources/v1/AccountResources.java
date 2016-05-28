@@ -23,6 +23,8 @@ import com.hello.suripu.core.models.TimeZoneHistory;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.passwordreset.PasswordReset;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
+import com.hello.suripu.core.profile.ImmutableProfilePhoto;
+import com.hello.suripu.core.profile.ProfilePhotoStore;
 import com.hello.suripu.core.util.HelloHttpHeader;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PasswordUtil;
@@ -64,6 +66,7 @@ public class AccountResources {
     private final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB;
     private final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB;
     private final DeviceAdminDAO deviceAdminDAO;
+    private final ProfilePhotoStore profilePhotoStore;
 
     @Context
     HttpServletRequest request;
@@ -74,7 +77,8 @@ public class AccountResources {
                             final TimeZoneHistoryDAODynamoDB timeZoneHistoryDAODynamoDB,
                             final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB,
                             final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB,
-                            final DeviceAdminDAO deviceAdminDAO) {
+                            final DeviceAdminDAO deviceAdminDAO,
+                            final ProfilePhotoStore profilePhotoStore) {
         this.accountDAO = accountDAO;
         this.passwordResetDB = passwordResetDB;
         this.deviceDAO = deviceDAO;
@@ -83,6 +87,7 @@ public class AccountResources {
         this.smartAlarmLoggerDynamoDB = smartAlarmLoggerDynamoDB;
         this.ringTimeHistoryDAODynamoDB = ringTimeHistoryDAODynamoDB;
         this.deviceAdminDAO = deviceAdminDAO;
+        this.profilePhotoStore = profilePhotoStore;
     }
 
 
@@ -105,7 +110,7 @@ public class AccountResources {
             if (!accountByEmailOptional.isPresent()) {
                 throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Account not found").build());
             }
-            return accountByEmailOptional.get();
+            return withPhotoMaybe(accountByEmailOptional.get());
         }
         else {
             LOGGER.debug("Looking up account by id {}", id);
@@ -113,7 +118,7 @@ public class AccountResources {
             if (!accountByIdOptional.isPresent()) {
                 throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Account not found").build());
             }
-            return accountByIdOptional.get();
+            return withPhotoMaybe(accountByIdOptional.get());
         }
     }
 
@@ -320,5 +325,14 @@ public class AccountResources {
         final Integer maxId = maxIdRaw == null ? Integer.MAX_VALUE : maxIdRaw;
         final Integer minUpDays = minUpDaysRaw == null ? DeviceAdminDAOImpl.DEFAULT_ACCOUNT_DEVICE_MAP_MIN_UP_DAYS : minUpDaysRaw;
         return deviceAdminDAO.getMostRecentPairsQualifiedForDustCalibration(limit, maxId, minUpDays);
+    }
+
+    private Account withPhotoMaybe(final Account account) {
+        final Optional<ImmutableProfilePhoto> photo = profilePhotoStore.get(account.id.get());
+        if(photo.isPresent()) {
+            return Account.withProfilePhoto(account, photo.get().photo());
+        }
+
+        return account;
     }
 }
