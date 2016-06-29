@@ -29,6 +29,7 @@ public class AccessTokenAdminMapper implements ResultSetMapper<AccessTokenAdmin>
                 UUID.fromString(r.getString("access_token")),
                 UUID.fromString(r.getString("refresh_token")),
                 r.getLong("expires_in"),
+                r.getLong("refresh_expires_in"),
                 new DateTime(r.getTimestamp("created_at"), DateTimeZone.UTC),
                 r.getLong("account_id"),
                 r.getLong("app_id"),
