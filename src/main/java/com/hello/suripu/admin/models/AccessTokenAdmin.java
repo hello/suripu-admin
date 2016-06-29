@@ -22,8 +22,8 @@ public class AccessTokenAdmin extends AccessToken {
     @JsonIgnore
     public final String tokenType = "Bearer";
 
-    public AccessTokenAdmin(final Long id, final UUID token, final UUID refreshToken, final Long expiresIn, final DateTime createdAt, final Long accountId, final Long appId, final OAuthScope[] scopes, final String appName) {
-        super(token, refreshToken, expiresIn, createdAt, accountId, appId, scopes);
+    public AccessTokenAdmin(final Long id, final UUID token, final UUID refreshToken, final Long expiresIn, final Long refreshExpiresIn, final DateTime createdAt, final Long accountId, final Long appId, final OAuthScope[] scopes, final String appName) {
+        super(token, refreshToken, expiresIn, refreshExpiresIn, createdAt, accountId, appId, scopes);
         this.id = id;
         this.appName = appName;
     }
