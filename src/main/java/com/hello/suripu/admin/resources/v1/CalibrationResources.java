@@ -4,13 +4,17 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.models.UpdateCalibrationResponse;
 import com.hello.suripu.core.db.CalibrationDAO;
-import com.hello.suripu.core.db.DeviceDataDAO;
+import com.hello.suripu.core.db.DeviceDAO;
+import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
 import com.hello.suripu.core.models.Calibration;
+import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.coredw8.oauth.AccessToken;
 import com.hello.suripu.coredw8.oauth.Auth;
 import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +46,15 @@ public class CalibrationResources {
     private static final Integer MAX_PUT_FORCE_SIZE = 500;
 
     private final CalibrationDAO calibrationDAO;
-    private final DeviceDataDAO deviceDataDAO;
+    private final DeviceDataDAODynamoDB deviceDataDAODynamoDB;
+    private final DeviceDAO deviceDAO;
 
 
 
-    public CalibrationResources(final CalibrationDAO calibrationDAO, final DeviceDataDAO deviceDataDAO) {
+    public CalibrationResources(final CalibrationDAO calibrationDAO, final DeviceDAO deviceDAO, final DeviceDataDAODynamoDB deviceDataDAODynamoDB) {
         this.calibrationDAO = calibrationDAO;
-        this.deviceDataDAO = deviceDataDAO;
+        this.deviceDAO = deviceDAO;
+        this.deviceDataDAODynamoDB = deviceDataDAODynamoDB;
     }
 
 
@@ -166,7 +172,12 @@ public class CalibrationResources {
                                                             @PathParam("account_id") @NotNull @Valid final Long accountId,
                                                             @QueryParam("sense_internal_id") @NotNull @Valid final Long senseInternalId) {
 
-        final Integer avgDustLast10days = deviceDataDAO.getAverageDustForLast10Days(accountId, senseInternalId);
+        final Optional<DeviceAccountPair> deviceIdPair = deviceDAO.getMostRecentSensePairByAccountId(accountId);
+        if(!deviceIdPair.isPresent()) {
+            throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+        }
+
+        final Integer avgDustLast10days = deviceDataDAODynamoDB.getAverageDustForLast10Days(accountId, deviceIdPair.get().externalDeviceId, DateTime.now(DateTimeZone.UTC));
         return ImmutableMap.of("average_dust_last_10_days", avgDustLast10days);
     }
 }

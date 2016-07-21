@@ -17,15 +17,6 @@ public class SuripuAdminConfiguration extends Configuration {
 
     @Valid
     @NotNull
-    @JsonProperty("sensors_db")
-    private DataSourceFactory sensorsDB = new DataSourceFactory();
-
-    public DataSourceFactory getSensorsDB() {
-        return sensorsDB;
-    }
-
-    @Valid
-    @NotNull
     @JsonProperty("common_db")
     private DataSourceFactory commonDB = new DataSourceFactory();
 
