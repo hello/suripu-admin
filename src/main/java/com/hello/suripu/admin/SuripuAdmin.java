@@ -485,7 +485,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final ActiveDevicesTracker activeDevicesTracker = new ActiveDevicesTracker(jedisPool);
 
 
-        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAO, deviceDataDAODynamoDB));
+        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAODynamoDB));
 
         final AmazonDynamoDB pillDataDAODynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.PILL_DATA);
         final PillDataDAODynamoDB pillDataDAODynamoDB = new PillDataDAODynamoDB(
