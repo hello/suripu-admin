@@ -1,8 +1,5 @@
 package com.hello.suripu.admin;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -14,6 +11,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
 import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
@@ -23,8 +22,6 @@ import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.admin.db.AccessTokenAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
-import com.hello.suripu.admin.db.TableDAO;
-import com.hello.suripu.admin.db.TableDAOPostgres;
 import com.hello.suripu.admin.db.UptimeDAO;
 import com.hello.suripu.admin.modules.AdminRolloutModule;
 import com.hello.suripu.admin.processors.ActiveDevicesTracker;
@@ -32,7 +29,6 @@ import com.hello.suripu.admin.resources.v1.AccountResources;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
 import com.hello.suripu.admin.resources.v1.CalibrationResources;
-import com.hello.suripu.admin.resources.v1.DBResource;
 import com.hello.suripu.admin.resources.v1.DataResources;
 import com.hello.suripu.admin.resources.v1.DeviceResources;
 import com.hello.suripu.admin.resources.v1.DiagnosticResources;
@@ -70,7 +66,6 @@ import com.hello.suripu.core.db.ApplicationsDAO;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.CalibrationDynamoDB;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
 import com.hello.suripu.core.db.DeviceReadDAO;
 import com.hello.suripu.core.db.FeatureStore;
@@ -100,7 +95,6 @@ import com.hello.suripu.core.db.TagStoreDAODynamoDB;
 import com.hello.suripu.core.db.TeamStore;
 import com.hello.suripu.core.db.TimeZoneHistoryDAODynamoDB;
 import com.hello.suripu.core.db.TimelineAnalyticsDAO;
-import com.hello.suripu.core.db.TrackerMotionDAO;
 import com.hello.suripu.core.db.TrendsInsightsDAO;
 import com.hello.suripu.core.db.UserLabelDAO;
 import com.hello.suripu.core.db.WifiInfoDAO;
@@ -137,16 +131,6 @@ import com.hello.suripu.coredw8.oauth.OAuthCredentialAuthFilter;
 import com.hello.suripu.coredw8.oauth.ScopesAllowedDynamicFeature;
 import com.hello.suripu.coredw8.oauth.stores.PersistentAccessTokenStore;
 import com.hello.suripu.coredw8.util.CustomJSONExceptionMapper;
-
-import org.joda.time.DateTimeZone;
-import org.skife.jdbi.v2.DBI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
@@ -156,8 +140,15 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-
+import org.joda.time.DateTimeZone;
+import org.skife.jdbi.v2.DBI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
+
+import java.net.InetSocketAddress;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 
 public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
@@ -183,14 +174,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
     public void run(SuripuAdminConfiguration configuration, Environment environment) throws Exception {
         final DBIFactory factory = new DBIFactory();
         final DBI commonDB = factory.build(environment, configuration.getCommonDB(), "postgresql-common");
-        final DBI sensorsDB = factory.build(environment, configuration.getSensorsDB(), "postgresql-sensors");
-
         final DBI redshiftDB = factory.build(environment, configuration.getRedshiftDB(), "postgresql-redshift");
         final DBI storeDB = factory.build(environment, configuration.getStoredDB(), "postgresql-store");
         environment.healthChecks().unregister("postgresql-store");
-        sensorsDB.registerArgumentFactory(new JodaArgumentFactory());
-        sensorsDB.registerContainerFactory(new OptionalContainerFactory());
-        sensorsDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
 
         commonDB.registerArgumentFactory(new JodaArgumentFactory());
         commonDB.registerContainerFactory(new OptionalContainerFactory());
@@ -251,11 +237,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final TrackingDAO trackingDAO = commonDB.onDemand(TrackingDAO.class);
         final UserLabelDAO userLabelDAO = commonDB.onDemand(UserLabelDAO.class);
         final TimelineAnalyticsDAO timelineAnalyticsDAO = commonDB.onDemand(TimelineAnalyticsDAO.class);
-
-        // Sensor DB
-        final DeviceDataDAO deviceDataDAO = sensorsDB.onDemand(DeviceDataDAO.class);
-        final TrackerMotionDAO trackerMotionDAO = sensorsDB.onDemand(TrackerMotionDAO.class);
-        final TableDAO sensorsTableDAO = sensorsDB.onDemand(TableDAOPostgres.class);
 
         // Redshift
         final UptimeDAO uptimeDAO = redshiftDB.onDemand(UptimeDAO.class);
@@ -485,7 +466,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final ActiveDevicesTracker activeDevicesTracker = new ActiveDevicesTracker(jedisPool);
 
 
-        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAO, deviceDataDAODynamoDB));
+        environment.jersey().register(new InsightsResource(insightProcessor, deviceDAO, deviceDataDAODynamoDB));
 
         final AmazonDynamoDB pillDataDAODynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.PILL_DATA);
         final PillDataDAODynamoDB pillDataDAODynamoDB = new PillDataDAODynamoDB(
@@ -498,8 +479,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
         environment.jersey().register(new ApplicationResources(applicationStore));
-        environment.jersey().register(new DataResources(deviceDataDAO, deviceDAO, accountDAO, userLabelDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO, pillDataDAODynamoDB));
-        final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceAdminDAO, deviceDataDAO, trackerMotionDAO, accountDAO,
+        environment.jersey().register(new DataResources(deviceDataDAODynamoDB, deviceDAO, accountDAO, userLabelDAO, sensorsViewsDynamoDB, senseColorDAO, calibrationDAO, pillDataDAODynamoDB));
+        final DeviceResources deviceResources = new DeviceResources(deviceDAO, deviceAdminDAO, pillDataDAODynamoDB, accountDAO,
                 mergedUserInfoDynamoDB, senseKeyStore, pillKeyStore, jedisPool, pillHeartBeatDAO, senseColorDAO, respCommandsDAODynamoDB,pillViewsDynamoDB, sensorsViewsDynamoDB);
 
         environment.jersey().register(deviceResources);
@@ -532,10 +513,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new TeamsResources(teamStore));
         environment.jersey().register(new TagsResources(tagStore));
         environment.jersey().register(new TokenResources(implicitTokenStore, applicationStore, accessTokenDAO, accountDAO, accessTokenAdminDAO));
-        environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDataDAO));
+        environment.jersey().register(new CalibrationResources(calibrationDAO, deviceDAO, deviceDataDAODynamoDB));
         environment.jersey().register(new WifiResources(wifiInfoDAO));
         environment.jersey().register(new KeyStoreResources(senseKeyStore, pillKeyStore));
-        environment.jersey().register(new DBResource(sensorsTableDAO));
         environment.jersey().register(new FeedbackResources(feedbackReadDAO, feedbackDAO, accountDAO));
         environment.jersey().register(new TrackingResources(activeDevicesTracker));
         environment.jersey().register(new UptimeResources(teamStore, jedisPool));

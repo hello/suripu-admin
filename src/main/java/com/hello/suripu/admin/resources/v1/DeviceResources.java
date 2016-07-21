@@ -17,15 +17,14 @@ import com.hello.suripu.core.configuration.ActiveDevicesTrackerConfiguration;
 import com.hello.suripu.core.configuration.BlackListDevicesConfiguration;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.KeyStore;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
+import com.hello.suripu.core.db.PillDataDAODynamoDB;
 import com.hello.suripu.core.db.PillHeartBeatDAO;
 import com.hello.suripu.core.db.PillViewsDynamoDB;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB.ResponseCommand;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
-import com.hello.suripu.core.db.TrackerMotionDAO;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.db.util.MatcherPatternsDB;
 import com.hello.suripu.core.models.Account;
@@ -39,6 +38,7 @@ import com.hello.suripu.core.models.PillRegistration;
 import com.hello.suripu.core.models.ProvisionRequest;
 import com.hello.suripu.core.models.SenseRegistration;
 import com.hello.suripu.core.models.TimeZoneHistory;
+import com.hello.suripu.core.models.TrackerMotion;
 import com.hello.suripu.core.models.UserInfo;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
@@ -86,8 +86,7 @@ public class DeviceResources {
 
   private final DeviceDAO deviceDAO;
   private final DeviceAdminDAO deviceAdminDAO;
-  private final DeviceDataDAO deviceDataDAO;
-  private final TrackerMotionDAO trackerMotionDAO;
+  private final PillDataDAODynamoDB pillDataDAODynamoDB;
   private final AccountDAO accountDAO;
   private final MergedUserInfoDynamoDB mergedUserInfoDynamoDB;
   private final KeyStore senseKeyStore;
@@ -102,8 +101,7 @@ public class DeviceResources {
 
   public DeviceResources(final DeviceDAO deviceDAO,
                          final DeviceAdminDAO deviceAdminDAO,
-                         final DeviceDataDAO deviceDataDAO,
-                         final TrackerMotionDAO trackerMotionDAO,
+                         final PillDataDAODynamoDB pillDataDAODynamoDB,
                          final AccountDAO accountDAO,
                          final MergedUserInfoDynamoDB mergedUserInfoDynamoDB,
                          final KeyStore senseKeyStore,
@@ -121,8 +119,7 @@ public class DeviceResources {
     this.mergedUserInfoDynamoDB = mergedUserInfoDynamoDB;
     this.senseKeyStore = senseKeyStore;
     this.pillKeyStore = pillKeyStore;
-    this.deviceDataDAO = deviceDataDAO;
-    this.trackerMotionDAO = trackerMotionDAO;
+    this.pillDataDAODynamoDB = pillDataDAODynamoDB;
     this.jedisPool = jedisPool;
     this.pillHeartBeatDAO = pillHeartBeatDAO;
     this.senseColorDAO = senseColorDAO;
@@ -940,16 +937,24 @@ public class DeviceResources {
 
     for (final DeviceAccountPair pillAccountPair : pillAccountPairs) {
       Optional<DeviceStatus> pillStatusOptional = this.pillHeartBeatDAO.getPillStatus(pillAccountPair.internalDeviceId);
+
       if (!pillStatusOptional.isPresent()) {
         LOGGER.warn("Failed to get heartbeat for account id {} on pill internal id: {} - external id: {}, looking into tracker motion", accountId, pillAccountPair.internalDeviceId, pillAccountPair.externalDeviceId);
-        pillStatusOptional = this.trackerMotionDAO.pillStatus(pillAccountPair.internalDeviceId, accountId);
+        final Optional<TrackerMotion> latest = this.pillDataDAODynamoDB.getMostRecent(pillAccountPair.externalDeviceId, accountId, DateTime.now());
+        if (latest.isPresent()) {
+          final TrackerMotion pillData = latest.get();
+          final DeviceStatus deviceStatus = new DeviceStatus(0L, 0L, "1", 100, new DateTime(pillData.timestamp, DateTimeZone.UTC), 0);
+          pillStatusOptional = Optional.of (deviceStatus);
+        }
       }
+
       if (!pillStatusOptional.isPresent()) {
         pills.add(DeviceAdmin.create(pillAccountPair));
       } else {
         pills.add(DeviceAdmin.create(pillAccountPair, pillStatusOptional.get()));
       }
     }
+
     return pills;
   }
 
