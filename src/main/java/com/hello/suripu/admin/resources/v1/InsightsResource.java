@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataInsightQueryDAO;
+import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.DeviceId;
 import com.hello.suripu.core.models.Insights.InsightCard;
 import com.hello.suripu.core.oauth.OAuthScope;
@@ -55,22 +56,22 @@ public class InsightsResource {
         final InsightCard.Category category = generateInsightRequest.insightCategory;
         final Long accountId = generateInsightRequest.accountId;
 
-        final Optional<Long> deviceIdOptional = deviceDAO.getMostRecentSenseByAccountId(accountId);
-        if (!deviceIdOptional.isPresent()) {
-            LOGGER.debug("Could not get deviceId, no {} insight generated for accountId {}", category, accountId);
+
+
+        final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(accountId);
+        if (!deviceAccountPairOptional.isPresent()) {
+            LOGGER.debug("action=no-insight reason=device-account-pair-absent accountId={} insight_cat={}", accountId, category.toString());
             return Optional.absent();
         }
 
-        final Long deviceId = deviceIdOptional.get();
-
-        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, DeviceId.create(deviceId), deviceDataInsightQueryDAO, category);
+        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceAccountPairOptional.get(), deviceDataInsightQueryDAO, category);
 
         if (!generatedInsight.isPresent()) {
-            LOGGER.debug("Could not generate {} insight for accountId {} ", category, accountId);
+            LOGGER.debug("action=no-insight accountId={} insight_cat={}", accountId, category.toString());
             return Optional.absent();
         }
 
-        LOGGER.debug("Successfully generated {} insight for accountId {}", category, accountId);
+        LOGGER.debug("action=insight-generated accountId={} insight_cat={}", accountId, category.toString());
         return generatedInsight;
     }
 
