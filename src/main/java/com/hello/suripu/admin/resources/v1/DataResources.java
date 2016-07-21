@@ -6,7 +6,7 @@ import com.hello.suripu.admin.Util;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.CalibrationDAO;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.db.DeviceDataDAO;
+import com.hello.suripu.core.db.DeviceDataDAODynamoDB;
 import com.hello.suripu.core.db.PillDataDAODynamoDB;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
 import com.hello.suripu.core.db.UserLabelDAO;
@@ -61,7 +61,7 @@ public class DataResources {
     private static final Boolean USE_AUDIO_PEAK_ENERGY_DB = true; // always show new audio peak energy in admin tool
     private static final Float NO_SOUND_FILL_VALUE_DB = (float) 25; // Replace with 25 decibels when Sense isn't capturing audio
 
-    private final DeviceDataDAO deviceDataDAO;
+    private final DeviceDataDAODynamoDB deviceDataDAODynamoDB;
     private final DeviceDAO deviceDAO;
     private final AccountDAO accountDAO;
     private final UserLabelDAO userLabelDAO;
@@ -70,7 +70,7 @@ public class DataResources {
     private final CalibrationDAO calibrationDAO;
     private final PillDataDAODynamoDB pillDataDAODynamoDB;
 
-    public DataResources(final DeviceDataDAO deviceDataDAO,
+    public DataResources(final DeviceDataDAODynamoDB deviceDataDAODynamoDB,
                          final DeviceDAO deviceDAO,
                          final AccountDAO accountDAO,
                          final UserLabelDAO userLabelDAO,
@@ -79,7 +79,7 @@ public class DataResources {
                          final CalibrationDAO calibrationDAO,
                          final PillDataDAODynamoDB pillDataDAODynamoDB) {
 
-        this.deviceDataDAO = deviceDataDAO;
+        this.deviceDataDAODynamoDB = deviceDataDAODynamoDB;
         this.deviceDAO = deviceDAO;
         this.accountDAO = accountDAO;
         this.userLabelDAO = userLabelDAO;
@@ -232,8 +232,8 @@ public class DataResources {
          */
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
 
-        final List<Sample> timeSeries = deviceDataDAO.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
-                accountId, deviceIdPair.get().internalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId,
+        final List<Sample> timeSeries = deviceDataDAODynamoDB.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
+                accountId, deviceIdPair.get().externalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId,
                         withCalibratedDust), USE_AUDIO_PEAK_ENERGY_DB);
 
         if (Sensor.PARTICULATES.name().equalsIgnoreCase(sensor)) {
@@ -368,11 +368,11 @@ public class DataResources {
 
         final Optional<Device.Color> color = senseColorDAO.getColorForSense(deviceAccountPairOptional.get().externalDeviceId);
 
-        final AllSensorSampleList sensorSamples = deviceDataDAO.generateTimeSeriesByUTCTimeAllSensors(
+        final AllSensorSampleList sensorSamples = deviceDataDAODynamoDB.generateTimeSeriesByUTCTimeAllSensors(
                 startTimestamp,
                 endTimestamp,
                 accountId,
-                deviceAccountPairOptional.get().internalDeviceId,
+                deviceAccountPairOptional.get().externalDeviceId,
                 slotDurationInMinutes,
                 missingDataDefaultValue,
                 color,

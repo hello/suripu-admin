@@ -3,7 +3,6 @@ package com.hello.suripu.admin.resources.v1;
 import com.google.common.base.Optional;
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
-import com.hello.suripu.core.db.DeviceDataDAO;
 import com.hello.suripu.core.db.DeviceDataInsightQueryDAO;
 import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.DeviceId;
