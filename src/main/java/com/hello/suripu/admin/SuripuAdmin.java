@@ -27,6 +27,7 @@ import com.hello.suripu.admin.db.UptimeDAO;
 import com.hello.suripu.admin.modules.AdminRolloutModule;
 import com.hello.suripu.admin.processors.ActiveDevicesTracker;
 import com.hello.suripu.admin.resources.v1.AccountResources;
+import com.hello.suripu.admin.resources.v1.AggStatsResource;
 import com.hello.suripu.admin.resources.v1.AlarmResources;
 import com.hello.suripu.admin.resources.v1.ApplicationResources;
 import com.hello.suripu.admin.resources.v1.CalibrationResources;
@@ -62,6 +63,7 @@ import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.AccountDAOImpl;
+import com.hello.suripu.core.db.AggStatsDAODynamoDB;
 import com.hello.suripu.core.db.AggregateSleepScoreDAODynamoDB;
 import com.hello.suripu.core.db.ApplicationsDAO;
 import com.hello.suripu.core.db.CalibrationDAO;
@@ -106,16 +108,19 @@ import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.flipper.DynamoDBAdapter;
+import com.hello.suripu.core.insights.InsightsLastSeen;
 import com.hello.suripu.core.insights.InsightsLastSeenDAO;
 import com.hello.suripu.core.insights.InsightsLastSeenDynamoDB;
 import com.hello.suripu.core.logging.DataLogger;
 import com.hello.suripu.core.logging.KinesisLoggerFactory;
+import com.hello.suripu.core.models.AggStats;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
 import com.hello.suripu.core.passwordreset.PasswordResetDB;
 import com.hello.suripu.core.pill.heartbeat.PillHeartBeatDAODynamoDB;
 import com.hello.suripu.core.preferences.AccountPreferencesDAO;
 import com.hello.suripu.core.preferences.AccountPreferencesDynamoDB;
 import com.hello.suripu.core.processors.AccountInfoProcessor;
+import com.hello.suripu.core.processors.AggStatsProcessor;
 import com.hello.suripu.core.processors.InsightProcessor;
 import com.hello.suripu.core.processors.QuestionProcessor;
 import com.hello.suripu.core.processors.insights.LightData;
@@ -301,6 +306,10 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AmazonDynamoDB insightsDynamoDB = dynamoDBClientFactory.getForTable(DynamoDBTableName.INSIGHTS);
         final InsightsDAODynamoDB insightsDAODynamoDB = new InsightsDAODynamoDB(insightsDynamoDB,
                 tableNames.get(DynamoDBTableName.INSIGHTS));
+
+        final AmazonDynamoDB insightsLastSeenDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.INSIGHTS_LAST_SEEN);
+        final InsightsLastSeenDAO insightsLastSeenDAODynamoDB = InsightsLastSeenDynamoDB.create(insightsLastSeenDynamoDBClient,
+                tableNames.get(DynamoDBTableName.INSIGHTS_LAST_SEEN));
 
         final AmazonDynamoDB accountPreferencesDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.PREFERENCES);
         final AccountPreferencesDAO accountPreferencesDynamoDB = AccountPreferencesDynamoDB.create(accountPreferencesDynamoDBClient,

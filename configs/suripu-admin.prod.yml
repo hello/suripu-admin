@@ -132,6 +132,8 @@ dynamodb:
     ring_time_history: prod_ring_history_by_account
     smart_alarm_log: prod_smart_alarm_log
     calibration: prod_calibration
+    insights : prod_insights
+    insights_last_seen: prod_insights_last_seen
     sleep_stats : prod_sleep_stats
     preferences : prod_preferences
     profile_photo: prod_profile_photo
@@ -165,7 +167,7 @@ dynamodb:
       ring_time_history: http://dynamodb.us-east-1.amazonaws.com
       calibration: http://dynamodb.us-east-1.amazonaws.com
       insights : http://dynamodb.us-east-1.amazonaws.com
-      insights_last_seen: http://dynamodb.us-east-1.amazonaws.com
+      insights_last_seen : http://dynamodb.us-east-1.amazonaws.com
       sleep_stats : http://dynamodb.us-east-1.amazonaws.com
       preferences : http://dynamodb.us-east-1.amazonaws.com
       profile_photo: http://dynamodb.us-east-1.amazonaws.com
