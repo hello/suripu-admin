@@ -502,6 +502,31 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 configuration.dynamoDBConfiguration().tables().get(DynamoDBTableName.PILL_DATA)
         );
 
+
+        //AggStats stuff
+        final AmazonDynamoDB aggStatsDAODynamoDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.AGG_STATS, AggStatsDAODynamoDB.class);
+        final AggStatsDAODynamoDB aggStatsDAODynamoDB = new AggStatsDAODynamoDB(aggStatsDAODynamoDBClient,
+                tableNames.get(DynamoDBTableName.AGG_STATS),
+                configuration.getAggStatsVersion());
+
+        final AggStatsProcessor.Builder aggStatsProcessorBuilder = new AggStatsProcessor.Builder()
+                .withSleepStatsDAODynamoDB(sleepStatsDAODynamoDB)
+                .withPillDataDAODynamoDB(pillDataDAODynamoDB)
+                .withDeviceDataDAODynamoDB(deviceDataDAODynamoDB)
+                .withSenseColorDAO(senseColorDAO)
+                .withCalibrationDAO(calibrationDAO)
+                .withAggStatsDAO(aggStatsDAODynamoDB);
+
+        final AggStatsProcessor aggStatsProcessor = aggStatsProcessorBuilder.build();
+
+        environment.jersey().register(new AggStatsResource(accountDAO,
+                aggStatsProcessor,
+                aggStatsDAODynamoDB,
+                deviceReadDAO,
+                sleepStatsDAODynamoDB));
+        //End AggStats stuff
+
+
         environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO, photoStore));
 
@@ -562,5 +587,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withQuestions(questionResponseDAO)
                 .build();
         environment.jersey().register(new QuestionResources(accountDAO, questionProcessor, timeZoneHistoryDAODynamoDB));
+
     }
 }
