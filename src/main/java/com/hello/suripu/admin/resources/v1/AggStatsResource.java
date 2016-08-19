@@ -55,7 +55,7 @@ public class AggStatsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/generateAggStats")
-    public Integer generateSingleAggStats(@Auth final AccessToken accessToken,
+    public Integer generateAggStats(@Auth final AccessToken accessToken,
                                           final AggStatsGenerationRequest aggStatsGenerationRequest) {
 
         final Long accountId = aggStatsGenerationRequest.accountId;
