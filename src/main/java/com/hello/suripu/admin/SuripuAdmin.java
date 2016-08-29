@@ -23,6 +23,7 @@ import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.admin.db.AccessTokenAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
+import com.hello.suripu.admin.db.RedshiftDAO;
 import com.hello.suripu.admin.db.UptimeDAO;
 import com.hello.suripu.admin.modules.AdminRolloutModule;
 import com.hello.suripu.admin.processors.ActiveDevicesTracker;
@@ -254,6 +255,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         // Redshift
         final UptimeDAO uptimeDAO = redshiftDB.onDemand(UptimeDAO.class);
+        final RedshiftDAO redshiftDAO = redshiftDB.onDemand(RedshiftDAO.class);
 
         final ImmutableMap<DynamoDBTableName, String> tableNames = configuration.dynamoDBConfiguration().tables();
         final AmazonDynamoDB mergedUserInfoDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.ALARM_INFO);
@@ -519,10 +521,14 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final AggStatsProcessor aggStatsProcessor = aggStatsProcessorBuilder.build();
 
-        environment.jersey().register(new AggStatsResource(accountDAO,
+        environment.jersey().register(new AggStatsResource(
+                accountDAO,
                 aggStatsProcessor,
                 aggStatsDAODynamoDB,
+                calibrationDAO,
                 deviceReadDAO,
+                redshiftDAO,
+                senseColorDAO,
                 sleepStatsDAODynamoDB));
         //End AggStats stuff
 
