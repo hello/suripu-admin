@@ -2,6 +2,7 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.hello.suripu.admin.db.RedshiftDAO;
 import com.hello.suripu.admin.models.AggStatsGenerationRequest;
 import com.hello.suripu.core.db.AccountDAO;
@@ -34,6 +35,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 /**
  * Created by jyfan on 7/25/16.
@@ -163,6 +165,20 @@ public class AggStatsResource {
         //overwrite?
         final Boolean overwrite = aggStatsGenerationRequest.overwrite;
 
+        //Query deviceData & pillData
+        final DateTime queryStartTime = startDateLocalInclusive.withHourOfDay(AggStats.DAY_START_END_HOUR);
+        final DateTime queryEndTime = endDateLocalExclusive.withHourOfDay(AggStats.DAY_START_END_HOUR);
+
+        final ImmutableList<DeviceData> deviceDataListAll = redshiftDAO.getSenseDataBetweenLocalUTC(accountId, queryStartTime, queryEndTime);
+        LOGGER.trace("resource=agg-stats action=queryed-device-data account_id={} aggStatsGenerationRequest={} len_data={}", accountId, aggStatsGenerationRequest.toString(), deviceDataListAll.size());
+
+        final ImmutableList<TrackerMotion> pillDataListAll = redshiftDAO.getPillDataBetweenLocalUTC(accountId, queryStartTime, queryEndTime);
+        LOGGER.trace("resource=agg-stats action=queryed-tracker-motion account_id={} aggStatsGenerationRequest={} len_data={}", accountId, aggStatsGenerationRequest.toString(), pillDataListAll.size());
+
+        //Query sense color, dust calibration
+        final Optional<Device.Color> senseColorOptional = aggStatsProcessor.getSenseColorOptional(senseColorDAO, deviceId);
+        final Optional<Calibration> calibrationOptional = aggStatsProcessor.getCalibrationOptional(calibrationDAO, deviceId);
+
         //generate agg stat for target dates
         Integer numSuccess = 0;
         for (DateTime targetDateLocal = startDateLocalInclusive; targetDateLocal.isBefore(endDateLocalExclusive); targetDateLocal = targetDateLocal.plusDays(1)) {
@@ -178,17 +194,13 @@ public class AggStatsResource {
             final DateTime startLocalTime = targetDateLocal.withHourOfDay(AggStats.DAY_START_END_HOUR);
             final DateTime endLocalTime = targetDateLocal.plusDays(1).withHourOfDay(AggStats.DAY_START_END_HOUR);
 
-            //Query deviceData
-            final ImmutableList<DeviceData> deviceDataList = redshiftDAO.getSenseDataBetweenLocalUTC(accountId, startLocalTime, endLocalTime);
-            LOGGER.trace("resource=agg-stats action=queryed-device-data account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), deviceDataList.size());
+            //Extract deviceData
+            final ImmutableList<DeviceData> deviceDataList = extractDeviceDataList(deviceDataListAll, startLocalTime, endLocalTime);
+            LOGGER.trace("resource=agg-stats data=device-data account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), deviceDataList.size());
 
-            //Query pillDatao
-            final ImmutableList<TrackerMotion> pillDataList = redshiftDAO.getPillDataBetweenLocalUTC(accountId, startLocalTime, endLocalTime);
-            LOGGER.trace("resource=agg-stats action=queryed-tracker-motion account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), pillDataList.size());
-
-            //Query sense color, dust calibration
-            final Optional<Device.Color> senseColorOptional = aggStatsProcessor.getSenseColorOptional(senseColorDAO, deviceId);
-            final Optional<Calibration> calibrationOptional = aggStatsProcessor.getCalibrationOptional(calibrationDAO, deviceId);
+            //Extract pillData
+            final ImmutableList<TrackerMotion> pillDataList = extractTrackerMotionList(pillDataListAll, startLocalTime, endLocalTime);
+            LOGGER.trace("resource=agg-stats data=tracker-motion account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), pillDataList.size());
 
             //Compute aggregate stats
             final AggStatsInputs aggStatsInputs = AggStatsInputs.create(senseColorOptional, calibrationOptional, deviceDataList, pillDataList);
@@ -205,6 +217,30 @@ public class AggStatsResource {
         }
 
         return numSuccess;
+    }
+
+    private static ImmutableList<DeviceData> extractDeviceDataList(final ImmutableList<DeviceData> allDeviceData, final DateTime startLocalTime, final DateTime endLocalTime) {
+        final List<DeviceData> outputDeviceDatas = Lists.newArrayList();
+
+        for (final DeviceData deviceData : allDeviceData) {
+            if ( deviceData.localTime().isAfter(startLocalTime.minus(1)) && deviceData.localTime().isBefore(endLocalTime.plus(1)) ) {
+                outputDeviceDatas.add(deviceData);
+            }
+        }
+
+        return ImmutableList.copyOf(outputDeviceDatas);
+    }
+
+    private static ImmutableList<TrackerMotion> extractTrackerMotionList(final ImmutableList<TrackerMotion> allTrackerMotion, final DateTime startLocalTime, final DateTime endLocalTime) {
+        final List<TrackerMotion> outputTrackerMotions = Lists.newArrayList();
+
+        for (final TrackerMotion trackerMotion : allTrackerMotion) {
+            if ( trackerMotion.localTime().isAfter(startLocalTime.minus(1)) && trackerMotion.localTime().isBefore(endLocalTime.plus(1))) {
+                outputTrackerMotions.add(trackerMotion);
+            }
+        }
+
+        return ImmutableList.copyOf(outputTrackerMotions);
     }
 
 }
