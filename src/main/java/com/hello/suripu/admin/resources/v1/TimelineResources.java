@@ -4,9 +4,9 @@ import com.hello.suripu.core.db.TimelineAnalyticsDAO;
 import com.hello.suripu.core.models.GroupedTimelineLogSummary;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

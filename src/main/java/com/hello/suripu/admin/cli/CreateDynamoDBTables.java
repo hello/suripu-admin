@@ -7,16 +7,17 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
-import com.hello.suripu.coredw8.configuration.NewDynamoDBConfiguration;
-import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
+import com.hello.suripu.core.db.FirmwareVersionMappingDAODynamoDB;
 import com.hello.suripu.core.db.PillViewsDynamoDB;
 import com.hello.suripu.core.db.SenseEventsDAO;
 import com.hello.suripu.core.db.TagStoreDAODynamoDB;
+import com.hello.suripu.coredropwizard.configuration.NewDynamoDBConfiguration;
+
+import net.sourceforge.argparse4j.inf.Namespace;
 
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
-import net.sourceforge.argparse4j.inf.Namespace;
 
 public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfiguration> {
 
@@ -62,7 +63,7 @@ public class CreateDynamoDBTables extends ConfiguredCommand<SuripuAdminConfigura
             client.describeTable(tableName);
             System.out.println(String.format("%s already exists.", tableName));
         } catch (AmazonServiceException exception) {
-            final CreateTableResult result = FirmwareVersionMappingDAO.createTable(tableName, client);
+            final CreateTableResult result = FirmwareVersionMappingDAODynamoDB.createTable(tableName, client);
             final TableDescription description = result.getTableDescription();
             System.out.println(description.getTableStatus());
         }

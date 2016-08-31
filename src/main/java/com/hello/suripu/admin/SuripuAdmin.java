@@ -1,5 +1,8 @@
 package com.hello.suripu.admin;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -11,8 +14,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.hello.suripu.admin.cli.CreateDynamoDBTables;
 import com.hello.suripu.admin.cli.ManageKinesisStreams;
 import com.hello.suripu.admin.cli.PopulateColors;
@@ -74,6 +75,7 @@ import com.hello.suripu.core.db.FeedbackReadDAO;
 import com.hello.suripu.core.db.FileManifestDynamoDB;
 import com.hello.suripu.core.db.FirmwareUpgradePathDAO;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
+import com.hello.suripu.core.db.FirmwareVersionMappingDAODynamoDB;
 import com.hello.suripu.core.db.InsightsDAODynamoDB;
 import com.hello.suripu.core.db.KeyStore;
 import com.hello.suripu.core.db.KeyStoreDynamoDB;
@@ -103,6 +105,9 @@ import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
+import com.hello.suripu.core.flipper.DynamoDBAdapter;
+import com.hello.suripu.core.insights.InsightsLastSeenDAO;
+import com.hello.suripu.core.insights.InsightsLastSeenDynamoDB;
 import com.hello.suripu.core.logging.DataLogger;
 import com.hello.suripu.core.logging.KinesisLoggerFactory;
 import com.hello.suripu.core.oauth.stores.PersistentApplicationStore;
@@ -118,19 +123,31 @@ import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.core.profile.ProfilePhotoStore;
 import com.hello.suripu.core.profile.ProfilePhotoStoreDynamoDB;
 import com.hello.suripu.core.tracking.TrackingDAO;
-import com.hello.suripu.coredw8.clients.AmazonDynamoDBClientFactory;
-import com.hello.suripu.coredw8.db.AccessTokenDAO;
-import com.hello.suripu.coredw8.db.AuthorizationCodeDAO;
-import com.hello.suripu.coredw8.metrics.RegexMetricFilter;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.AuthDynamicFeature;
-import com.hello.suripu.coredw8.oauth.AuthValueFactoryProvider;
-import com.hello.suripu.coredw8.oauth.OAuthAuthenticator;
-import com.hello.suripu.coredw8.oauth.OAuthAuthorizer;
-import com.hello.suripu.coredw8.oauth.OAuthCredentialAuthFilter;
-import com.hello.suripu.coredw8.oauth.ScopesAllowedDynamicFeature;
-import com.hello.suripu.coredw8.oauth.stores.PersistentAccessTokenStore;
-import com.hello.suripu.coredw8.util.CustomJSONExceptionMapper;
+import com.hello.suripu.coredropwizard.clients.AmazonDynamoDBClientFactory;
+import com.hello.suripu.coredropwizard.db.AccessTokenDAO;
+import com.hello.suripu.coredropwizard.db.AuthorizationCodeDAO;
+import com.hello.suripu.coredropwizard.metrics.RegexMetricFilter;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.AuthDynamicFeature;
+import com.hello.suripu.coredropwizard.oauth.AuthValueFactoryProvider;
+import com.hello.suripu.coredropwizard.oauth.OAuthAuthenticator;
+import com.hello.suripu.coredropwizard.oauth.OAuthAuthorizer;
+import com.hello.suripu.coredropwizard.oauth.OAuthCredentialAuthFilter;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowedDynamicFeature;
+import com.hello.suripu.coredropwizard.oauth.stores.PersistentAccessTokenStore;
+import com.hello.suripu.coredropwizard.util.CustomJSONExceptionMapper;
+import com.librato.rollout.RolloutClient;
+
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.joda.time.DateTimeZone;
+import org.skife.jdbi.v2.DBI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
+
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jdbi.ImmutableListContainerFactory;
@@ -140,15 +157,7 @@ import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.joda.time.DateTimeZone;
-import org.skife.jdbi.v2.DBI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
-
-import java.net.InetSocketAddress;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 
 public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
@@ -352,6 +361,13 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AdminRolloutModule rolloutModule = new AdminRolloutModule(featureStore, 30);
         ObjectGraphRoot.getInstance().init(rolloutModule);
 
+        environment.jersey().register(new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(new RolloutClient(new DynamoDBAdapter(featureStore, 30))).to(RolloutClient.class);
+            }
+        });
+
         final AmazonDynamoDB teamStoreDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.TEAMS, TeamStore.class);
         final TeamStore teamStore = new TeamStore(teamStoreDBClient, tableNames.get(DynamoDBTableName.TEAMS));
 
@@ -363,7 +379,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
 
         final AmazonDynamoDB fwVersionMapping = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.FIRMWARE_VERSIONS, FirmwareVersionMappingDAO.class);
-        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(fwVersionMapping, tableNames.get(DynamoDBTableName.FIRMWARE_VERSIONS));
+        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAODynamoDB(fwVersionMapping, tableNames.get(DynamoDBTableName.FIRMWARE_VERSIONS));
 
         final AmazonDynamoDB otaHistoryClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.OTA_HISTORY, OTAHistoryDAODynamoDB.class);
         final OTAHistoryDAODynamoDB otaHistoryDAODynamoDB = new OTAHistoryDAODynamoDB(otaHistoryClient, tableNames.get(DynamoDBTableName.OTA_HISTORY));
@@ -450,10 +466,13 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withMapping(questionResponseDAO);
         final AccountInfoProcessor accountInfoProcessor = builder.build();
 
+        final AmazonDynamoDB insightsLastSeenDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.INSIGHTS_LAST_SEEN);
+        final InsightsLastSeenDAO insightsLastSeenDAODynamoDB = InsightsLastSeenDynamoDB.create(insightsLastSeenDynamoDBClient, tableNames.get(DynamoDBTableName.INSIGHTS_LAST_SEEN));
+
         final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
                 .withSenseDAOs(deviceDataDAODynamoDB, deviceReadDAO)
                 .withInsightsDAO(trendsInsightsDAO)
-                .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, sleepStatsDAODynamoDB)
+                .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, insightsLastSeenDAODynamoDB, sleepStatsDAODynamoDB)
                 .withPreferencesDAO(accountPreferencesDynamoDB)
                 .withAccountReadDAO(accountDAO)
                 .withAccountInfoProcessor(accountInfoProcessor)

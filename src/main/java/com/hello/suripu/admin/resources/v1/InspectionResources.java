@@ -5,9 +5,9 @@ import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

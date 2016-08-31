@@ -1,9 +1,9 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.collect.ImmutableList;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.SenseEventsDAO;
 import com.hello.suripu.core.metrics.DeviceEvents;
 import com.codahale.metrics.annotation.Timed;

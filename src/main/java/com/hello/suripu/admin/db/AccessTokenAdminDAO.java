@@ -2,7 +2,7 @@ package com.hello.suripu.admin.db;
 
 import com.hello.suripu.admin.db.mappers.AccessTokenAdminMapper;
 import com.hello.suripu.admin.models.AccessTokenAdmin;
-import com.hello.suripu.coredw8.db.AccessTokenDAO;
+import com.hello.suripu.coredropwizard.db.AccessTokenDAO;
 import org.skife.jdbi.v2.sqlobject.Bind;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;

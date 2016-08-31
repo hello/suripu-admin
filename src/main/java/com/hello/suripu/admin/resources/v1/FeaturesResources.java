@@ -1,13 +1,17 @@
 package com.hello.suripu.admin.resources.v1;
 
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.models.Feature;
 import com.hello.suripu.core.oauth.OAuthScope;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.List;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -16,8 +20,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Collections;
-import java.util.List;
 
 @Path("/v1/features")
 public class FeaturesResources {

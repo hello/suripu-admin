@@ -1,5 +1,10 @@
 package com.hello.suripu.admin;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.google.common.io.CharStreams;
+
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -11,11 +16,9 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-import com.google.common.io.CharStreams;
 import com.hello.suripu.core.db.FirmwareVersionMappingDAO;
+import com.hello.suripu.core.db.FirmwareVersionMappingDAODynamoDB;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +36,7 @@ public class PopulateVersionNumbers {
         final AWSCredentialsProvider awsCredentialsProvider = new DefaultAWSCredentialsProviderChain();
         final AmazonS3 amazonS3 = new AmazonS3Client(awsCredentialsProvider);
         final AmazonDynamoDB amazonDynamoDB = new AmazonDynamoDBClient(awsCredentialsProvider);
-        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAO(amazonDynamoDB, "firmware_versions_mapping");
+        final FirmwareVersionMappingDAO firmwareVersionMappingDAO = new FirmwareVersionMappingDAODynamoDB(amazonDynamoDB, "firmware_versions_mapping");
         ObjectListing objectListing;
 
         final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
