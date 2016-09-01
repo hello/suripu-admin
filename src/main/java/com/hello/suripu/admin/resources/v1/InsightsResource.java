@@ -1,28 +1,32 @@
 package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
+
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataInsightQueryDAO;
 import com.hello.suripu.core.models.DeviceAccountPair;
-import com.hello.suripu.core.models.DeviceId;
 import com.hello.suripu.core.models.Insights.InsightCard;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.processors.InsightProcessor;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
+import com.librato.rollout.RolloutClient;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by jyfan on 9/2/15.
@@ -31,6 +35,9 @@ import java.util.List;
 @Path("/v1/insights")
 
 public class InsightsResource {
+
+    @Inject
+    RolloutClient featureFlipper;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InsightsResource.class);
 
@@ -64,7 +71,7 @@ public class InsightsResource {
             return Optional.absent();
         }
 
-        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceAccountPairOptional.get(), deviceDataInsightQueryDAO, category);
+        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceAccountPairOptional.get(), deviceDataInsightQueryDAO, category, featureFlipper);
 
         if (!generatedInsight.isPresent()) {
             LOGGER.debug("action=no-insight accountId={} insight_cat={}", accountId, category.toString());

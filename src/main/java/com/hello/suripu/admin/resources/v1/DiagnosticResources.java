@@ -1,9 +1,10 @@
 package com.hello.suripu.admin.resources.v1;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Longs;
+
+import com.codahale.metrics.annotation.Timed;
 import com.hello.suripu.admin.UptimeBucketing;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.UptimeDAO;
@@ -16,11 +17,14 @@ import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.tracking.Category;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.core.util.JsonError;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+
+import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -32,7 +36,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/v1/diagnostic")
 public class DiagnosticResources {

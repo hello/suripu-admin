@@ -3,7 +3,7 @@ package com.hello.suripu.admin.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.coredw8.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;

@@ -1,21 +1,24 @@
 package com.hello.suripu.admin.modules;
 
+import com.hello.suripu.admin.resources.v1.InsightsResource;
 import com.hello.suripu.core.db.FeatureStore;
 import com.hello.suripu.core.flipper.DynamoDBAdapter;
 import com.hello.suripu.core.processors.QuestionProcessor;
 import com.librato.rollout.RolloutAdapter;
 import com.librato.rollout.RolloutClient;
-import dagger.Module;
-import dagger.Provides;
 
 import javax.inject.Singleton;
+
+import dagger.Module;
+import dagger.Provides;
 
 /**
  * Created by kingshy on 2/8/16.
  */
 
 @Module(injects = {
-        QuestionProcessor.class
+    QuestionProcessor.class,
+    InsightsResource.class
 })
 
 public class AdminRolloutModule {
