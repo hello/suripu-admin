@@ -59,7 +59,6 @@ server:
     - type: http
       port: 6667
   requestLog:
-    timeZone: UTC
     appenders:
       - type: console
 #      - type: file
@@ -73,6 +72,7 @@ logging:
   level: INFO
   loggers:
     com.hello.suripu.admin: DEBUG
+    com.hello.suripu.core.processors.AggStatsProcessor: INFO
   appenders:
      - type: console
 #    - type: file
@@ -105,12 +105,15 @@ redis:
 dynamodb:
   region: us-east-1
   tables:
+      agg_stats : agg_stats
       alarm_info : alarm_info
       device_data : sense_data
       features : features
       file_manifest: file_manifest
       firmware_upgrade_path: fw_upgrade_path
       firmware_versions : firmware_versions_mapping
+      insights: insights
+      insights_last_seen: insights_last_seen
       marketing_insights_seen : marketing_insights_seen
       ota_history : ota_history
       password_reset : password_reset
@@ -129,7 +132,6 @@ dynamodb:
       ring_time_history: ring_history_by_account
       smart_alarm_log: smart_alarm_log
       calibration: calibration
-      insights : insights
       sleep_stats : sleep_stats
       preferences : preferences
       profile_photo : profile_photo
@@ -139,12 +141,15 @@ dynamodb:
 
   
   endpoints:
+      agg_stats : http://localhost:7777
       alarm_info : http://localhost:7777
       device_data : http://localhost:7777
       features : http://localhost:7777
       file_manifest: http://localhost:7777
       firmware_upgrade_path : http://localhost:7777
       firmware_versions : http://localhost:7777
+      insights: http://localhost:7777
+      insights_last_seen: http://localhost:7777
       marketing_insights_seen: http://localhost:7777
       ota_history : http://localhost:7777
       password_reset : http://localhost:7777
@@ -170,6 +175,7 @@ dynamodb:
       sleep_score : http://localhost:7777
       wifi_info : http://localhost:7777
 
+agg_stats_version: v_0_1
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
 

@@ -59,7 +59,6 @@ server:
     - type: http
       port: 6667
   requestLog:
-    timeZone: UTC
     appenders:
       - type: file
         currentLogFilename: /var/log/suripu-admin/suripu-admin-access.log
@@ -107,11 +106,14 @@ redis:
 dynamodb:
   region: us-east-1
   tables:
+    agg_stats : prod_agg_stats
     alarm_info : prod_alarm_info
     device_data : prod_sense_data
     features : features
     file_manifest: prod_file_manifest
     firmware_upgrade_path : prod_fw_upgrade_path
+    insights: prod_insights
+    insights_last_seen: prod_insights_last_seen
     firmware_versions : prod_firmware_versions_mapping
     marketing_insights_seen : prod_marketing_insights_seen
     ota_history : ota_history
@@ -131,7 +133,6 @@ dynamodb:
     ring_time_history: prod_ring_history_by_account
     smart_alarm_log: prod_smart_alarm_log
     calibration: prod_calibration
-    insights : prod_insights
     sleep_stats : prod_sleep_stats
     preferences : prod_preferences
     profile_photo: prod_profile_photo
@@ -140,6 +141,7 @@ dynamodb:
 
 
   endpoints:
+      agg_stats : http://dynamodb.us-east-1.amazonaws.com
       alarm_info : http://dynamodb.us-east-1.amazonaws.com
       device_data : http://dynamodb.us-east-1.amazonaws.com
       features : http://dynamodb.us-east-1.amazonaws.com
@@ -165,13 +167,14 @@ dynamodb:
       ring_time_history: http://dynamodb.us-east-1.amazonaws.com
       calibration: http://dynamodb.us-east-1.amazonaws.com
       insights : http://dynamodb.us-east-1.amazonaws.com
+      insights_last_seen : http://dynamodb.us-east-1.amazonaws.com
       sleep_stats : http://dynamodb.us-east-1.amazonaws.com
       preferences : http://dynamodb.us-east-1.amazonaws.com
       profile_photo: http://dynamodb.us-east-1.amazonaws.com
       sleep_score : http://dynamodb.us-east-1.amazonaws.com
       wifi_info : http://dynamodb.us-east-1.amazonaws.com
 
-
+agg_stats_version: v_0_1
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
 

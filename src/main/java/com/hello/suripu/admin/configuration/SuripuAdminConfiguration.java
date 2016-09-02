@@ -1,10 +1,10 @@
 package com.hello.suripu.admin.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hello.suripu.coredw8.configuration.GraphiteConfiguration;
-import com.hello.suripu.coredw8.configuration.KinesisConfiguration;
-import com.hello.suripu.coredw8.configuration.RedisConfiguration;
-import com.hello.suripu.coredw8.configuration.NewDynamoDBConfiguration;
+import com.hello.suripu.coredropwizard.configuration.GraphiteConfiguration;
+import com.hello.suripu.coredropwizard.configuration.KinesisConfiguration;
+import com.hello.suripu.coredropwizard.configuration.RedisConfiguration;
+import com.hello.suripu.coredropwizard.configuration.NewDynamoDBConfiguration;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import jersey.repackaged.com.google.common.base.MoreObjects;
@@ -104,6 +104,12 @@ public class SuripuAdminConfiguration extends Configuration {
     public DataSourceFactory getInsightsDB() {
         return insightsDB;
     }
+
+    @Valid
+    @NotNull
+    @JsonProperty("agg_stats_version")
+    private String aggStatsVersion;
+    public String getAggStatsVersion() { return aggStatsVersion; }
 
     @Valid
     @NotNull

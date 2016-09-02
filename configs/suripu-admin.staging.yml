@@ -59,7 +59,6 @@ server:
     - type: http
       port: 6667
   requestLog:
-    timeZone: UTC
     appenders:
       - type: file
         currentLogFilename: /var/log/suripu-admin/suripu-admin-access.log
@@ -107,12 +106,15 @@ redis:
 dynamodb:
   region: us-east-1
   tables:
+    agg_stats : agg_stats
     alarm_info : alarm_info
     device_data : sense_data
     features : features
     file_manifest: file_manifest
     firmware_upgrade_path: fw_upgrade_path
     firmware_versions : prod_firmware_versions_mapping
+    insights: insights
+    insights_last_seen: insights_last_seen
     marketing_insights_seen : marketing_insights_seen
     ota_history : ota_history
     password_reset : password_reset
@@ -131,7 +133,6 @@ dynamodb:
     ring_time_history: ring_history_by_account
     smart_alarm_log: smart_alarm_log
     calibration: calibration
-    insights : insights
     sleep_stats : sleep_stats
     preferences : preferences
     profile_photo: profile_photo
@@ -141,12 +142,15 @@ dynamodb:
 
 
   endpoints:
+    agg_stats : http://dynamodb.us-east-1.amazonaws.com
     alarm_info : http://dynamodb.us-east-1.amazonaws.com
     device_data : http://dynamodb.us-east-1.amazonaws.com
     features : http://dynamodb.us-east-1.amazonaws.com
     file_manifest: http://dynamodb.us-east-1.amazonaws.com
     firmware_upgrade_path : http://dynamodb.us-east-1.amazonaws.com
     firmware_versions : http://dynamodb.us-east-1.amazonaws.com
+    insights: http://dynamodb.us-east-1.amazonaws.com
+    insights_last_seen: http://dynamodb.us-east-1.amazonaws.com
     ota_history : http://dynamodb.us-east-1.amazonaws.com
     marketing_insights_seen : http://dynamodb.us-east-1.amazonaws.com
     password_reset : http://dynamodb.us-east-1.amazonaws.com
@@ -165,14 +169,13 @@ dynamodb:
     smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
     ring_time_history: http://dynamodb.us-east-1.amazonaws.com
     calibration: http://dynamodb.us-east-1.amazonaws.com
-    insights : http://dynamodb.us-east-1.amazonaws.com
     sleep_stats : http://dynamodb.us-east-1.amazonaws.com
     preferences : http://dynamodb.us-east-1.amazonaws.com
     profile_photo : http://dynamodb.us-east-1.amazonaws.com
     sleep_score : http://dynamodb.us-east-1.amazonaws.com
     wifi_info : http://dynamodb.us-east-1.amazonaws.com
 
-
+agg_stats_version: v_0_1
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
 

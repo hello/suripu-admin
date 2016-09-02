@@ -5,9 +5,9 @@ import com.google.common.base.Optional;
 import com.hello.suripu.core.db.KeyStore;
 import com.hello.suripu.core.models.DeviceKeyStoreRecord;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

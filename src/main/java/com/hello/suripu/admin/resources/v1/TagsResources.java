@@ -7,9 +7,9 @@ import com.google.common.collect.Sets;
 import com.hello.suripu.core.db.TagStoreDAODynamoDB;
 import com.hello.suripu.core.models.Tag;
 import com.hello.suripu.core.oauth.OAuthScope;
-import com.hello.suripu.coredw8.oauth.AccessToken;
-import com.hello.suripu.coredw8.oauth.Auth;
-import com.hello.suripu.coredw8.oauth.ScopesAllowed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 
 import java.util.List;
 
