@@ -477,9 +477,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
                 .withMapping(questionResponseDAO);
         final AccountInfoProcessor accountInfoProcessor = builder.build();
 
-        final AmazonDynamoDB insightsLastSeenDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.INSIGHTS_LAST_SEEN);
-        final InsightsLastSeenDAO insightsLastSeenDAODynamoDB = InsightsLastSeenDynamoDB.create(insightsLastSeenDynamoDBClient, tableNames.get(DynamoDBTableName.INSIGHTS_LAST_SEEN));
-
         final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
                 .withSenseDAOs(deviceDataDAODynamoDB, deviceReadDAO)
                 .withInsightsDAO(trendsInsightsDAO)

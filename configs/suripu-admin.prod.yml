@@ -133,8 +133,6 @@ dynamodb:
     ring_time_history: prod_ring_history_by_account
     smart_alarm_log: prod_smart_alarm_log
     calibration: prod_calibration
-    insights : prod_insights
-    insights_last_seen: prod_insights_last_seen
     sleep_stats : prod_sleep_stats
     preferences : prod_preferences
     profile_photo: prod_profile_photo
