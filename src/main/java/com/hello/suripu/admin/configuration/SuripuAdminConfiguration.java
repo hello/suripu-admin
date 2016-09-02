@@ -107,6 +107,12 @@ public class SuripuAdminConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    @JsonProperty("agg_stats_version")
+    private String aggStatsVersion;
+    public String getAggStatsVersion() { return aggStatsVersion; }
+
+    @Valid
+    @NotNull
     @JsonProperty("sleep_score_version")
     private String sleepScoreVersion;
     public String getSleepScoreVersion() { return sleepScoreVersion; }

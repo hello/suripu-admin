@@ -72,6 +72,7 @@ logging:
   level: INFO
   loggers:
     com.hello.suripu.admin: DEBUG
+    com.hello.suripu.core.processors.AggStatsProcessor: INFO
   appenders:
      - type: console
 #    - type: file
@@ -104,6 +105,7 @@ redis:
 dynamodb:
   region: us-east-1
   tables:
+      agg_stats : agg_stats
       alarm_info : alarm_info
       device_data : sense_data
       features : features
@@ -139,6 +141,7 @@ dynamodb:
 
   
   endpoints:
+      agg_stats : http://localhost:7777
       alarm_info : http://localhost:7777
       device_data : http://localhost:7777
       features : http://localhost:7777
@@ -165,12 +168,14 @@ dynamodb:
       smart_alarm_log: http://localhost:7777
       ring_time_history: http://localhost:7777
       calibration: http://localhost:7777
+      insights: http://localhost:7777
       sleep_stats : http://localhost:7777
       preferences : http://localhost:7777
       profile_photo : http://localhost:7777
       sleep_score : http://localhost:7777
       wifi_info : http://localhost:7777
 
+agg_stats_version: v_0_1
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
 

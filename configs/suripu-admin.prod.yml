@@ -106,6 +106,7 @@ redis:
 dynamodb:
   region: us-east-1
   tables:
+    agg_stats : prod_agg_stats
     alarm_info : prod_alarm_info
     device_data : prod_sense_data
     features : features
@@ -140,6 +141,7 @@ dynamodb:
 
 
   endpoints:
+      agg_stats : http://dynamodb.us-east-1.amazonaws.com
       alarm_info : http://dynamodb.us-east-1.amazonaws.com
       device_data : http://dynamodb.us-east-1.amazonaws.com
       features : http://dynamodb.us-east-1.amazonaws.com
@@ -165,14 +167,14 @@ dynamodb:
       ring_time_history: http://dynamodb.us-east-1.amazonaws.com
       calibration: http://dynamodb.us-east-1.amazonaws.com
       insights : http://dynamodb.us-east-1.amazonaws.com
-      insights_last_seen: http://dynamodb.us-east-1.amazonaws.com
+      insights_last_seen : http://dynamodb.us-east-1.amazonaws.com
       sleep_stats : http://dynamodb.us-east-1.amazonaws.com
       preferences : http://dynamodb.us-east-1.amazonaws.com
       profile_photo: http://dynamodb.us-east-1.amazonaws.com
       sleep_score : http://dynamodb.us-east-1.amazonaws.com
       wifi_info : http://dynamodb.us-east-1.amazonaws.com
 
-
+agg_stats_version: v_0_1
 sleep_score_version: v_0_1
 sleep_stats_version: v_0_2
 
