@@ -15,12 +15,13 @@ import com.hello.suripu.core.models.AggStats;
 import com.hello.suripu.core.models.Calibration;
 import com.hello.suripu.core.models.Device;
 import com.hello.suripu.core.models.DeviceAccountPair;
-import com.hello.suripu.core.models.DeviceData;
 import com.hello.suripu.core.models.DeviceId;
 import com.hello.suripu.core.models.Insights.AggStatsInputs;
 import com.hello.suripu.core.models.TrackerMotion;
 import com.hello.suripu.core.oauth.OAuthScope;
+import com.hello.suripu.core.pill.data.AggStatTrackerMotion;
 import com.hello.suripu.core.processors.AggStatsProcessor;
+import com.hello.suripu.core.sense.data.AggStatDeviceData;
 import com.hello.suripu.core.util.AggStatsComputer;
 
 import com.hello.suripu.coredropwizard.oauth.AccessToken;
@@ -170,11 +171,11 @@ public class AggStatsResource {
         final DateTime queryStartTime = startDateLocalInclusive.withHourOfDay(AggStats.DAY_START_END_HOUR);
         final DateTime queryEndTime = endDateLocalExclusive.withHourOfDay(AggStats.DAY_START_END_HOUR);
 
-        final ImmutableList<DeviceData> deviceDataListAll = redshiftDAO.getSenseDataBetweenLocalUTC(accountId, queryStartTime, queryEndTime);
-        LOGGER.trace("resource=agg-stats action=queryed-device-data account_id={} aggStatsGenerationRequest={} len_data={}", accountId, aggStatsGenerationRequest.toString(), deviceDataListAll.size());
+        final ImmutableList<AggStatDeviceData> aggStatDeviceDataListAll = redshiftDAO.getSenseDataBetweenLocalUTC(accountId, queryStartTime, queryEndTime);
+        LOGGER.trace("resource=agg-stats action=queryed-device-data account_id={} aggStatsGenerationRequest={} len_data={}", accountId, aggStatsGenerationRequest.toString(), aggStatDeviceDataListAll.size());
 
-        final ImmutableList<TrackerMotion> pillDataListAll = redshiftDAO.getPillDataBetweenLocalUTC(accountId, queryStartTime, queryEndTime);
-        LOGGER.trace("resource=agg-stats action=queryed-tracker-motion account_id={} aggStatsGenerationRequest={} len_data={}", accountId, aggStatsGenerationRequest.toString(), pillDataListAll.size());
+        final ImmutableList<AggStatTrackerMotion> aggStatPillDataListAll = redshiftDAO.getPillDataBetweenLocalUTC(accountId, queryStartTime, queryEndTime);
+        LOGGER.trace("resource=agg-stats action=queryed-tracker-motion account_id={} aggStatsGenerationRequest={} len_data={}", accountId, aggStatsGenerationRequest.toString(), aggStatPillDataListAll.size());
 
         //Query sense color, dust calibration
         final Optional<Device.Color> senseColorOptional = aggStatsProcessor.getSenseColorOptional(senseColorDAO, deviceId);
@@ -196,15 +197,15 @@ public class AggStatsResource {
             final DateTime endLocalTime = targetDateLocal.plusDays(1).withHourOfDay(AggStats.DAY_START_END_HOUR);
 
             //Extract deviceData
-            final ImmutableList<DeviceData> deviceDataList = extractDeviceDataList(deviceDataListAll, startLocalTime, endLocalTime);
-            LOGGER.trace("resource=agg-stats data=device-data account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), deviceDataList.size());
+            final ImmutableList<AggStatDeviceData> aggStatDeviceDataList = extractDeviceDataList(aggStatDeviceDataListAll, startLocalTime, endLocalTime);
+            LOGGER.trace("resource=agg-stats data=device-data account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), aggStatDeviceDataList.size());
 
             //Extract pillData
-            final ImmutableList<TrackerMotion> pillDataList = extractTrackerMotionList(pillDataListAll, startLocalTime, endLocalTime);
+            final ImmutableList<AggStatTrackerMotion> pillDataList = extractTrackerMotionList(aggStatPillDataListAll, startLocalTime, endLocalTime);
             LOGGER.trace("resource=agg-stats data=tracker-motion account_id={} targetDateLocal={} len_data={}", accountId, targetDateLocal.toString(), pillDataList.size());
 
             //Compute aggregate stats
-            final AggStatsInputs aggStatsInputs = AggStatsInputs.create(senseColorOptional, calibrationOptional, deviceDataList, pillDataList);
+            final AggStatsInputs aggStatsInputs = AggStatsInputs.create(senseColorOptional, calibrationOptional, aggStatDeviceDataList, pillDataList);
             final Optional<AggStats> aggStats = AggStatsComputer.computeAggStats(accountId, deviceId, targetDateLocal, aggStatsInputs);
             if (!aggStats.isPresent()) {
                 continue;
@@ -220,28 +221,28 @@ public class AggStatsResource {
         return numSuccess;
     }
 
-    private static ImmutableList<DeviceData> extractDeviceDataList(final ImmutableList<DeviceData> allDeviceData, final DateTime startLocalTime, final DateTime endLocalTime) {
-        final List<DeviceData> outputDeviceDatas = Lists.newArrayList();
+    private static ImmutableList<AggStatDeviceData> extractDeviceDataList(final ImmutableList<AggStatDeviceData> allAggStatDeviceData, final DateTime startLocalTime, final DateTime endLocalTime) {
+        final List<AggStatDeviceData> outputAggStatDeviceDatas = Lists.newArrayList();
 
-        for (final DeviceData deviceData : allDeviceData) {
-            if ( deviceData.localTime().isAfter(startLocalTime.minus(1)) && deviceData.localTime().isBefore(endLocalTime.plus(1)) ) {
-                outputDeviceDatas.add(deviceData);
+        for (final AggStatDeviceData aggStatDeviceData : allAggStatDeviceData) {
+            if ( aggStatDeviceData.localTime.isAfter(startLocalTime.minus(1)) && aggStatDeviceData.localTime.isBefore(endLocalTime.plus(1)) ) {
+                outputAggStatDeviceDatas.add(aggStatDeviceData);
             }
         }
 
-        return ImmutableList.copyOf(outputDeviceDatas);
+        return ImmutableList.copyOf(outputAggStatDeviceDatas);
     }
 
-    private static ImmutableList<TrackerMotion> extractTrackerMotionList(final ImmutableList<TrackerMotion> allTrackerMotion, final DateTime startLocalTime, final DateTime endLocalTime) {
-        final List<TrackerMotion> outputTrackerMotions = Lists.newArrayList();
+    private static ImmutableList<AggStatTrackerMotion> extractTrackerMotionList(final ImmutableList<AggStatTrackerMotion> allAggStatTrackerMotion, final DateTime startLocalTime, final DateTime endLocalTime) {
+        final List<AggStatTrackerMotion> outputAggStatTrackerMotions = Lists.newArrayList();
 
-        for (final TrackerMotion trackerMotion : allTrackerMotion) {
-            if ( trackerMotion.localTime().isAfter(startLocalTime.minus(1)) && trackerMotion.localTime().isBefore(endLocalTime.plus(1))) {
-                outputTrackerMotions.add(trackerMotion);
+        for (final AggStatTrackerMotion aggStatTrackerMotion : allAggStatTrackerMotion) {
+            if ( aggStatTrackerMotion.localTime.isAfter(startLocalTime.minus(1)) && aggStatTrackerMotion.localTime.isBefore(endLocalTime.plus(1))) {
+                outputAggStatTrackerMotions.add(aggStatTrackerMotion);
             }
         }
 
-        return ImmutableList.copyOf(outputTrackerMotions);
+        return ImmutableList.copyOf(outputAggStatTrackerMotions);
     }
 
 }
