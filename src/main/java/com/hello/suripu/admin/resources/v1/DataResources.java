@@ -15,7 +15,7 @@ import com.hello.suripu.core.logging.SenseLogTag;
 import com.hello.suripu.core.models.Account;
 import com.hello.suripu.core.models.AllSensorSampleList;
 import com.hello.suripu.core.models.Calibration;
-import com.hello.suripu.core.models.CurrentRoomState;
+import com.hello.suripu.core.roomstate.CurrentRoomState;
 import com.hello.suripu.core.models.DataScience.UserLabel;
 import com.hello.suripu.core.models.Device;
 import com.hello.suripu.core.models.DeviceAccountPair;
@@ -184,7 +184,7 @@ public class DataResources {
     public List<Sample> getAdminLastDay(
             @Auth AccessToken accessToken,
             @PathParam("email") final String email,
-            @PathParam("sensor") final String sensor,
+            @PathParam("sensor") final Sensor sensor,
             @PathParam("resolution") final String resolution,
             @QueryParam("from") Long queryEndTimestampInUTC,
             @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust,
@@ -236,7 +236,7 @@ public class DataResources {
                 accountId, deviceIdPair.get().externalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId,
                         withCalibratedDust), USE_AUDIO_PEAK_ENERGY_DB);
 
-        if (Sensor.PARTICULATES.name().equalsIgnoreCase(sensor)) {
+        if (Sensor.PARTICULATES.equals(sensor)) {
             if (smooth) {
                 return SmoothSample.convert(timeSeries);
             }
