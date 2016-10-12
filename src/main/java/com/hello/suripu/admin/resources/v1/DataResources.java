@@ -184,7 +184,7 @@ public class DataResources {
     public List<Sample> getAdminLastDay(
             @Auth AccessToken accessToken,
             @PathParam("email") final String email,
-            @PathParam("sensor") final Sensor sensor,
+            @PathParam("sensor") final String sensorString,
             @PathParam("resolution") final String resolution,
             @QueryParam("from") Long queryEndTimestampInUTC,
             @QueryParam("with_calibrated_dust") @DefaultValue("true") final Boolean withCalibratedDust,
@@ -231,6 +231,7 @@ public class DataResources {
         * data, instead of 24 hours.
          */
         final long queryStartTimeInUTC = new DateTime(queryEndTimestampInUTC, DateTimeZone.UTC).minusDays(limitDays).getMillis();
+        final Sensor sensor = Sensor.fromString(sensorString);
 
         final List<Sample> timeSeries = deviceDataDAODynamoDB.generateTimeSeriesByUTCTime(queryStartTimeInUTC, queryEndTimestampInUTC,
                 accountId, deviceIdPair.get().externalDeviceId, slotDurationInMinutes, sensor, 0, color, getCalibration(deviceIdPair.get().externalDeviceId,
