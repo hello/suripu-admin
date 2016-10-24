@@ -1,13 +1,12 @@
 package com.hello.suripu.admin.resources.v1;
 
+import com.amazonaws.AmazonServiceException;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
-import com.amazonaws.AmazonServiceException;
-import com.codahale.metrics.annotation.Timed;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
@@ -41,26 +40,24 @@ import com.hello.suripu.core.models.SenseRegistration;
 import com.hello.suripu.core.models.TimeZoneHistory;
 import com.hello.suripu.core.models.TrackerMotion;
 import com.hello.suripu.core.models.UserInfo;
+import com.hello.suripu.core.models.device.v2.Sense;
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
 import com.hello.suripu.core.util.PillColorUtil;
 import com.hello.suripu.core.util.SenseLogLevelUtil;
+import com.hello.suripu.core.util.SerialNumberUtils;
 import com.hello.suripu.coredropwizard.oauth.AccessToken;
 import com.hello.suripu.coredropwizard.oauth.Auth;
 import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.skife.jdbi.v2.exceptions.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -77,11 +74,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.exceptions.JedisDataException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
 
 @Path("/v1/devices")
 public class DeviceResources {
@@ -608,62 +606,24 @@ public class DeviceResources {
     return deviceIdsMissingColor;
   }
 
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
-  @POST
-  @Path("/color/{sense_id}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Integer updateColorsForMissingSense(@Auth final AccessToken accessToken,
-                                             @PathParam("sense_id") final String senseId) {
-
-    final Optional<DeviceKeyStoreRecord> deviceKeyStoreRecordOptional = senseKeyStore.getKeyStoreRecord(senseId);
-    if (!deviceKeyStoreRecordOptional.isPresent()) {
-      LOGGER.warn("Couldn't KeyStoreRecord for deviceId {}", senseId);
-      return 0;
-    }
-
-    final Optional<Device.Color> colorOptional = serialNumberToColor(deviceKeyStoreRecordOptional.get().metadata, deviceKeyStoreRecordOptional.get().deviceId);
-    if (colorOptional.isPresent()) {
-      return senseColorDAO.saveColorForSense(senseId, colorOptional.get().name());
-    }
-    return 0;
-  }
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
-  @GET
-  @Path("/color/{sense_id}")
-  public String getColor(@Auth final AccessToken accessToken,
+    @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+    @GET
+    @Path("/color/{sense_id}")
+    public String getColor(@Auth final AccessToken accessToken,
                          @PathParam("sense_id") final String senseId) {
-
-    final Optional<Device.Color> colorOptional = senseColorDAO.getColorForSense(senseId);
-    if (colorOptional.isPresent()) {
-      return colorOptional.get().name();
+      final Optional<DeviceKeyStoreRecord> recordFromDDB = senseKeyStore.getKeyStoreRecord(senseId);
+      if(!recordFromDDB.isPresent()) {
+        LOGGER.warn("action=get-color sense_id={} msg=missing-keystore-record");
+        return "UNKNOWN";
+      }
+      final DeviceKeyStoreRecord record = recordFromDDB.get();
+      final Optional<Sense.Color> colorOptional = SerialNumberUtils.extractColorFrom(record.metadata);
+      if(colorOptional.isPresent()) {
+          return colorOptional.get().name();
+      }
+      LOGGER.warn("action=get-color sense_id={} invalid_sn={}", record.metadata);
+      return "UNKOWN";
     }
-
-    return Device.Color.valueOf("BLACK").name();
-  }
-
-
-  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
-  @PUT
-  @Path("/color/{sense_id}/{color}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response setColor(@Auth final AccessToken accessToken,
-                           @PathParam("sense_id") final String senseId,
-                           @PathParam("color") final String color) {
-
-    final Device.Color senseColor = Device.Color.valueOf(color);
-
-    if (!senseColor.equals(Device.Color.BLACK) && !senseColor.equals(Device.Color.WHITE)) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-          .entity(new JsonError(Response.Status.BAD_REQUEST.getStatusCode(), "Bad color for Sense")).build());
-    }
-
-    if (senseColorDAO.update(senseId, senseColor.name()) == 0) {
-      LOGGER.debug("Cannot update because sense color not found for sense {}, proceed to insert a new entry", senseId);
-      senseColorDAO.saveColorForSense(senseId, senseColor.name());
-    }
-    return Response.noContent().build();
-  }
 
   @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
   @GET
@@ -991,24 +951,5 @@ public class DeviceResources {
       return Optional.absent();
     }
     return Optional.of(new TimeZoneHistory(dateTimeZoneOptional.get().getOffset(eventDateTime), dateTimeZoneOptional.get().getID()));
-  }
-
-  private Optional<Device.Color> serialNumberToColor(final String serialNumber, final String deviceId) {
-    final String SENSE_US_PREFIX_WHITE = "91000008W";
-    final String SENSE_US_PREFIX_BLACK = "91000008B";
-
-    if (serialNumber.length() < SENSE_US_PREFIX_WHITE.length()) {
-      LOGGER.error("SN {} is too short for device_id = {}", serialNumber, deviceId);
-      return Optional.absent();
-    }
-    final String snPrefix = serialNumber.substring(0, SENSE_US_PREFIX_WHITE.length());
-    if (snPrefix.toUpperCase().equals(SENSE_US_PREFIX_WHITE)) {
-      return Optional.of(Device.Color.WHITE);
-    } else if (snPrefix.toUpperCase().equals(SENSE_US_PREFIX_BLACK)) {
-      return Optional.of(Device.Color.BLACK);
-    }
-
-    LOGGER.error("Can't get color for SN {}, {}", serialNumber, deviceId);
-    return Optional.absent();
   }
 }
