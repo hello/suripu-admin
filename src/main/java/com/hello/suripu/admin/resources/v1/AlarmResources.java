@@ -1,25 +1,29 @@
 package com.hello.suripu.admin.resources.v1;
 
-import com.amazonaws.AmazonServiceException;
 import com.google.common.base.Optional;
+
+import com.amazonaws.AmazonServiceException;
+import com.codahale.metrics.annotation.Timed;
 import com.hello.suripu.admin.Util;
-import com.hello.suripu.coredropwizard.oauth.AccessToken;
-import com.hello.suripu.coredropwizard.oauth.Auth;
-import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 import com.hello.suripu.core.db.AccountDAO;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.MergedUserInfoDynamoDB;
 import com.hello.suripu.core.models.Alarm;
 import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.UserInfo;
-
 import com.hello.suripu.core.oauth.OAuthScope;
 import com.hello.suripu.core.util.JsonError;
-import com.codahale.metrics.annotation.Timed;
+import com.hello.suripu.coredropwizard.oauth.AccessToken;
+import com.hello.suripu.coredropwizard.oauth.Auth;
+import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,8 +32,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
 
 
 @Path("/v1/alarms")
@@ -64,7 +66,6 @@ public class AlarmResources {
 
         final Long accountId = accountIdOptional.get();
 
-        LOGGER.debug("Before getting device account map from account_id");
         final List<DeviceAccountPair> deviceAccountMap = this.deviceDAO.getSensesForAccountId(accountId);
         if(deviceAccountMap.size() == 0){
             LOGGER.error("User {} tries to retrieve alarm without paired with a Morpheus.", accountId);
@@ -73,7 +74,6 @@ public class AlarmResources {
         }
 
         try {
-            LOGGER.debug("Before getting device account map from account_id");
             final Optional<UserInfo> alarmInfoOptional = this.mergedUserInfoDynamoDB.getInfo(deviceAccountMap.get(0).externalDeviceId, accountId);
             LOGGER.debug("Fetched alarm info optional");
 
