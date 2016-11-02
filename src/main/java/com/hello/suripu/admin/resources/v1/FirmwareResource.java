@@ -467,22 +467,27 @@ public class FirmwareResource {
 
         ObjectListing objectListing;
 
-        final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
-            .withBucketName("hello-firmware").withPrefix("sense/" + fwVersion);
-
+        //There's currently no fw version map differentiation between sense and sense1p5, so this will work
+        final Set<String> sensePaths = Sets.newHashSet("sense", "sense1p5");
         final List<String> keys = Lists.newArrayList();
-        int i = 0;
-        do {
-            objectListing = s3Client.listObjects(listObjectsRequest);
-            for (S3ObjectSummary objectSummary :
-                objectListing.getObjectSummaries()) {
-                if(objectSummary.getKey().contains("build_info.txt")) {
-                    keys.add(objectSummary.getKey());
+
+        for(final String sensePath : sensePaths) {
+            final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+                .withBucketName("hello-firmware").withPrefix(sensePath + "/" + fwVersion);
+            int i = 0;
+            do {
+                objectListing = s3Client.listObjects(listObjectsRequest);
+                for (S3ObjectSummary objectSummary :
+                    objectListing.getObjectSummaries()) {
+                    if(objectSummary.getKey().contains("build_info.txt")) {
+                        keys.add(objectSummary.getKey());
+                    }
                 }
-            }
-            listObjectsRequest.setMarker(objectListing.getNextMarker());
-            i++;
-        } while (objectListing.isTruncated() && i < 5);
+                listObjectsRequest.setMarker(objectListing.getNextMarker());
+                i++;
+            } while (objectListing.isTruncated() && i < 5);
+        }
+
 
         for(final String key: keys) {
             final String humanVersion = key.split("/")[1];
