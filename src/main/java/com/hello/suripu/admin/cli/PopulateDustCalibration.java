@@ -34,7 +34,7 @@ public class PopulateDustCalibration extends ConfiguredCommand<SuripuAdminConfig
     private static final Logger LOGGER = LoggerFactory.getLogger(PopulateDustCalibration.class);
 
     private static final Long CHINA_OFFSET_MILLIS = 8L * 3600L * 1000L; // GMT +8
-    private static final int BATCH_SIZE = 50;
+    private static final int BATCH_SIZE = 25; // dynamodb max batch size
 
     public PopulateDustCalibration() {
         super("dusty", "dust calibration");
