@@ -211,6 +211,11 @@
             <artifactId>postgresql</artifactId>
             <version>9.2-1004-jdbc4</version>
         </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>3.4</version>
+        </dependency>
     </dependencies>
     <build>
         <extensions>
