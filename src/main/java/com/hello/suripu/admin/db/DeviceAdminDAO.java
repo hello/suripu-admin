@@ -13,10 +13,12 @@ public interface DeviceAdminDAO {
     ImmutableList<Account> getAccountsByPillId(final String deviceId, final Long maxDevices);
     ImmutableList<DeviceAccountPair> getPillsByPillIdHint(final String pillId);
     ImmutableList<Account> getAccountsWithSenseWithoutPill(final Integer limit);
+    ImmutableList<DeviceAccountPair> getMostRecentPairs(Integer limit, Integer maxId);
     ImmutableList<Account> getAccountsWithLowPillBattery(final Integer criticalBatteryLevel, final Integer limit);
     ImmutableList<DeviceAccountPair> getMostRecentPairsQualifiedForDustCalibration(final Integer limit, final Integer maxId, final Integer minUpDays);
     ImmutableList<DeviceAccountPair> getLatestUniqueActiveSensePairs(final Integer maxId, final Integer limit);
     ImmutableList<DeviceAccountPair> getLatestUniqueActivePillPairs(final Integer maxId, final Integer limit);
     Long getAllSensesCount();
     Long getAllPillsCount();
+
 }
