@@ -10,6 +10,7 @@ import com.google.common.collect.Sets;
 import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
+import com.hello.suripu.admin.models.DeviceAccountPairWrapper;
 import com.hello.suripu.admin.models.DeviceAdmin;
 import com.hello.suripu.admin.models.DeviceStatusBreakdown;
 import com.hello.suripu.admin.models.InactiveDevicesPaginator;
@@ -80,6 +81,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 @Path("/v1/devices")
 public class DeviceResources {
@@ -876,6 +878,30 @@ public class DeviceResources {
 
     return logLevelNames;
   }
+
+  @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
+  @GET
+  @Timed
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/recent")
+  public List<DeviceAccountPairWrapper> recent(@Auth AccessToken accessToken) {
+    final List<DeviceAccountPair> pairs = deviceAdminDAO.getMostRecentPairs(90, Integer.MAX_VALUE);
+    final Set<String> uniqueDeviceIds = pairs.stream()
+            .map(p -> p.externalDeviceId)
+            .collect(Collectors.toSet());
+
+    final Map<String, DeviceKeyStoreRecord> records = senseKeyStore.getKeyStoreRecordBatch(uniqueDeviceIds);
+    final List<DeviceAccountPairWrapper> pairWrappers = new ArrayList<>();
+    for(final DeviceAccountPair pair : pairs) {
+        if(records.containsKey(pair.externalDeviceId)) {
+          pairWrappers.add(new DeviceAccountPairWrapper(pair, records.get(pair.externalDeviceId)));
+        }
+    }
+
+    return pairWrappers;
+  }
+
+
 
   // Helpers
   private List<DeviceAdmin> getSensesByAccountId(final Long accountId) {
