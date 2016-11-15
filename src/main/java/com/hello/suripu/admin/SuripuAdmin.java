@@ -23,6 +23,7 @@ import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.admin.db.AccessTokenAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
+import com.hello.suripu.admin.db.ExpansionsAdminDAO;
 import com.hello.suripu.admin.db.RedshiftDAO;
 import com.hello.suripu.admin.db.UptimeDAO;
 import com.hello.suripu.admin.modules.AdminRolloutModule;
@@ -37,6 +38,7 @@ import com.hello.suripu.admin.resources.v1.DeviceResources;
 import com.hello.suripu.admin.resources.v1.DiagnosticResources;
 import com.hello.suripu.admin.resources.v1.DownloadResource;
 import com.hello.suripu.admin.resources.v1.EventsResources;
+import com.hello.suripu.admin.resources.v1.ExpansionsResource;
 import com.hello.suripu.admin.resources.v1.FeaturesResources;
 import com.hello.suripu.admin.resources.v1.FeedbackResources;
 import com.hello.suripu.admin.resources.v1.FileResources;
@@ -249,6 +251,8 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final TrackingDAO trackingDAO = commonDB.onDemand(TrackingDAO.class);
         final UserLabelDAO userLabelDAO = commonDB.onDemand(UserLabelDAO.class);
         final TimelineAnalyticsDAO timelineAnalyticsDAO = commonDB.onDemand(TimelineAnalyticsDAO.class);
+        final ExpansionsAdminDAO expansionsAdminDAO = commonDB.onDemand(ExpansionsAdminDAO.class);
+
 
         // Redshift
         final UptimeDAO uptimeDAO = redshiftDB.onDemand(UptimeDAO.class);
@@ -574,7 +578,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.jersey().register(new UptimeResources(teamStore, jedisPool));
         environment.jersey().register(new FileResources(fileManifestDynamoDB));
         environment.jersey().register(new VersionResources());
-
+        environment.jersey().register(new ExpansionsResource(expansionsAdminDAO));
         // Store
         final StoreDAO storeDAO = storeDB.onDemand(StoreDAO.class);
         environment.jersey().register(new StoreResources(storeDAO));
