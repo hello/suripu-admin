@@ -481,6 +481,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         final InsightProcessor.Builder insightBuilder = new InsightProcessor.Builder()
                 .withSenseDAOs(deviceDataDAODynamoDB, deviceReadDAO)
+                .withSenseColorDAO(senseColorDAO)
                 .withInsightsDAO(trendsInsightsDAO)
                 .withDynamoDBDAOs(aggregateSleepScoreDAODynamoDB, insightsDAODynamoDB, insightsLastSeenDAODynamoDB, sleepStatsDAODynamoDB)
                 .withPreferencesDAO(accountPreferencesDynamoDB)
