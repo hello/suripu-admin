@@ -109,6 +109,7 @@ import com.hello.suripu.core.db.WifiInfoDAO;
 import com.hello.suripu.core.db.WifiInfoDynamoDB;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
 import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
+import com.hello.suripu.core.db.colors.SenseColorDynamoDBDAO;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
 import com.hello.suripu.core.flipper.DynamoDBAdapter;
@@ -129,6 +130,8 @@ import com.hello.suripu.core.processors.insights.LightData;
 import com.hello.suripu.core.processors.insights.WakeStdDevData;
 import com.hello.suripu.core.profile.ProfilePhotoStore;
 import com.hello.suripu.core.profile.ProfilePhotoStoreDynamoDB;
+import com.hello.suripu.core.sense.metadata.MetadataDAODynamoDB;
+import com.hello.suripu.core.sense.metadata.SenseMetadataDAO;
 import com.hello.suripu.core.tracking.TrackingDAO;
 import com.hello.suripu.coredropwizard.clients.AmazonDynamoDBClientFactory;
 import com.hello.suripu.coredropwizard.db.AccessTokenDAO;
@@ -248,7 +251,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final FeedbackDAO feedbackDAO = commonDB.onDemand(FeedbackDAO.class);
         final OnBoardingLogDAO onBoardingLogDAO = commonDB.onDemand(OnBoardingLogDAO.class);
         final PillHeartBeatDAO pillHeartBeatDAO = commonDB.onDemand(PillHeartBeatDAO.class);
-        final SenseColorDAO senseColorDAO = commonDB.onDemand(SenseColorDAOSQLImpl.class);
+//        final SenseColorDAO senseColorDAO = commonDB.onDemand(SenseColorDAOSQLImpl.class);
         final TrackingDAO trackingDAO = commonDB.onDemand(TrackingDAO.class);
         final UserLabelDAO userLabelDAO = commonDB.onDemand(UserLabelDAO.class);
         final TimelineAnalyticsDAO timelineAnalyticsDAO = commonDB.onDemand(TimelineAnalyticsDAO.class);
@@ -318,6 +321,9 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final AmazonDynamoDB accountPreferencesDynamoDBClient = dynamoDBClientFactory.getForTable(DynamoDBTableName.PREFERENCES);
         final AccountPreferencesDAO accountPreferencesDynamoDB = AccountPreferencesDynamoDB.create(accountPreferencesDynamoDBClient,
                 tableNames.get(DynamoDBTableName.PREFERENCES));
+
+        final SenseMetadataDAO senseMetadataDAO = MetadataDAODynamoDB.create(senseKeyStore);
+        final SenseColorDAO senseColorDAO = new SenseColorDynamoDBDAO(senseMetadataDAO);
 
         //InsightsData
         final LightData lightData = new LightData(); // lights global distribution
