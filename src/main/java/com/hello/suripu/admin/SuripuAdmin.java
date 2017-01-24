@@ -95,6 +95,7 @@ import com.hello.suripu.core.db.QuestionResponseDAO;
 import com.hello.suripu.core.db.ResponseCommandsDAODynamoDB;
 import com.hello.suripu.core.db.RingTimeHistoryDAODynamoDB;
 import com.hello.suripu.core.db.SenseEventsDAO;
+import com.hello.suripu.core.db.SenseEventsDynamoDB;
 import com.hello.suripu.core.db.SensorsViewsDynamoDB;
 import com.hello.suripu.core.db.SleepStatsDAODynamoDB;
 import com.hello.suripu.core.db.SmartAlarmLoggerDynamoDB;
@@ -387,7 +388,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final TagStoreDAODynamoDB tagStore = new TagStoreDAODynamoDB(tagStoreDBClient, tableNames.get(DynamoDBTableName.TAGS));
 
         final AmazonDynamoDB senseEventsDBClient = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.SENSE_EVENTS, SenseEventsDAO.class);
-        final SenseEventsDAO senseEventsDAO = new SenseEventsDAO(senseEventsDBClient, tableNames.get(DynamoDBTableName.SENSE_EVENTS));
+        final SenseEventsDAO senseEventsDAO = new SenseEventsDynamoDB(senseEventsDBClient, tableNames.get(DynamoDBTableName.SENSE_EVENTS));
 
 
         final AmazonDynamoDB fwVersionMapping = dynamoDBClientFactory.getInstrumented(DynamoDBTableName.FIRMWARE_VERSIONS, FirmwareVersionMappingDAO.class);
