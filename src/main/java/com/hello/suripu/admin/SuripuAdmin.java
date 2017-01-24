@@ -251,7 +251,6 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final FeedbackDAO feedbackDAO = commonDB.onDemand(FeedbackDAO.class);
         final OnBoardingLogDAO onBoardingLogDAO = commonDB.onDemand(OnBoardingLogDAO.class);
         final PillHeartBeatDAO pillHeartBeatDAO = commonDB.onDemand(PillHeartBeatDAO.class);
-//        final SenseColorDAO senseColorDAO = commonDB.onDemand(SenseColorDAOSQLImpl.class);
         final TrackingDAO trackingDAO = commonDB.onDemand(TrackingDAO.class);
         final UserLabelDAO userLabelDAO = commonDB.onDemand(UserLabelDAO.class);
         final TimelineAnalyticsDAO timelineAnalyticsDAO = commonDB.onDemand(TimelineAnalyticsDAO.class);
