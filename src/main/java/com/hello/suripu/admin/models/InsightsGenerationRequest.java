@@ -2,7 +2,6 @@ package com.hello.suripu.admin.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hello.suripu.core.models.DeviceAccountPair;
 import com.hello.suripu.core.models.Insights.InsightCard;
 
 /**
