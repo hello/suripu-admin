@@ -2,7 +2,6 @@ package com.hello.suripu.admin.resources.v1;
 
 import com.google.common.base.Optional;
 
-import com.hello.suripu.admin.models.InsightsFutureGenerationRequest;
 import com.hello.suripu.admin.models.InsightsGenerationRequest;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.DeviceDataInsightQueryDAO;
@@ -89,11 +88,11 @@ public class InsightsResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/generateFutureInsight")
     public Optional<InsightCard.Category> generateFutureInsight(@Auth final AccessToken accessToken,
-                                                                InsightsFutureGenerationRequest generateFutureInsightRequest) {
+                                                                InsightsGenerationRequest generateInsightRequest) {
 
-        final InsightCard.Category category = generateFutureInsightRequest.insightCategory;
-        final Long accountId = generateFutureInsightRequest.accountId;
-        final DateTime dateVisibleLocal = generateFutureInsightRequest.dateVisibleLocal;
+        final InsightCard.Category category = generateInsightRequest.insightCategory;
+        final Long accountId = generateInsightRequest.accountId;
+        final DateTime dateVisibleLocal = generateInsightRequest.dateVisibleLocal;
 
 
         final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(accountId);
