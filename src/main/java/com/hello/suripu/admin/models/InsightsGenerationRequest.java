@@ -21,23 +21,23 @@ public class InsightsGenerationRequest {
 
     public final InsightCard.Category insightCategory;
 
-    @JsonProperty("date_visible_local_string_optional")
-    public final Optional<String> dateVisibleLocalStringOptional;
+    @JsonProperty("publication_date_local")
+    public final Optional<String> publicationDateLocalStringOptional;
 
-    public final DateTime dateVisibleLocal;
+    public final DateTime publicationDateLocal;
 
     @JsonCreator
     public InsightsGenerationRequest(@JsonProperty("account_id") final Long accountId,
                                      @JsonProperty("category_string") final String categoryString,
-                                     @JsonProperty("date_visible_local_string_optional") final Optional<String> dateVisibleLocalStringOptional) {
+                                     @JsonProperty("publication_date_local") final Optional<String> publicationDateLocalStringOptional) {
         this.accountId = accountId;
         this.categoryString = categoryString;
         this.insightCategory = InsightCard.Category.fromString(categoryString);
-        this.dateVisibleLocalStringOptional = dateVisibleLocalStringOptional;
-        if (dateVisibleLocalStringOptional.isPresent()) {
-            this.dateVisibleLocal = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(dateVisibleLocalStringOptional.get());
+        this.publicationDateLocalStringOptional = publicationDateLocalStringOptional;
+        if (publicationDateLocalStringOptional.isPresent()) {
+            this.publicationDateLocal = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(publicationDateLocalStringOptional.get());
         } else {
-            this.dateVisibleLocal = DateTime.now(DateTimeZone.UTC);
+            this.publicationDateLocal = DateTime.now(DateTimeZone.UTC);
         }
     }
 
