@@ -72,9 +72,9 @@ public class InsightsResource {
 
 
         Optional<InsightCard.Category> generatedInsight;
-        if (generateInsightRequest.dateVisibleLocalStringOptional.isPresent()) {
-            final DateTime dateVisibleLocal = generateInsightRequest.dateVisibleLocal;
-            generatedInsight = insightProcessor.generateFutureInsightsByCategory(accountId, category, dateVisibleLocal);
+        if (generateInsightRequest.publicationDateLocalStringOptional.isPresent()) {
+            final DateTime publicationDateLocal = generateInsightRequest.publicationDateLocal;
+            generatedInsight = insightProcessor.generateFutureInsightsByCategory(accountId, category, publicationDateLocal);
         } else {
             generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceAccountPairOptional.get(), deviceDataInsightQueryDAO, category, featureFlipper);
         }
