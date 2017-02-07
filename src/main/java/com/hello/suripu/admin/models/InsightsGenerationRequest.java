@@ -21,23 +21,19 @@ public class InsightsGenerationRequest {
 
     public final InsightCard.Category insightCategory;
 
-    @JsonProperty("publication_date_local")
-    public final Optional<String> publicationDateLocalStringOptional;
-
-    public final DateTime publicationDateLocal;
+    public final Optional<DateTime> publicationDateLocal;
 
     @JsonCreator
     public InsightsGenerationRequest(@JsonProperty("account_id") final Long accountId,
                                      @JsonProperty("category_string") final String categoryString,
-                                     @JsonProperty("publication_date_local") final Optional<String> publicationDateLocalStringOptional) {
+                                     @JsonProperty("publication_date_local") final Optional<String> publicationDateLocal) {
         this.accountId = accountId;
         this.categoryString = categoryString;
         this.insightCategory = InsightCard.Category.fromString(categoryString);
-        this.publicationDateLocalStringOptional = publicationDateLocalStringOptional;
-        if (publicationDateLocalStringOptional.isPresent()) {
-            this.publicationDateLocal = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(publicationDateLocalStringOptional.get());
+        if (publicationDateLocal.isPresent()) {
+            this.publicationDateLocal = Optional.of(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(publicationDateLocal.get()));
         } else {
-            this.publicationDateLocal = DateTime.now(DateTimeZone.UTC);
+            this.publicationDateLocal = Optional.absent();
         }
     }
 
