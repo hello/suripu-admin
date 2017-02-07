@@ -14,6 +14,7 @@ import com.hello.suripu.coredropwizard.oauth.Auth;
 import com.hello.suripu.coredropwizard.oauth.ScopesAllowed;
 import com.librato.rollout.RolloutClient;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,15 +64,20 @@ public class InsightsResource {
         final InsightCard.Category category = generateInsightRequest.insightCategory;
         final Long accountId = generateInsightRequest.accountId;
 
-
-
         final Optional<DeviceAccountPair> deviceAccountPairOptional = deviceDAO.getMostRecentSensePairByAccountId(accountId);
         if (!deviceAccountPairOptional.isPresent()) {
             LOGGER.debug("action=no-insight reason=device-account-pair-absent accountId={} insight_cat={}", accountId, category.toString());
             return Optional.absent();
         }
 
-        final Optional<InsightCard.Category> generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceAccountPairOptional.get(), deviceDataInsightQueryDAO, category, featureFlipper);
+
+        Optional<InsightCard.Category> generatedInsight;
+        if (generateInsightRequest.dateVisibleLocalStringOptional.isPresent()) {
+            final DateTime dateVisibleLocal = generateInsightRequest.dateVisibleLocal;
+            generatedInsight = insightProcessor.generateFutureInsightsByCategory(accountId, category, dateVisibleLocal);
+        } else {
+            generatedInsight = insightProcessor.generateInsightsByCategory(accountId, deviceAccountPairOptional.get(), deviceDataInsightQueryDAO, category, featureFlipper);
+        }
 
         if (!generatedInsight.isPresent()) {
             LOGGER.debug("action=no-insight accountId={} insight_cat={}", accountId, category.toString());
@@ -81,7 +87,6 @@ public class InsightsResource {
         LOGGER.debug("action=insight-generated accountId={} insight_cat={}", accountId, category.toString());
         return generatedInsight;
     }
-
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_READ})
     @GET
