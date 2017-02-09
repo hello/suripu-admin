@@ -105,6 +105,7 @@ redis:
 
 dynamodb:
   region: us-east-1
+  default_endpoint: http://dynamodb.us-east-1.amazonaws.com
   tables:
     agg_stats : prod_agg_stats
     alarm_info : prod_alarm_info
@@ -138,41 +139,7 @@ dynamodb:
     profile_photo: prod_profile_photo
     sleep_score : prod_sleep_score
     wifi_info : prod_wifi_info
-
-
-  endpoints:
-      agg_stats : http://dynamodb.us-east-1.amazonaws.com
-      alarm_info : http://dynamodb.us-east-1.amazonaws.com
-      device_data : http://dynamodb.us-east-1.amazonaws.com
-      features : http://dynamodb.us-east-1.amazonaws.com
-      file_manifest: http://dynamodb.us-east-1.amazonaws.com
-      firmware_upgrade_path : http://dynamodb.us-east-1.amazonaws.com
-      firmware_versions : http://dynamodb.us-east-1.amazonaws.com
-      marketing_insights_seen : http://dynamodb.us-east-1.amazonaws.com
-      ota_history : http://dynamodb.us-east-1.amazonaws.com
-      password_reset : http://dynamodb.us-east-1.amazonaws.com
-      pill_key_store : http://dynamodb.us-east-1.amazonaws.com
-      pill_last_seen : http://dynamodb.us-east-1.amazonaws.com
-      pill_heartbeat: http://dynamodb.us-east-1.amazonaws.com
-      pill_data: http://dynamodb.us-east-1.amazonaws.com
-      sense_events : http://dynamodb.us-east-1.amazonaws.com
-      sense_key_store : http://dynamodb.us-east-1.amazonaws.com
-      sense_last_seen : http://dynamodb.us-east-1.amazonaws.com
-      sense_prefix : http://dynamodb.us-east-1.amazonaws.com
-      sync_response_commands : http://dynamodb.us-east-1.amazonaws.com
-      tags: http://dynamodb.us-east-1.amazonaws.com
-      teams : http://dynamodb.us-east-1.amazonaws.com
-      timezone_history : http://dynamodb.us-east-1.amazonaws.com
-      smart_alarm_log: http://dynamodb.us-east-1.amazonaws.com
-      ring_time_history: http://dynamodb.us-east-1.amazonaws.com
-      calibration: http://dynamodb.us-east-1.amazonaws.com
-      insights : http://dynamodb.us-east-1.amazonaws.com
-      insights_last_seen : http://dynamodb.us-east-1.amazonaws.com
-      sleep_stats : http://dynamodb.us-east-1.amazonaws.com
-      preferences : http://dynamodb.us-east-1.amazonaws.com
-      profile_photo: http://dynamodb.us-east-1.amazonaws.com
-      sleep_score : http://dynamodb.us-east-1.amazonaws.com
-      wifi_info : http://dynamodb.us-east-1.amazonaws.com
+  endpoints: {}
 
 agg_stats_version: v_0_1
 sleep_score_version: v_0_1
