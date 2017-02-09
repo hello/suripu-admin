@@ -108,7 +108,6 @@ import com.hello.suripu.core.db.UserLabelDAO;
 import com.hello.suripu.core.db.WifiInfoDAO;
 import com.hello.suripu.core.db.WifiInfoDynamoDB;
 import com.hello.suripu.core.db.colors.SenseColorDAO;
-import com.hello.suripu.core.db.colors.SenseColorDAOSQLImpl;
 import com.hello.suripu.core.db.colors.SenseColorDynamoDBDAO;
 import com.hello.suripu.core.db.util.JodaArgumentFactory;
 import com.hello.suripu.core.db.util.PostgresIntegerArrayArgumentFactory;
@@ -409,7 +408,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         final FirmwareUpgradePathDAO firmwareUpgradePathDAO = new FirmwareUpgradePathDAO(fwUpgradePathDynamoDB, tableNames.get(DynamoDBTableName.FIRMWARE_UPGRADE_PATH));
 
         final AmazonDynamoDBAsync sensorsViewsDynamoDBClient = new AmazonDynamoDBAsyncClient(AmazonDynamoDBClientFactory.getDefaultClientConfiguration());
-        sensorsViewsDynamoDBClient.setEndpoint(configuration.dynamoDBConfiguration().endpoints().get(DynamoDBTableName.SENSE_LAST_SEEN));
+        sensorsViewsDynamoDBClient.setEndpoint(configuration.dynamoDBConfiguration().defaultEndpoint());
 
         final SensorsViewsDynamoDB sensorsViewsDynamoDB = new SensorsViewsDynamoDB(
                 sensorsViewsDynamoDBClient,
