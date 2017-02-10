@@ -4,7 +4,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.hello.suripu.admin.Util;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.models.PillAdmin;
 import com.hello.suripu.core.db.AccountDAO;
@@ -56,35 +55,18 @@ public class PillResource {
     @Path("/heartbeats")
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, List<PillHeartBeat>> getPillStatus(@Auth final AccessToken accessToken,
-                                            @QueryParam("email") final String email,
-                                            @QueryParam("pill_id_partial") final String pillIdPartial,
+                                            @QueryParam("pill_id") final String pillId,
                                             @QueryParam("start_ts") final Long startTs) {
 
         final DateTime cursor = (startTs == null) ? DateTime.now(DateTimeZone.UTC) : new DateTime(startTs, DateTimeZone.UTC);
 
-        final List<DeviceAccountPair> pills = Lists.newArrayList();
-        if (email == null && pillIdPartial == null){
+        if (pillId == null){
             throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
                     .entity("Missing query params!").build());
         }
 
-        if (email != null) {
-            LOGGER.debug("Querying all pills for email = {}", email);
-            final Optional<Long> accountIdOptional = Util.getAccountIdByEmail(accountDAO, email);
-            if (!accountIdOptional.isPresent()) {
-                throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
-                        .entity("Account not found!").build());
-            }
-            pills.addAll(deviceDAO.getPillsForAccountId(accountIdOptional.get()));
-        } else {
-            LOGGER.debug("Querying all pills whose IDs contain = {}", pillIdPartial);
-            pills.addAll(deviceAdminDAO.getPillsByPillIdHint(pillIdPartial));
-        }
-
         final Map<String, List<PillHeartBeat>> heartBeatsPerPill = Maps.newHashMap();
-        for (final DeviceAccountPair pair : pills) {
-            heartBeatsPerPill.put(pair.externalDeviceId, pillHeartBeatDAODynamoDB.get(pair.externalDeviceId, cursor));
-        }
+        heartBeatsPerPill.put(pillId, pillHeartBeatDAODynamoDB.get(pillId, cursor));
 
         return heartBeatsPerPill;
     }
