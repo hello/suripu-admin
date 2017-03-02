@@ -4,11 +4,11 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.hello.suripu.admin.Util;
+import com.hello.suripu.admin.db.AccountAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.models.PasswordResetAdmin;
 import com.hello.suripu.core.db.AccountDAO;
-import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.DeviceDAO;
 import com.hello.suripu.core.db.RingTimeHistoryDAODynamoDB;
 import com.hello.suripu.core.db.SmartAlarmLoggerDynamoDB;
@@ -50,6 +50,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Path("/v1/account")
 public class AccountResources {
@@ -59,9 +60,10 @@ public class AccountResources {
     private final Integer MAX_RECENT_USERS_LIMIT = 500;
 
     private final AccountDAO accountDAO;
+
     private final PasswordResetDB passwordResetDB;
     private final DeviceDAO deviceDAO;
-    private final AccountDAOAdmin accountDAOAdmin;
+    private final AccountAdminDAO accountAdminDAO;
     private final TimeZoneHistoryDAODynamoDB timeZoneHistoryDAODynamoDB;
     private final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB;
     private final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB;
@@ -73,7 +75,7 @@ public class AccountResources {
     public AccountResources(final AccountDAO accountDAO,
                             final PasswordResetDB passwordResetDB,
                             final DeviceDAO deviceDAO,
-                            final AccountDAOAdmin accountDAOAdmin,
+                            final AccountAdminDAO accountAdminDAO,
                             final TimeZoneHistoryDAODynamoDB timeZoneHistoryDAODynamoDB,
                             final SmartAlarmLoggerDynamoDB smartAlarmLoggerDynamoDB,
                             final RingTimeHistoryDAODynamoDB ringTimeHistoryDAODynamoDB,
@@ -82,7 +84,7 @@ public class AccountResources {
         this.accountDAO = accountDAO;
         this.passwordResetDB = passwordResetDB;
         this.deviceDAO = deviceDAO;
-        this.accountDAOAdmin = accountDAOAdmin;
+        this.accountAdminDAO = accountAdminDAO;
         this.timeZoneHistoryDAODynamoDB = timeZoneHistoryDAODynamoDB;
         this.smartAlarmLoggerDynamoDB = smartAlarmLoggerDynamoDB;
         this.ringTimeHistoryDAODynamoDB = ringTimeHistoryDAODynamoDB;
@@ -97,28 +99,34 @@ public class AccountResources {
     @Produces(MediaType.APPLICATION_JSON)
     public Account retrieveAccountByEmailOrId(@Auth final AccessToken accessToken,
                                               @QueryParam("email") final String email,
-                                              @QueryParam("id") final Long id) {
+                                              @QueryParam("id") final String id) {
 
         if (email == null &&  id == null) {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
                     .entity("Missing query params, please specify email or id").build());
         }
 
-        else if (email != null) {
+        if (email != null) {
             LOGGER.debug("Looking account up by email {}", email);
             final Optional<Account> accountByEmailOptional = accountDAO.getByEmail(email.toLowerCase());
             if (!accountByEmailOptional.isPresent()) {
                 throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Account not found").build());
             }
             return withPhotoMaybe(accountByEmailOptional.get());
-        }
-        else {
+        } else {
+            Optional<Account> optionalAccount;
             LOGGER.debug("Looking up account by id {}", id);
-            final Optional<Account> accountByIdOptional = accountDAO.getById(id);
-            if (!accountByIdOptional.isPresent()) {
+            try {
+                final UUID externalId = UUID.fromString(id);
+                optionalAccount = accountAdminDAO.getByExternalId(externalId);
+            }  catch (IllegalArgumentException exception) {
+                optionalAccount = accountDAO.getById(Long.parseLong(id));
+            }
+
+            if (!optionalAccount.isPresent()) {
                 throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Account not found").build());
             }
-            return withPhotoMaybe(accountByIdOptional.get());
+            return withPhotoMaybe(optionalAccount.get());
         }
     }
 
@@ -168,7 +176,7 @@ public class AccountResources {
         if (limit == null || maxId == null) {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(new JsonError(Response.Status.BAD_REQUEST.getStatusCode(), "limit and max_id required")).build());
         }
-        return accountDAOAdmin.getRecentBeforeId(Math.min(limit, MAX_RECENT_USERS_LIMIT), maxId);
+        return accountAdminDAO.getRecentBeforeId(Math.min(limit, MAX_RECENT_USERS_LIMIT), maxId);
     }
 
     @ScopesAllowed({OAuthScope.ADMINISTRATION_WRITE})
@@ -185,12 +193,14 @@ public class AccountResources {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(new JsonError(Response.Status.NOT_FOUND.getStatusCode(), "account not found")).build());
         }
 
-        final PasswordReset passwordReset = PasswordReset.create(accountOptional.get());
-        passwordResetDB.save(passwordReset);
-
         if (passwordResetAdmin.password.length() < 6){
             throw new WebApplicationException(Response.status(Response.Status.NOT_ACCEPTABLE).entity("Password length should be greater than 6").build());
         }
+
+        final PasswordReset passwordReset = PasswordReset.create(accountOptional.get());
+        passwordResetDB.save(passwordReset);
+
+
 
         final Boolean updated = accountDAO.updatePasswordFromResetEmail(passwordReset.accountId, PasswordUtil.encrypt(passwordResetAdmin.password), passwordReset.state);
 
@@ -234,7 +244,7 @@ public class AccountResources {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/count_by_created")
     public List<AccountCount> retrieveCountsByCreated(@Auth final AccessToken accessToken) {
-        return accountDAOAdmin.countByDate();
+        return accountAdminDAO.countByDate();
 
     }
 

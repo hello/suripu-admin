@@ -21,6 +21,7 @@ import com.hello.suripu.admin.cli.ScanFWVersion;
 import com.hello.suripu.admin.cli.ScanSerialNumbers;
 import com.hello.suripu.admin.configuration.SuripuAdminConfiguration;
 import com.hello.suripu.admin.db.AccessTokenAdminDAO;
+import com.hello.suripu.admin.db.AccountAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAO;
 import com.hello.suripu.admin.db.DeviceAdminDAOImpl;
 import com.hello.suripu.admin.db.ExpansionsAdminDAO;
@@ -64,7 +65,6 @@ import com.hello.suripu.core.ObjectGraphRoot;
 import com.hello.suripu.core.configuration.DynamoDBTableName;
 import com.hello.suripu.core.configuration.QueueName;
 import com.hello.suripu.core.db.AccountDAO;
-import com.hello.suripu.core.db.AccountDAOAdmin;
 import com.hello.suripu.core.db.AccountDAOImpl;
 import com.hello.suripu.core.db.AggStatsDAODynamoDB;
 import com.hello.suripu.core.db.AggregateSleepScoreDAODynamoDB;
@@ -148,9 +148,6 @@ import com.hello.suripu.coredropwizard.util.CustomJSONExceptionMapper;
 import com.librato.rollout.RolloutClient;
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
-import io.dropwizard.jdbi.ImmutableListContainerFactory;
-import io.dropwizard.jdbi.ImmutableSetContainerFactory;
-import io.dropwizard.jdbi.OptionalContainerFactory;
 import io.dropwizard.jdbi.bundles.DBIExceptionsBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
@@ -196,10 +193,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         environment.healthChecks().unregister("postgresql-store");
 
         commonDB.registerArgumentFactory(new JodaArgumentFactory());
-        commonDB.registerContainerFactory(new OptionalContainerFactory());
         commonDB.registerArgumentFactory(new PostgresIntegerArrayArgumentFactory());
-        commonDB.registerContainerFactory(new ImmutableListContainerFactory());
-        commonDB.registerContainerFactory(new ImmutableSetContainerFactory());
 
         // not registering any additional container factory for redshift
         // not registering any additional container factory for store db
@@ -242,7 +236,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
 
         // Common DB
         final AccountDAO accountDAO = commonDB.onDemand(AccountDAOImpl.class);
-        final AccountDAOAdmin accountDAOAdmin = commonDB.onDemand(AccountDAOAdmin.class);
+        final AccountAdminDAO accountAdminDAO = commonDB.onDemand(AccountAdminDAO.class);
         final DeviceDAO deviceDAO = commonDB.onDemand(DeviceDAO.class);
         final DeviceReadDAO deviceReadDAO = commonDB.onDemand(DeviceReadDAO.class);
         final DeviceAdminDAO deviceAdminDAO = commonDB.onDemand(DeviceAdminDAOImpl.class);
@@ -537,7 +531,7 @@ public class SuripuAdmin extends Application<SuripuAdminConfiguration> {
         //End AggStats stuff
 
 
-        environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountDAOAdmin,
+        environment.jersey().register(new AccountResources(accountDAO, passwordResetDB, deviceDAO, accountAdminDAO,
                 timeZoneHistoryDAODynamoDB, smartAlarmLoggerDynamoDB, ringTimeHistoryDAODynamoDB, deviceAdminDAO, photoStore));
 
         environment.jersey().register(new AlarmResources(mergedUserInfoDynamoDB, deviceDAO, accountDAO));
